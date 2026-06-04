@@ -9579,8 +9579,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                             <path fill="#488BC3" d="M35.743 10.41 31.241 0l-17.3 40h8.652l8.648-19.46 4.8 10.812h-9.126L31.241 40h17.296z"></path>
                         </svg>
                     </div>
-                    <div class="vault-label">My APTM Balance</div>
-                    <div class="vault-aptm" id="sidebar-equity-value">$0.00 APTM</div>
+                    <div class="vault-label">My APTM Value</div>
+                    <div class="vault-aptm" id="sidebar-equity-value">0.0000 APTM</div>
                     <div class="vault-live-pill" style="margin-top:8px;">
                         <div class="vault-live-dot"></div>
                         <span class="vault-live-text"><span id="live-price-display">Fetching…</span></span>
@@ -12109,7 +12109,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const p = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
         const starsPerAptm = Math.round(p / CONFIG.STAR_USD);
         s('drawer-price', '1 APTM = ' + starsPerAptm + ' ★  |  1 ★ = $0.01');
-        s('live-price-display', 'Apertum · $' + p.toFixed(4) + ' / APTM');
+        s('live-price-display', 'Live · $' + p.toFixed(4) + ' / APTM');
         s('rp-rate', '1 ★ = $0.01 · APTM @ $' + p.toFixed(4));
     }
 
@@ -13102,7 +13102,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             const depUsdt  = parseFloat(currentUsdtBalance) || 0;
             const earnUsdt = parseFloat(currentEarnedUsdt)  || 0;
-            const myUsdtStr = '$' + fmtUsdt(depUsdt + earnUsdt) + ' APTM';
+            const myUsdtStr = (depUsdt + earnUsdt).toFixed(4) + ' APTM';
 
             // Sidebar
             s('user-stars',              availStr);
@@ -13112,7 +13112,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const earnedRow = document.getElementById('sidebar-earned-row');
             if (earnedRow) earnedRow.style.display = earnedStars > 0 ? '' : 'none';
             s('sidebar-equity-value',    myUsdtStr);
-            s('live-price-display',      'Apertum · 1 ★ = $0.01 · APTM @ $' + (currentAptmPriceUsd > 0 ? currentAptmPriceUsd.toFixed(4) : '0.17'));
+            s('live-price-display',      'Live · $' + (currentAptmPriceUsd > 0 ? currentAptmPriceUsd.toFixed(4) : '0.1700') + ' / APTM');
 
             // Studio nav badge
             s('sidebar-stars-badge',     availStr);
