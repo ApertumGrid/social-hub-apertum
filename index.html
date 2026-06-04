@@ -9575,7 +9575,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div class="vault-card-premium vault-card-aptm">
                     <!-- APTM logo orb, top-right -->
                     <div id="aptm-logo-orb" title="APTM on Apertum">
-                        <svg width="28" height="28" viewBox="0 0 50 40" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="28" height="28" viewBox="13 0 36 40" xmlns="http://www.w3.org/2000/svg">
                             <path fill="#488BC3" d="M35.743 10.41 31.241 0l-17.3 40h8.652l8.648-19.46 4.8 10.812h-9.126L31.241 40h17.296z"></path>
                         </svg>
                     </div>
@@ -12047,9 +12047,44 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         return rpcProvider;
     }
 
-    // Read live APTM price from the contract oracle.
-    // Falls back to last known price, then to 0.17 if chain is unreachable.
+    // Read live APTM price — primary source is the DEX pair reserves.
+    // Falls back to on-chain oracle, then last known price, then 0.17.
     async function getLiveAptmPrice() {
+        // ── Primary: read reserves from DEX pair (wAPTM/wUSDT, both 18 dec) ──
+        try {
+            const pairAbi = [
+                "function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)",
+                "function token0() view returns (address)"
+            ];
+            const pair = new ethers.Contract(APTM_DEX_PAIR, pairAbi, getRpcProvider());
+            const [reserves, token0Addr] = await Promise.race([
+                Promise.all([pair.getReserves(), pair.token0()]),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('dex timeout')), 6000))
+            ]);
+            const r0 = parseFloat(ethers.utils.formatUnits(reserves[0], 18));
+            const r1 = parseFloat(ethers.utils.formatUnits(reserves[1], 18));
+            if (r0 > 0 && r1 > 0) {
+                // Determine which token is APTM via its symbol()
+                let aptmIsToken0 = false;
+                try {
+                    const t0 = new ethers.Contract(token0Addr,
+                        ['function symbol() view returns (string)'], getRpcProvider());
+                    const sym = await t0.symbol();
+                    aptmIsToken0 = /APT/i.test(sym);
+                } catch (_) {
+                    // Heuristic: APTM < $1 so APTM reserve is the larger of the two
+                    aptmIsToken0 = r0 > r1;
+                }
+                const price = aptmIsToken0 ? r1 / r0 : r0 / r1;
+                if (price > 0) {
+                    currentAptmPriceUsd = price;
+                    return price;
+                }
+            }
+        } catch (e) {
+            console.warn('[DEX] reserve read failed:', e.message);
+        }
+        // ── Fallback: on-chain oracle updated by Cloud Function ──────────────
         try {
             const ro = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, getRpcProvider());
             const raw = await Promise.race([
