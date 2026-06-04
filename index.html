@@ -11785,7 +11785,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         </div>
                         <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;">
                             <span style="background:rgba(124,92,191,0.35);color:var(--purple-light);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
-                            <div>Withdraw APTM to your wallet on the <span style="color:#a78bfa;font-weight:600;">Apertum network</span>. <span style="color:#ef4444;">Not Ethereum. Not BSC.</span></div>
+                            <div>Withdraw APTM to your wallet on the <span style="color:#a78bfa;font-weight:600;">Apertum network</span>. <span style="color:#ef4444;">Not Ethereum.</span></div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:flex-start;">
                             <span style="background:rgba(124,92,191,0.35);color:var(--purple-light);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
@@ -12899,7 +12899,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             // Stars = spendable USDT / $0.01
             purchasedStars  = Math.max(0, Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10);
-            // creatorEarnings comes from Firestore only — on-chain withdrawableUSDT is 0
+            // creatorEarnings comes from Firestore only — on-chain withdrawableAPTM is 0
             // until settlement and must not overwrite the Firestore value
             creatorEarnings = 0;
 
@@ -12910,7 +12910,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     await window.fs.setDoc(userRef, { stars: 0, creatorStars: 0, depositedAptm: 0, lastSync: Date.now(), address: addr.toLowerCase() });
                 } else {
                     const d = snap.data();
-                    // Combine: Firestore unsettled + on-chain settled (withdrawableUSDT)
+                    // Combine: Firestore unsettled + on-chain settled (withdrawableAPTM)
                     const fbCreatorStars = Math.max(0, parseFloat(d.creatorStars || 0));
                     window._firestoreCreatorStars = fbCreatorStars;
                     const onChainSettled = Math.floor(withdrawableHuman / CONFIG.STAR_USD * 10) / 10;
@@ -12918,7 +12918,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window._onChainWithdrawableUsdt = withdrawableHuman;
                     creatorEarnings   = fbCreatorStars + onChainSettled;
                     currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
-                    console.log(`[syncData] depositedUSDT=${depositedHuman.toFixed(4)} | withdrawableUSDT=${withdrawableHuman.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
+                    console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} | withdrawableAPTM=${withdrawableHuman.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
                     await window.fs.updateDoc(userRef, { lastSync: Date.now() }).catch(() => {});
                 }
             }
@@ -13495,7 +13495,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 window._firestoreDepositedUsdt = _depUsdt;
                 const _fbEarned            = Math.max(0, parseFloat(snap.data().creatorStars || 0));
                 window._firestoreCreatorStars = _fbEarned;
-                // Combine Firestore unsettled + on-chain settled (withdrawableUSDT)
+                // Combine Firestore unsettled + on-chain settled (withdrawableAPTM)
                 creatorEarnings   = _fbEarned + (window._onChainEarned || 0);
                 currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
             } else {
@@ -16212,7 +16212,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Read on-chain balance
             const roContract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, getRpcProvider());
             const bal = await roContract.getBalance(addr);
-            // depositedUSDT on-chain minus Firestore-tracked spend = true spendable deposit
+            // depositedAPTM on-chain minus Firestore-tracked spend = true spendable deposit
             const onChainDeposited    = parseFloat(ethers.utils.formatUnits(bal.deposited,    18)) || 0;
             const onChainWithdrawable = parseFloat(ethers.utils.formatUnits(bal.withdrawable, 18)) || 0;
             // earnUsdt = on-chain already-settled + Firestore not-yet-settled (no double-count)
