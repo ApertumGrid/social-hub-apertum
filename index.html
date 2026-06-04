@@ -66,13 +66,13 @@
         import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyANZhaAodV4TvfLk84dzwscI7cSSiwyyv4",
-            authDomain: "socialhub-33014.firebaseapp.com",
-            projectId: "socialhub-33014",
-            storageBucket: "socialhub-33014.firebasestorage.app",
-            messagingSenderId: "864088350104",
-            appId: "1:864088350104:web:9a5044bd40c6621fa7dfed",
-            measurementId: "G-B2C1K1LVGQ"
+            apiKey: "AIzaSyA3c9CVx1eY8_m_16LN4QTmmPXZh_UJdwA",
+            authDomain: "socialhubaptm.firebaseapp.com",
+            projectId: "socialhubaptm",
+            storageBucket: "socialhubaptm.firebasestorage.app",
+            messagingSenderId: "27568726411",
+            appId: "1:27568726411:web:1a60222f37b365b1464f8e",
+            measurementId: "G-9HKL98ZJER"
         };
         const app       = initializeApp(firebaseConfig);
         const db        = getFirestore(app);
@@ -82,7 +82,7 @@
         window.storage   = storage;
         window.messaging = messaging;
         window.fcmGetToken = (swReg) => getToken(messaging, {
-            vapidKey: 'BCJzlDQ0IUr2dueYlt2fEc36_8v5PFZeI_yn5m0WDpz56wJbmsietLKtsvdxtplPFUOo5TcR_ATbG1eopX8m3us',
+            vapidKey: 'BDtfeGJR-5K20N-9dRcKkoBzI1BJGnGRUb1z35uiuViOw-fBPfYVI1IjHBJ5jC3dKn7Hfh8dNLNAHyA_WmWIOX8',
             serviceWorkerRegistration: swReg
         });
         window.fs  = { collection, addDoc, getDocs, query, orderBy, onSnapshot, doc, updateDoc, increment, where, runTransaction, setDoc, getDoc, serverTimestamp, deleteDoc, writeBatch, arrayUnion, arrayRemove, limitToLast, limit };
@@ -11919,7 +11919,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             FLICK: 5.0,
             BOOST: 10,
         },
-        STORAGE_BUCKET: "gs://socialhub-33014.firebasestorage.app"
+        STORAGE_BUCKET: "gs://socialhubaptm.firebasestorage.app"
     };
 
     // ── fmtUsdt: exact USDT display — always truncates, never rounds up ──────
@@ -14438,7 +14438,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Record in Firebase
             if (userAddress && window.db) {
                 try {
-                    const cfResp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/recordDeposit', {
+                    const cfResp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/recordDeposit', {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body:    JSON.stringify({ senderAddress: userAddress, aptmAmount, aptmPrice: livePrice })
@@ -16177,7 +16177,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // Cloud Function endpoint
     const SYNC_FUNCTION_URL =
-        "https://us-central1-socialhub-33014.cloudfunctions.net/syncStarsToBlockchain";
+        "https://us-central1-socialhubaptm.cloudfunctions.net/syncStarsToBlockchain";
 
     let _settleInProgress = false;
 
@@ -16241,7 +16241,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             showToast('Requesting withdrawal authorization…');
 
             // Request CF-signed withdrawal permit
-            const cfResp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/requestWithdraw', {
+            const cfResp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/requestWithdraw', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ userAddress: addr })
@@ -21578,7 +21578,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
         showToast('Processing purchase on-chain…');
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/purchaseListing', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/purchaseListing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ listingId: listing.id, buyerAddress: userAddress })
@@ -21699,7 +21699,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 : [];
 
             showToast('Creating listing…');
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/createListing', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/createListing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -21836,7 +21836,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (!confirm('Confirm you received this product?\n\nThis will release payment to the seller on-chain.')) return;
         showToast('Confirming delivery on-chain…');
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/confirmDelivery', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/confirmDelivery', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ purchaseId, buyerAddress: userAddress })
@@ -21882,7 +21882,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const btn = document.getElementById('mkt-review-submit-btn');
         if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/submitReview', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/submitReview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ purchaseId, buyerAddress: userAddress, rating, review })
@@ -21927,7 +21927,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (!confirm('Renew this listing for another 6 months?\nFee: 100★ ($1.00) — non-refundable.')) return;
         showToast('Renewing listing…');
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/renewListing', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/renewListing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ listingId, sellerAddress: userAddress })
@@ -25567,7 +25567,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const walletParam = window.userAddress
             ? '&walletAddress=' + encodeURIComponent(window.userAddress)
             : '';
-        const res  = await fetch(`https://us-central1-socialhub-33014.cloudfunctions.net/getAgoraToken?channel=${encodeURIComponent(channel)}${walletParam}`);
+        const res  = await fetch(`https://us-central1-socialhubaptm.cloudfunctions.net/getAgoraToken?channel=${encodeURIComponent(channel)}${walletParam}`);
         const data = await res.json();
         if (!data.token) throw new Error('Token fetch failed');
         AGORA_TOKEN = data.token;
@@ -26180,7 +26180,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             // Start server-side cloud recording only when host opted in
             if (willCloudRecord) (function(_sid, _ch) {
-                fetch('https://us-central1-socialhub-33014.cloudfunctions.net/startCloudRecording', {
+                fetch('https://us-central1-socialhubaptm.cloudfunctions.net/startCloudRecording', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ streamId: _sid, channelName: _ch })
@@ -26920,7 +26920,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (input) input.value = '';
 
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/sendLiveChat', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/sendLiveChat', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
@@ -27358,7 +27358,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         }
 
         try {
-            const resp = await fetch('https://us-central1-socialhub-33014.cloudfunctions.net/sendGift', {
+            const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/sendGift', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
