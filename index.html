@@ -12708,8 +12708,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
                     showQrModal:    true,
-                    chains:         [APTM_CHAIN_ID],        // Apertum mainnet
-                    optionalChains: [1],
+                    chains:         [1],                    // required known chain (WC registry)
+                    optionalChains: [APTM_CHAIN_ID],        // Apertum — custom chain, handled via rpcMap
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
                         1:               'https://cloudflare-eth.com'
@@ -12722,6 +12722,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     }
                 });
                 await wcProv.enable(); // opens QR modal — resolves when user approves
+                await _ensureApertumChain(wcProv); // switch/add Apertum after session established
                 window._activeWCProvider = wcProv;
                 eth = wcProv;
             } else {
