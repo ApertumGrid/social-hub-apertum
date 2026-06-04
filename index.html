@@ -9575,14 +9575,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div class="vault-card-premium vault-card-aptm">
                     <!-- APTM logo orb, top-right -->
                     <div id="aptm-logo-orb" title="APTM on Apertum">
-                        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="14" cy="14" r="14" fill="#7c5cbf"/>
-                            <text x="14" y="20" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial,sans-serif">APT</text>
-                        </svg>
+                        <img src="https://apertum.io/assets/aptm-logo.png" width="28" height="28" alt="APTM" style="width:28px;height:28px;object-fit:contain;" onerror="this.style.display='none';this.parentNode.innerHTML='<svg width=\'28\' height=\'28\' viewBox=\'0 0 28 28\' xmlns=\'http://www.w3.org/2000/svg\'><circle cx=\'14\' cy=\'14\' r=\'14\' fill=\'#7c5cbf\'/><text x=\'14\' y=\'20\' text-anchor=\'middle\' fill=\'white\' font-size=\'13\' font-weight=\'bold\' font-family=\'Arial,sans-serif\'>A</text></svg>'">
                     </div>
                     <div class="vault-label">My APTM Balance</div>
                     <div class="vault-aptm" id="sidebar-equity-value">$0.00 APTM</div>
-                    <div class="vault-divider" style="margin-top:10px;"></div>
+                    <div class="vault-live-pill" style="margin-top:8px;">
+                        <div class="vault-live-dot"></div>
+                        <span class="vault-live-text"><span id="live-price-display">Fetching…</span></span>
+                    </div>
+                    <div class="vault-divider" style="margin-top:6px;"></div>
                     <button style="width:100%;padding:9px 0;border-radius:10px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(135deg,#6d3fd4 0%,#5a9fd4 100%);color:#fff;box-shadow:0 4px 14px rgba(109,63,212,.35),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''" onclick="convertAPTM()">+ DEPOSIT $APTM</button>
                     <div style="margin-top:7px;font-size:0.6rem;color:rgba(255,255,255,0.35);text-align:center;line-height:1.5;">Send native <span style="color:rgba(124,92,191,0.9);font-weight:600;">APTM</span> on the <span style="color:rgba(45,212,191,0.7);font-weight:600;">Apertum</span> network</div>
                 </div>
