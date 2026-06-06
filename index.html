@@ -1585,15 +1585,19 @@
         .layout-preview-grid4 { display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:3px; }
 
         /* â”€â”€ Split-screen video area layouts â”€â”€â”€ applied to #live-broadcaster-video-container */
-        #live-broadcaster-video-container.layout-split2 #live-broadcaster-video,
+        #live-broadcaster-video-container.layout-split2 {
+            position:relative !important; overflow:hidden !important;
+        }
+        #live-broadcaster-video-container.layout-split2 #live-broadcaster-video {
+            position:absolute !important; top:0 !important; left:0 !important;
+            width:50% !important; height:100% !important;
+            border-radius:0 !important;
+        }
         #live-broadcaster-video-container.layout-split2 #cohost-pip-host {
-            position:relative !important; inset:auto !important;
+            position:absolute !important; top:0 !important; left:50% !important;
             width:50% !important; height:100% !important;
             border-radius:0 !important; border:none !important;
-        }
-        #live-broadcaster-video-container.layout-split2 {
-            display:flex !important; flex-direction:row !important;
-            gap:2px !important;
+            border-left:2px solid var(--purple) !important; background:#000 !important;
         }
         #live-broadcaster-video-container.layout-pip-bottom #live-broadcaster-video {
             position:absolute !important; top:0 !important; left:0 !important;
@@ -1606,22 +1610,25 @@
             border-top:2px solid var(--purple) !important;
         }
         #live-broadcaster-video-container.layout-grid4 {
-            display:grid !important;
-            grid-template-columns:1fr 1fr !important;
-            grid-template-rows:1fr 1fr !important;
-            gap:2px !important;
+            position:relative !important; overflow:hidden !important;
         }
         #live-broadcaster-video-container.layout-grid4 #live-broadcaster-video {
-            position:relative !important; inset:auto !important;
-            width:100% !important; height:100% !important;
-            grid-column:1; grid-row:1;
+            position:absolute !important; top:0 !important; left:0 !important;
+            width:50% !important; height:100% !important;
             border-radius:0 !important;
         }
         #live-broadcaster-video-container.layout-grid4 #cohost-pip-host {
-            position:relative !important; inset:auto !important;
-            width:100% !important; height:100% !important;
-            border-radius:0 !important; border:none !important;
-            grid-column:2; grid-row:1;
+            position:absolute !important; top:0 !important; left:50% !important;
+            width:50% !important; height:100% !important;
+            border-radius:0 !important; border:none !important; background:#000 !important;
+        }
+        @media (max-width:768px) {
+            #live-broadcaster-video-container.layout-split2 #live-broadcaster-video,
+            #live-broadcaster-video-container.layout-split2 #cohost-pip-host,
+            #live-broadcaster-video-container.layout-grid4 #live-broadcaster-video,
+            #live-broadcaster-video-container.layout-grid4 #cohost-pip-host {
+                width:50% !important; height:100% !important;
+            }
         }
         /* Overlay elements should stay on top in any layout */
         #live-broadcaster-video-container .live-stream-overlay-top,
@@ -5784,7 +5791,8 @@
             body.flicks-active #topnav,
             body.flicks-active #mobile-dashboard,
             body.flicks-active #bottom-nav,
-            body.flicks-active #cmd-orb { display: none !important; }
+            body.flicks-active #cmd-orb,
+            body.flicks-active #hype-ticker { display: none !important; }
 
             body.flicks-active #feed-col { padding: 0 !important; overflow: hidden !important; }
 
@@ -10160,9 +10168,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             <div id="page-marketplace" class="page">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
                     <div class="page-heading" style="margin:0;">Market<span>place</span></div>
-                    <button onclick="openCreateListing()" style="padding:9px 20px;border-radius:20px;border:1px solid rgba(240,180,41,0.5);background:rgba(240,180,41,0.1);color:var(--gold);font-size:0.78rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">+ List a Product · 100★</button>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                        <button onclick="openCreateListing()" style="padding:9px 20px;border-radius:20px;border:1px solid rgba(240,180,41,0.5);background:rgba(240,180,41,0.1);color:var(--gold);font-size:0.78rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">+ List a Product</button>
+                        <span style="font-size:0.62rem;color:var(--text-muted);">100★ listing fee · active for 6 months</span>
+                    </div>
                 </div>
-                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:16px;">Digital products · On-chain escrow · Trustless settlement</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:16px;">Buy and sell digital products. Payment held securely until delivery.</div>
 
                 <!-- Category filter -->
                 <div class="mkt-cat-row" id="mkt-cat-row">
@@ -10175,6 +10186,25 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     <div class="mkt-cat" onclick="loadMarketplace('advisory',this)">🔷 Advisory</div>
                     <div class="mkt-cat" onclick="loadMarketplace('writing',this)">✍️ Writing</div>
                     <div class="mkt-cat" onclick="loadMarketplace('custom',this)">🎬 Custom Content</div>
+                </div>
+
+                <!-- How it Works — shown on 'all' category only -->
+                <div id="mkt-how-it-works" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0 20px;">
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+                        <div style="font-size:1.5rem;margin-bottom:8px;">🛒</div>
+                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Browse &amp; Buy</div>
+                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Find digital products from creators. Pay with Stars at checkout.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+                        <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Escrow Holds Payment</div>
+                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Your Stars are held securely on-chain until you confirm delivery.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+                        <div style="font-size:1.5rem;margin-bottom:8px;">✅</div>
+                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Confirm &amp; Release</div>
+                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Approve delivery to release payment. Raise a dispute if needed.</div>
+                    </div>
                 </div>
 
                 <!-- Listings grid -->
@@ -21354,6 +21384,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
         if (catEl) catEl.classList.add('active');
 
+        // Show How it Works only on the 'all' view
+        const hiw = document.getElementById('mkt-how-it-works');
+        if (hiw) hiw.style.display = category === 'all' ? 'grid' : 'none';
+
         const grid = document.getElementById('mkt-listings-grid');
         if (!grid) return;
         grid.innerHTML = '<div class="mkt-empty">Loading…</div>';
@@ -30911,8 +30945,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (pip)   pip.style.cssText   = 'position:absolute;bottom:50px;right:10px;width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
         } else if (mode === 'split2') {
             container.classList.add('layout-split2');
-            if (bcVid) bcVid.style.cssText = 'position:relative;width:50%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:relative;width:50%;height:100%;border-radius:0;border:none;border-left:2px solid var(--purple);z-index:1;background:#000;';
+            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
+            if (pip)   pip.style.cssText   = 'position:absolute;top:0;left:50%;width:50%;height:100%;border-radius:0;border:none;border-left:2px solid var(--purple);z-index:1;background:#000;';
             if (!pip)  showToast('ℹ️ Co-host slot ready — approve a viewer from Stage Requests to fill it.');
         } else if (mode === 'pip-bottom') {
             container.classList.add('layout-pip-bottom');
@@ -30921,8 +30955,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (!pip)  showToast('ℹ️ Co-host strip ready — approve a viewer from Stage Requests.');
         } else if (mode === 'grid4') {
             container.classList.add('layout-grid4');
-            if (bcVid) bcVid.style.cssText = 'position:relative;width:100%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:relative;width:100%;height:100%;border-radius:0;border:none;background:#000;';
+            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
+            if (pip)   pip.style.cssText   = 'position:absolute;top:0;left:50%;width:50%;height:100%;border-radius:0;border:none;background:#000;z-index:1;';
             if (!pip)  showToast('ℹ️ Grid ready — up to 3 co-hosts can join. Approve from Stage Requests.');
         }
 
