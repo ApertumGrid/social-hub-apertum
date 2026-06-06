@@ -22028,8 +22028,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const hoursLeft = inDisputeWindow ? Math.ceil((d.disputeWindowEnd - now2) / 3600000) : 0;
 
                 let actionBtns = '';
-                if (d.status === 'pending' && d.deliveryUrl) {
-                    actionBtns = '<button onclick="confirmDelivery(\'' + doc.id + '\')" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(45,212,191,0.4);background:rgba(45,212,191,0.08);color:var(--teal);font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0;">Confirm Received</button>';
+                if (d.status === 'pending') {
+                    const escrowExpired = d.escrowId && d.escrowExpiry && d.escrowExpiry < Date.now();
+                    if (escrowExpired) {
+                        actionBtns = '<button onclick="claimExpiredEscrowUI(\'' + doc.id + '\')" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#ef4444;font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0;">🔓 Claim Refund</button>';
+                    } else if (d.deliveryUrl) {
+                        actionBtns = '<button onclick="confirmDelivery(\'' + doc.id + '\')" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(45,212,191,0.4);background:rgba(45,212,191,0.08);color:var(--teal);font-size:0.72rem;font-weight:700;cursor:pointer;flex-shrink:0;">Confirm Received</button>';
+                    }
                 } else if (d.status === 'complete') {
                     if (!d.reviewed) {
                         actionBtns += '<button onclick="openReviewModal(\'' + doc.id + '\',\'' + (d.listingId || '') + '\')" style="padding:5px 12px;border-radius:14px;border:1px solid rgba(240,180,41,0.4);background:rgba(240,180,41,0.08);color:var(--gold);font-size:0.7rem;font-weight:700;cursor:pointer;flex-shrink:0;margin-bottom:4px;">⭐ Leave Review</button>';
@@ -22076,6 +22081,65 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         } catch (e) { alert('Failed: ' + e.message); }
     }
     window.confirmDelivery = confirmDelivery;
+
+    // ── EscrowEscape: buyer self-rescue for expired marketplace escrows ────────
+    async function claimExpiredEscrowUI(purchaseId) {
+        const ESCROW_ESCAPE_ADDR = '0xc383bc8A198e052e2dE7fB95978a48e0889fC639';
+        const ESCROW_ESCAPE_ABI  = ['function claimExpiredEscrow(bytes32 id) external'];
+
+        if (!window._shLastEth) return showToast('Connect wallet first.');
+
+        if (!confirm(
+            'Claim Refund — Expired Escrow\n' +
+            '─────────────────────────────────\n' +
+            'This escrow has expired without delivery.\n' +
+            'A transaction will be sent to the EscrowEscape\n' +
+            'contract to restore your APTM deposit on-chain.\n\n' +
+            'Proceed?'
+        )) return;
+
+        showToast('Reading escrow details…');
+        try {
+            // 1. Fetch escrowId from Firestore
+            const snap = await window.fs.getDoc(
+                window.fs.doc(window.db, 'marketplace_purchases', purchaseId)
+            );
+            if (!snap.exists()) throw new Error('Purchase record not found.');
+            const escrowId = snap.data().escrowId;
+            if (!escrowId) throw new Error('No escrow ID on this purchase.');
+
+            // 2. Ensure wallet is on Apertum
+            const onAptm = await _ensureApertumChain(window._shLastEth);
+            if (!onAptm) return;
+
+            // 3. Get fresh signer
+            const freshProvider = new ethers.providers.Web3Provider(window._shLastEth);
+            const freshSigner   = freshProvider.getSigner();
+
+            // 4. Call EscrowEscape.claimExpiredEscrow(bytes32)
+            const escapeContract = new ethers.Contract(ESCROW_ESCAPE_ADDR, ESCROW_ESCAPE_ABI, freshSigner);
+            showToast('Sending claim transaction…');
+            const tx = await escapeContract.claimExpiredEscrow(escrowId);
+            showToast('Waiting for confirmation…');
+            await tx.wait();
+
+            // 5. Update Firestore purchase → refunded
+            await window.fs.updateDoc(
+                window.fs.doc(window.db, 'marketplace_purchases', purchaseId),
+                { status: 'refunded' }
+            );
+
+            showToast('Refund claimed ✓ — deposit restored on-chain.');
+            loadMyPurchases();
+            // Refresh on-chain balance so the vault box updates
+            try { await syncData(); } catch (_) {}
+
+        } catch (e) {
+            console.error('[claimExpiredEscrowUI]', e);
+            alert('Claim failed: ' + (e.reason || e.message || String(e)));
+        }
+    }
+    window.claimExpiredEscrowUI = claimExpiredEscrowUI;
 
     function openReviewModal(purchaseId, listingId) {
         const modal = document.getElementById('mkt-review-modal');
