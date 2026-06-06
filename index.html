@@ -10192,7 +10192,26 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         <span style="font-size:0.62rem;color:var(--text-muted);">100★ listing fee · active for 6 months</span>
                     </div>
                 </div>
-                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:16px;">Buy and sell digital products. Payment held securely until delivery.</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:14px;">Buy and sell digital products. Payment held securely until delivery.</div>
+
+                <!-- How it Works — shown on 'all' category only, sits above the category pills -->
+                <div id="mkt-how-it-works" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 12px;text-align:center;">
+                        <div style="font-size:1.3rem;margin-bottom:6px;">🛒</div>
+                        <div style="font-size:0.73rem;font-weight:700;color:var(--text-primary);margin-bottom:5px;">Browse &amp; Buy</div>
+                        <div style="font-size:0.63rem;color:var(--text-muted);line-height:1.5;">Find what you need and pay with Stars — your on-chain balance.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 12px;text-align:center;">
+                        <div style="font-size:1.3rem;margin-bottom:6px;">🔒</div>
+                        <div style="font-size:0.73rem;font-weight:700;color:var(--text-primary);margin-bottom:5px;">Escrow Holds Payment</div>
+                        <div style="font-size:0.63rem;color:var(--text-muted);line-height:1.5;">Funds lock on-chain instantly. Neither party can touch them until delivery.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 12px;text-align:center;">
+                        <div style="font-size:1.3rem;margin-bottom:6px;">✅</div>
+                        <div style="font-size:0.73rem;font-weight:700;color:var(--text-primary);margin-bottom:5px;">Confirm &amp; Release</div>
+                        <div style="font-size:0.63rem;color:var(--text-muted);line-height:1.5;">Confirm you received it. Payment goes to the seller. Simple.</div>
+                    </div>
+                </div>
 
                 <!-- Category filter — Level 1: Main categories -->
                 <div class="mkt-cat-row" id="mkt-cat-row">
@@ -10206,25 +10225,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 </div>
                 <!-- Level 2: Subcategories (shown when a main category is active) -->
                 <div class="mkt-subcat-row" id="mkt-subcat-row" style="display:none;"></div>
-
-                <!-- How it Works — shown on 'all' category only -->
-                <div id="mkt-how-it-works" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0 20px;">
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
-                        <div style="font-size:1.5rem;margin-bottom:8px;">🛒</div>
-                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Browse &amp; Buy</div>
-                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Find digital products from creators. Pay with Stars at checkout.</div>
-                    </div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
-                        <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
-                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Escrow Holds Payment</div>
-                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Your Stars are held securely on-chain until you confirm delivery.</div>
-                    </div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
-                        <div style="font-size:1.5rem;margin-bottom:8px;">✅</div>
-                        <div style="font-size:0.75rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Confirm &amp; Release</div>
-                        <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;">Approve delivery to release payment. Raise a dispute if needed.</div>
-                    </div>
-                </div>
 
                 <!-- Listings grid -->
                 <div id="mkt-listings-grid" class="mkt-grid"></div>
