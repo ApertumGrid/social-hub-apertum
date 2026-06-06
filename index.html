@@ -5901,6 +5901,25 @@
             border-color: var(--purple-lt); color: var(--purple-lt);
         }
         .mkt-cat:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
+        .mkt-subcat-row {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            margin-top: -8px; margin-bottom: 14px;
+            padding: 8px 10px; border-radius: 12px;
+            background: rgba(124,92,191,0.06);
+            border: 1px solid rgba(124,92,191,0.15);
+        }
+        .mkt-subcat {
+            padding: 4px 11px; border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted);
+            font-size: 0.67rem; font-weight: 600; cursor: pointer;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .mkt-subcat.active {
+            background: rgba(45,212,191,0.12);
+            border-color: var(--teal); color: var(--teal);
+        }
+        .mkt-subcat:hover:not(.active) { background: var(--bg-hover); color: var(--text-primary); }
         .mkt-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -10175,18 +10194,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 </div>
                 <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:16px;">Buy and sell digital products. Payment held securely until delivery.</div>
 
-                <!-- Category filter -->
+                <!-- Category filter — Level 1: Main categories -->
                 <div class="mkt-cat-row" id="mkt-cat-row">
-                    <div class="mkt-cat active" onclick="loadMarketplace('all',this)">All</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('courses',this)">🎓 Courses</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('data',this)">📊 Data & Research</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('templates',this)">📋 Templates</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('code',this)">💻 Code & Tools</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('design',this)">🎨 Design & UI</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('advisory',this)">🔷 Advisory</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('writing',this)">✍️ Writing</div>
-                    <div class="mkt-cat" onclick="loadMarketplace('custom',this)">🎬 Custom Content</div>
+                    <div class="mkt-cat active" id="mkt-main-all"      onclick="mktSelectMain('all',this)">All</div>
+                    <div class="mkt-cat" id="mkt-main-learn"    onclick="mktSelectMain('learn',this)">🎓 Learn</div>
+                    <div class="mkt-cat" id="mkt-main-tech"     onclick="mktSelectMain('tech',this)">💻 Tech</div>
+                    <div class="mkt-cat" id="mkt-main-creative" onclick="mktSelectMain('creative',this)">🎨 Creative</div>
+                    <div class="mkt-cat" id="mkt-main-content"  onclick="mktSelectMain('content',this)">📝 Content</div>
+                    <div class="mkt-cat" id="mkt-main-research" onclick="mktSelectMain('research',this)">📊 Research</div>
+                    <div class="mkt-cat" id="mkt-main-services" onclick="mktSelectMain('services',this)">⚙️ Services</div>
                 </div>
+                <!-- Level 2: Subcategories (shown when a main category is active) -->
+                <div class="mkt-subcat-row" id="mkt-subcat-row" style="display:none;"></div>
 
                 <!-- How it Works — shown on 'all' category only -->
                 <div id="mkt-how-it-works" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0 20px;">
@@ -15166,7 +15185,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     _activateTab('home', document.getElementById('nav-home'));
                     return;
                 }
-                loadMarketplace('all', document.querySelector('#mkt-cat-row .mkt-cat'));
+                mktSelectMain('all', document.getElementById('mkt-main-all'));
             }
         if (tabName === 'home' && typeof renderTrendingHubs === 'function') renderTrendingHubs(_allCommunities);
         if (typeof _trendingHubsSetVisible === 'function') _trendingHubsSetVisible(tabName === 'home');
@@ -21380,9 +21399,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     window.setAvailability = setAvailability;
 
     async function loadMarketplace(category, catEl) {
-        // Update active category pill
-        document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
-        if (catEl) catEl.classList.add('active');
+        // Active state: only update when catEl is provided (legacy/init calls).
+        // Two-level system (mktSelectMain/mktSelectSub) manages its own state.
+        if (catEl) {
+            document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
+            catEl.classList.add('active');
+            const subRow = document.getElementById('mkt-subcat-row');
+            if (subRow) subRow.style.display = 'none';
+            _mktActiveMain = 'all';
+        }
 
         // Show How it Works only on the 'all' view
         const hiw = document.getElementById('mkt-how-it-works');
@@ -21427,6 +21452,93 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         }
     }
     window.loadMarketplace = loadMarketplace;
+
+    // ── Two-level category system ─────────────────────────────────────────────
+    const MKT_SUBCATS = {
+        learn:    [{ label:'Courses & Masterclasses', value:'courses'      },
+                   { label:'Mentorship',              value:'mentorship'   },
+                   { label:'Advisory',                value:'advisory'     }],
+        tech:     [{ label:'Code & Tools',            value:'code'         },
+                   { label:'Scripts & Bots',          value:'scripts'      },
+                   { label:'Smart Contract Review',   value:'smart_contract'}],
+        creative: [{ label:'Design & UI',             value:'design'       },
+                   { label:'Branding',                value:'branding'     },
+                   { label:'Photography & Video',     value:'photo_video'  }],
+        content:  [{ label:'Writing',                 value:'writing'      },
+                   { label:'Templates',               value:'templates'    },
+                   { label:'Translation',             value:'translation'  }],
+        research: [{ label:'Data & Research',         value:'data'         },
+                   { label:'Trading & Analysis',      value:'trading'      },
+                   { label:'Reports',                 value:'reports'      }],
+        services: [{ label:'Consulting',              value:'consulting'   },
+                   { label:'Custom Content',          value:'custom'       },
+                   { label:'Security Resources',      value:'security'     }],
+    };
+    var _mktActiveMain = 'all';
+
+    function mktSelectMain(main, el) {
+        const subRow  = document.getElementById('mkt-subcat-row');
+        const allBtn  = document.getElementById('mkt-main-all');
+        // Clicking All — collapse everything
+        if (main === 'all') {
+            _mktActiveMain = 'all';
+            document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
+            if (allBtn) allBtn.classList.add('active');
+            if (subRow) subRow.style.display = 'none';
+            loadMarketplace('all', null);
+            return;
+        }
+        // Clicking already-active main cat — collapse
+        if (_mktActiveMain === main) {
+            _mktActiveMain = 'all';
+            document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
+            if (allBtn) allBtn.classList.add('active');
+            if (subRow) subRow.style.display = 'none';
+            loadMarketplace('all', null);
+            return;
+        }
+        _mktActiveMain = main;
+        document.querySelectorAll('.mkt-cat').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        // Build and show subcategory pills
+        const subs = MKT_SUBCATS[main] || [];
+        if (subRow && subs.length) {
+            subRow.innerHTML = subs.map(s =>
+                '<div class="mkt-subcat" onclick="mktSelectSub(\'' + s.value + '\',this)">' + s.label + '</div>'
+            ).join('');
+            subRow.style.display = 'flex';
+            // Auto-select first subcategory
+            const firstBtn = subRow.querySelector('.mkt-subcat');
+            if (firstBtn) mktSelectSub(subs[0].value, firstBtn);
+        }
+    }
+    window.mktSelectMain = mktSelectMain;
+
+    function mktSelectSub(category, el) {
+        document.querySelectorAll('.mkt-subcat').forEach(c => c.classList.remove('active'));
+        if (el) el.classList.add('active');
+        loadMarketplace(category, null);
+    }
+    window.mktSelectSub = mktSelectSub;
+
+    // ── Category-specific extra form fields ───────────────────────────────────
+    const MKT_EXTRA_CATS = ['mentorship','trading','smart_contract','courses','translation','consulting'];
+
+    function updateCategoryFields(category) {
+        const wrapper = document.getElementById('mkt-extra-fields');
+        MKT_EXTRA_CATS.forEach(function(g) {
+            var el = document.getElementById('mkt-extra-' + g);
+            if (el) el.style.display = 'none';
+        });
+        if (MKT_EXTRA_CATS.indexOf(category) !== -1) {
+            var el = document.getElementById('mkt-extra-' + category);
+            if (el) el.style.display = '';
+            if (wrapper) wrapper.style.display = '';
+        } else {
+            if (wrapper) wrapper.style.display = 'none';
+        }
+    }
+    window.updateCategoryFields = updateCategoryFields;
 
     function buildListingCard(id, listing) {
         const card = document.createElement('div');
@@ -21789,6 +21901,30 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 ? includedRaw.split('\n').map(l => l.trim()).filter(Boolean)
                 : [];
 
+            // Collect category-specific extra fields
+            const extraFields = {};
+            if (category === 'mentorship') {
+                extraFields.sessionLength    = document.getElementById('mkt-session-length')?.value || '';
+                extraFields.availabilityText = (document.getElementById('mkt-avail-text')?.value || '').trim();
+                extraFields.bookingLink      = (document.getElementById('mkt-booking-link')?.value || '').trim();
+            } else if (category === 'trading') {
+                extraFields.updateFrequency  = document.getElementById('mkt-update-freq')?.value || '';
+                extraFields.trackRecord      = (document.getElementById('mkt-track-record')?.value || '').trim();
+            } else if (category === 'smart_contract') {
+                extraFields.chainsSupported  = (document.getElementById('mkt-chains')?.value || '').trim();
+                extraFields.maxLinesOfCode   = parseInt(document.getElementById('mkt-max-lines')?.value || '0') || null;
+            } else if (category === 'courses') {
+                extraFields.numModules       = parseInt(document.getElementById('mkt-num-modules')?.value || '0') || null;
+                extraFields.skillLevel       = document.getElementById('mkt-skill-level')?.value || '';
+                extraFields.courseFormat     = document.getElementById('mkt-course-format')?.value || '';
+            } else if (category === 'translation') {
+                extraFields.languagesSupported = (document.getElementById('mkt-languages-supported')?.value || '').trim();
+                extraFields.wordsPerDay      = parseInt(document.getElementById('mkt-words-per-day')?.value || '0') || null;
+            } else if (category === 'consulting') {
+                extraFields.consultationFormat   = document.getElementById('mkt-consult-format')?.value || '';
+                extraFields.consultSessionLength = document.getElementById('mkt-consult-session')?.value || '';
+            }
+
             showToast('Creating listing…');
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/createListing', {
                 method: 'POST',
@@ -21802,7 +21938,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     stockCount: _mktStockType === 'limited' ? stockCount : null,
                     availability: _mktAvailability,
                     portfolioLink, refundPolicy,
-                    galleryUrls, introVideoUrl: videoUrl
+                    galleryUrls, introVideoUrl: videoUrl,
+                    extraFields
                 })
             });
             const data = await resp.json();
@@ -21814,7 +21951,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             closeCreateListing();
             showToast('Listing created! 🎉');
             if (document.getElementById('page-marketplace')?.classList.contains('active')) {
-                loadMarketplace('all', document.querySelector('#mkt-cat-row .mkt-cat'));
+                mktSelectMain('all', document.getElementById('mkt-main-all'));
             }
         } catch (e) {
             console.error('[submitListing]', e);
@@ -31945,15 +32082,25 @@ function _copyReplayLink(link) {
         <div class="mkt-row">
             <div class="mkt-form-group">
                 <label class="mkt-form-label">Category</label>
-                <select id="mkt-category" class="mkt-select">
-                    <option value="courses">🎓 Courses & Masterclasses</option>
-                    <option value="data">📊 Data & Research</option>
-                    <option value="templates">📋 Templates & Blueprints</option>
-                    <option value="code">💻 Code & Tools</option>
-                    <option value="design">🎨 Design & UI</option>
-                    <option value="advisory">🔷 Advisory & Consulting</option>
-                    <option value="writing">✍️ Writing & Translation</option>
+                <select id="mkt-category" class="mkt-select" onchange="updateCategoryFields(this.value)">
+                    <option value="courses">🎓 Courses &amp; Masterclasses</option>
+                    <option value="mentorship">🤝 Mentorship</option>
+                    <option value="advisory">🔷 Advisory</option>
+                    <option value="code">💻 Code &amp; Tools</option>
+                    <option value="scripts">🤖 Scripts &amp; Bots</option>
+                    <option value="smart_contract">🔐 Smart Contract Review</option>
+                    <option value="design">🎨 Design &amp; UI</option>
+                    <option value="branding">✨ Branding</option>
+                    <option value="photo_video">📸 Photography &amp; Video</option>
+                    <option value="writing">✍️ Writing</option>
+                    <option value="templates">📋 Templates</option>
+                    <option value="translation">🌐 Translation</option>
+                    <option value="data">📊 Data &amp; Research</option>
+                    <option value="trading">📈 Trading &amp; Analysis</option>
+                    <option value="reports">📑 Reports</option>
+                    <option value="consulting">💼 Consulting</option>
                     <option value="custom">🎬 Custom Content</option>
+                    <option value="security">🛡️ Security Resources</option>
                 </select>
             </div>
             <div class="mkt-form-group">
@@ -32064,6 +32211,127 @@ function _copyReplayLink(link) {
                 <div class="mkt-toggle-row">
                     <button class="mkt-toggle-btn active" id="mkt-avail-yes" onclick="setAvailability('available')">✅ Available</button>
                     <button class="mkt-toggle-btn" id="mkt-avail-no" onclick="setAvailability('busy')">🔴 Busy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3b: CATEGORY-SPECIFIC FIELDS -->
+        <div id="mkt-extra-fields" style="display:none;">
+            <div class="mkt-section-label">③ᵇ Category Details <span style="font-size:0.62rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+
+            <!-- Mentorship -->
+            <div id="mkt-extra-mentorship" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Session Length</label>
+                        <select id="mkt-session-length" class="mkt-select">
+                            <option value="30 min">30 minutes</option>
+                            <option value="60 min" selected>60 minutes</option>
+                            <option value="90 min">90 minutes</option>
+                        </select>
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Availability</label>
+                        <input id="mkt-avail-text" class="field" type="text" placeholder="e.g. Mon–Fri 9am–5pm UTC" style="margin-top:0;">
+                    </div>
+                </div>
+                <div class="mkt-form-group">
+                    <label class="mkt-form-label">Booking Link <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                    <input id="mkt-booking-link" class="field" type="url" placeholder="https://calendly.com/…" style="margin-top:0;">
+                </div>
+            </div>
+
+            <!-- Trading & Analysis -->
+            <div id="mkt-extra-trading" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Update Frequency</label>
+                        <select id="mkt-update-freq" class="mkt-select">
+                            <option value="Daily">Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="On-demand">On-demand</option>
+                        </select>
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Track Record / Proof <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                        <input id="mkt-track-record" class="field" type="url" placeholder="https://…" style="margin-top:0;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Contract Review -->
+            <div id="mkt-extra-smart_contract" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Chains Supported</label>
+                        <input id="mkt-chains" class="field" type="text" placeholder="e.g. Apertum, Ethereum, BNB" style="margin-top:0;">
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Max Lines of Code</label>
+                        <input id="mkt-max-lines" class="field" type="number" min="1" placeholder="e.g. 500" style="margin-top:0;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses & Masterclasses -->
+            <div id="mkt-extra-courses" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Number of Modules</label>
+                        <input id="mkt-num-modules" class="field" type="number" min="1" placeholder="e.g. 12" style="margin-top:0;">
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Skill Level</label>
+                        <select id="mkt-skill-level" class="mkt-select">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mkt-form-group">
+                    <label class="mkt-form-label">Format</label>
+                    <select id="mkt-course-format" class="mkt-select">
+                        <option value="Video">Video</option>
+                        <option value="Text">Text</option>
+                        <option value="Both">Both</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Translation -->
+            <div id="mkt-extra-translation" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Languages Supported</label>
+                        <input id="mkt-languages-supported" class="field" type="text" placeholder="e.g. English, Spanish, French" style="margin-top:0;">
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Words Per Day Capacity</label>
+                        <input id="mkt-words-per-day" class="field" type="number" min="1" placeholder="e.g. 2000" style="margin-top:0;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consulting -->
+            <div id="mkt-extra-consulting" style="display:none;">
+                <div class="mkt-row">
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Consultation Format</label>
+                        <select id="mkt-consult-format" class="mkt-select">
+                            <option value="Call">Call</option>
+                            <option value="Chat">Chat</option>
+                            <option value="Email">Email</option>
+                        </select>
+                    </div>
+                    <div class="mkt-form-group">
+                        <label class="mkt-form-label">Session Length</label>
+                        <select id="mkt-consult-session" class="mkt-select">
+                            <option value="30 min">30 minutes</option>
+                            <option value="60 min" selected>60 minutes</option>
+                            <option value="90 min">90 minutes</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
