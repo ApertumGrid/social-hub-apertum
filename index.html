@@ -9604,6 +9604,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         <button class="mdash-btn"        id="mdash-profile"     onclick="showMobileTab('profile')">
             <span class="mbtn-icon">◉</span>My Profile
         </button>
+        <button class="mdash-btn"        id="mdash-inbox"       onclick="showMobileTab('inbox')">
+            <span class="mbtn-icon">✉</span>Inbox
+        </button>
         <button class="mdash-btn"        id="mdash-marketplace" onclick="showMobileTab('marketplace')">
             <span class="mbtn-icon">🛍</span>Marketplace
         </button>
@@ -15192,11 +15195,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (desktopNavEl) { desktopNavEl.classList.add('active'); desktopNavEl.classList.add('lbtn-active'); }
 
         // 5. Reset mobile dashboard button active states
-        const mobileTabMap = { home: 'mdash-home', earnings: 'mdash-studio', profile: 'mdash-profile', communities: 'mdash-communities', marketplace: 'mdash-marketplace' };
+        const mobileTabMap = { home: 'mdash-home', earnings: 'mdash-studio', profile: 'mdash-profile', communities: 'mdash-communities', marketplace: 'mdash-marketplace', inbox: 'mdash-inbox' };
         // also handle showMobileTab names
         const mobileBtnMap = { home: 'mdash-home', studio: 'mdash-studio', profile: 'mdash-profile',
                                 earnings: 'mdash-studio', communities: 'mdash-communities', live: 'mdash-live',
-                                marketplace: 'mdash-marketplace' };
+                                marketplace: 'mdash-marketplace', inbox: 'mdash-inbox' };
         Object.values(mobileBtnMap).forEach(id => { const b = document.getElementById(id); if (b) b.classList.remove('active'); });
         const activeMobileBtn = mobileBtnMap[tabName];
         if (activeMobileBtn) { const b = document.getElementById(activeMobileBtn); if (b) b.classList.add('active'); }
