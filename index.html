@@ -6008,6 +6008,34 @@
             background: none; border: none; color: var(--text-muted);
             font-size: 1.2rem; cursor: pointer; line-height: 1; padding: 4px;
         }
+        /* ── Support System ─────────────────────────────────────────────── */
+        #support-modal {
+            position: fixed; inset: 0; z-index: 99991;
+            background: rgba(0,0,0,0.78); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        #support-inner {
+            background: var(--bg-panel); border: 1px solid rgba(124,92,191,0.35);
+            border-radius: 20px; padding: 28px 24px 22px; max-width: 420px; width: 100%;
+            position: relative; max-height: 90vh; overflow-y: auto;
+        }
+        .btn-support {
+            background: rgba(124,92,191,0.08) !important;
+            border: 1px solid rgba(124,92,191,0.3) !important;
+            color: var(--purple-lt) !important;
+        }
+        .btn-support:hover { background: rgba(124,92,191,0.16) !important; }
+        #bnav-support {
+            padding: 6px 14px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            font-family: var(--font-body);
+        }
+        #bnav-support .bnav-icon { font-size: 1.1rem; line-height: 1; }
+        #bnav-support .bnav-label { font-size: 0.44rem; font-weight: 600; margin-top: 3px; }
+
         /* ── QR Code System ──────────────────────────────────────────────── */
         #platform-qr-modal, #profile-qr-modal {
             position: fixed; inset: 0; z-index: 99990;
@@ -9637,6 +9665,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div id="nav-live" style="display:none;" onclick="_lbtnActivate(this);switchPage('live',this)">
                     <span class="nav-badge" id="live-viewer-badge" style="display:none;">LIVE</span>
                 </div>
+                <!-- Help & Support -->
+                <div class="lbtn btn-support" onclick="openSupportModal()" title="Help & Support">
+                    <span style="font-size:1.3rem;line-height:1;">?</span>
+                    <span class="lbtn-label">Support</span>
+                </div>
             </div>
 
             <!-- PREMIUM VAULT CARDS -->
@@ -11790,6 +11823,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         <span class="bnav-icon">⬡</span>
         Hubs
     </button>
+    <button class="bnav-item" id="bnav-support" onclick="openSupportModal()" title="Help & Support">
+        <span class="bnav-icon">?</span>
+        Help
+    </button>
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════
@@ -13502,6 +13539,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     lastConnectedAt:  Date.now()
                 });
                 console.log('[Firebase] New users doc created for', walletAddr.slice(0,8));
+                // Send welcome message from Ashley to new user
+                if (typeof window._sendWelcomeMessage === 'function') {
+                    window._sendWelcomeMessage(walletAddr).catch(function() {});
+                }
             }
         } catch (e) {
             console.warn("loadProfileFromFirebase:", e);
@@ -31607,6 +31648,149 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 })();
 </script>
 
+    <!-- ══ SUPPORT SYSTEM ════════════════════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+
+    var TG_TOKEN   = '8846966845:AAH8321KD5_YlpRMm7dhRfW_wjG0Loupo3c';
+    var TG_CHAT_ID = '-1003983614079';
+    var ASHLEY     = '0xe348fedea1850a0c2d4ac0fed3f903774de1e16a';
+    var ASHLEY_NAME = 'Ashley · SocialHub';
+
+    // ── Support modal ─────────────────────────────────────────────────────────
+
+    window.openSupportModal = function() {
+        var modal  = document.getElementById('support-modal');
+        var wallet = document.getElementById('support-wallet');
+        var succ   = document.getElementById('support-success');
+        var btn    = document.getElementById('support-submit-btn');
+        if (!modal) return;
+        // Auto-fill wallet
+        if (wallet && window.userAddress) wallet.value = window.userAddress;
+        // Reset state
+        if (succ) succ.style.display = 'none';
+        if (btn)  { btn.disabled = false; btn.textContent = 'Send Message →'; }
+        modal.style.display = 'flex';
+    };
+
+    window.closeSupportModal = function() {
+        var modal = document.getElementById('support-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    window.submitSupportRequest = async function() {
+        var name   = (document.getElementById('support-name')?.value   || '').trim();
+        var wallet = (document.getElementById('support-wallet')?.value  || '').trim();
+        var issue  = (document.getElementById('support-issue')?.value   || '').trim();
+        var btn    = document.getElementById('support-submit-btn');
+
+        if (!name)  { if (typeof showToast==='function') showToast('Please enter your name.'); return; }
+        if (!issue) { if (typeof showToast==='function') showToast('Please describe your issue.'); return; }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+        var timestamp = new Date().toLocaleString('en-GB', {
+            day:'2-digit', month:'short', year:'numeric',
+            hour:'2-digit', minute:'2-digit', timeZoneName:'short'
+        });
+
+        var text =
+            '🆘 *Support Request*\n' +
+            '👤 *Name:* ' + name + '\n' +
+            '👛 *Wallet:* ' + (wallet || 'Not connected') + '\n' +
+            '📝 *Issue:* ' + issue + '\n' +
+            '🕐 ' + timestamp;
+
+        try {
+            var resp = await fetch(
+                'https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id:    TG_CHAT_ID,
+                        text:       text,
+                        parse_mode: 'Markdown'
+                    })
+                }
+            );
+            var data = await resp.json();
+            if (!data.ok) throw new Error(data.description || 'Telegram error');
+
+            // Clear fields and show success
+            document.getElementById('support-name').value  = '';
+            document.getElementById('support-issue').value = '';
+            var succ = document.getElementById('support-success');
+            if (succ) succ.style.display = 'block';
+            if (btn)  { btn.disabled = false; btn.textContent = 'Send Message →'; }
+
+        } catch (e) {
+            console.error('[Support]', e);
+            if (btn) { btn.disabled = false; btn.textContent = 'Send Message →'; }
+            if (typeof showToast === 'function') showToast('Failed to send — please try again.');
+        }
+    };
+
+    // ── Auto welcome message for new wallets ──────────────────────────────────
+
+    window._sendWelcomeMessage = async function(userAddr) {
+        if (!window.db || !window.fs) return;
+        try {
+            var user   = userAddr.toLowerCase();
+            var ashley = ASHLEY;
+
+            // Thread ID: lexicographically sorted addresses joined with _
+            var sorted   = [user, ashley].sort();
+            var threadId = sorted[0] + '_' + sorted[1];
+            var threadRef = window.fs.doc(window.db, 'messages', threadId);
+
+            // Check if thread already exists (welcome already sent)
+            var existing = await window.fs.getDoc(threadRef);
+            if (existing.exists()) return;
+
+            var welcomeText =
+                '👋 Welcome to SocialHub!\n\n' +
+                "I'm Ashley, the founder. Thanks for joining.\n\n" +
+                'Start by depositing a small amount and making your first post — ' +
+                'you\'ll start earning Stars immediately.\n\n' +
+                'Need help with anything? Tap the ? button anytime.\n\n' +
+                '— Ashley';
+
+            var now = Date.now();
+
+            // Create thread doc
+            await window.fs.setDoc(threadRef, {
+                participants:     [user, ashley],
+                participantNames: {
+                    [ashley]: ASHLEY_NAME,
+                    [user]:   user.slice(0,6) + '…' + user.slice(-4)
+                },
+                lastMessage: welcomeText.slice(0, 100),
+                updatedAt:   now,
+                unreadFor:   { [user]: true, [ashley]: false }
+            });
+
+            // Add message to subcollection
+            await window.fs.addDoc(
+                window.fs.collection(window.db, 'messages', threadId, 'msgs'),
+                {
+                    sender:    ashley,
+                    text:      welcomeText,
+                    timestamp: now,
+                    platform:  true
+                }
+            );
+
+            console.log('[Support] Welcome message sent to', user.slice(0,8));
+        } catch (e) {
+            console.warn('[Support] Welcome message failed:', e.message);
+        }
+    };
+
+})();
+</script>
+
     <!-- Global countdown overlay — fixed fullscreen, shown before going live -->
     <div id="stream-countdown-overlay">
         <div class="countdown-num" id="countdown-num">3</div>
@@ -32855,6 +33039,37 @@ function _copyReplayLink(link) {
         <textarea id="mkt-review-text" class="field" rows="3" placeholder="Share your experience with other buyers… (optional)" style="resize:none;font-size:0.8rem;margin-bottom:14px;"></textarea>
         <div style="display:flex;justify-content:flex-end;">
             <button id="mkt-review-submit-btn" onclick="submitReviewUI()" style="padding:10px 24px;border-radius:20px;border:1px solid rgba(240,180,41,0.5);background:rgba(240,180,41,0.12);color:var(--gold);font-size:0.82rem;font-weight:700;cursor:pointer;">Submit Review</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ SUPPORT MODAL ═════════════════════════════════════════════════ -->
+<div id="support-modal" onclick="if(event.target===this)closeSupportModal()">
+    <div id="support-inner">
+        <button class="mkt-modal-close" onclick="closeSupportModal()">✕</button>
+        <div style="font-size:0.7rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple-lt);margin-bottom:6px;">Help &amp; Support</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:18px;">How can we help?</div>
+
+        <div class="mkt-form-group">
+            <label class="mkt-form-label">Your Name</label>
+            <input id="support-name" class="field" type="text" placeholder="Enter your name" style="margin-top:0;">
+        </div>
+        <div class="mkt-form-group">
+            <label class="mkt-form-label">Wallet Address</label>
+            <input id="support-wallet" class="field" type="text" placeholder="Connect wallet to auto-fill" style="margin-top:0;font-family:var(--font-mono);font-size:0.75rem;" readonly>
+        </div>
+        <div class="mkt-form-group">
+            <label class="mkt-form-label">Describe Your Issue</label>
+            <textarea id="support-issue" class="field" rows="4" placeholder="Tell us what's happening and we'll get back to you as soon as possible…" style="margin-top:0;resize:none;font-size:0.82rem;"></textarea>
+        </div>
+
+        <div id="support-success" style="display:none;padding:12px 14px;border-radius:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;font-size:0.8rem;font-weight:600;margin-bottom:14px;">
+            ✓ Your message has been received. Ashley will respond shortly.
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+            <button onclick="closeSupportModal()" style="padding:9px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:0.78rem;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="support-submit-btn" onclick="submitSupportRequest()" style="padding:9px 22px;border-radius:20px;border:1px solid rgba(124,92,191,0.5);background:rgba(124,92,191,0.15);color:var(--purple-lt);font-size:0.78rem;font-weight:700;cursor:pointer;">Send Message →</button>
         </div>
     </div>
 </div>
