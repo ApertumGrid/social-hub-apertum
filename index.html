@@ -9665,11 +9665,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div id="nav-live" style="display:none;" onclick="_lbtnActivate(this);switchPage('live',this)">
                     <span class="nav-badge" id="live-viewer-badge" style="display:none;">LIVE</span>
                 </div>
-                <!-- Help & Support -->
-                <div class="lbtn btn-support" onclick="openSupportModal()" title="Help & Support">
-                    <span style="font-size:1.3rem;line-height:1;">?</span>
-                    <span class="lbtn-label">Support</span>
-                </div>
             </div>
 
             <!-- PREMIUM VAULT CARDS -->
@@ -10884,6 +10879,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         </div>
                     </div>
                 </div>
+
+                <!-- Support button — always visible at bottom of inbox -->
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center;">
+                    <button onclick="openSupportModal()" style="padding:8px 22px;border-radius:20px;border:1px solid rgba(124,92,191,0.35);background:rgba(124,92,191,0.08);color:var(--purple-lt);font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s;">
+                        ? Help &amp; Support
+                    </button>
+                </div>
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
@@ -11822,10 +11824,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             onclick="switchPage('communities', null); setBnav('communities')">
         <span class="bnav-icon">⬡</span>
         Hubs
-    </button>
-    <button class="bnav-item" id="bnav-support" onclick="openSupportModal()" title="Help & Support">
-        <span class="bnav-icon">?</span>
-        Help
     </button>
 </div>
 
@@ -25598,7 +25596,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 </div>
                 <div class="hiw-scene-step">Welcome to SocialHub</div>
                 <div class="hiw-scene-title" id="hiw-title">Social media where<br>your engagement <span>pays you back</span></div>
-                <div class="hiw-scene-body">Every like, comment and post has <strong>real value</strong>.<br>Here's how it works — in 30 seconds. ⏱</div>
+                <div class="hiw-scene-body">Every like, comment and post has <strong>real value</strong>.<br>Here's how it works — in 30 seconds. ⏱<br><br><span style="font-size:0.78em;color:rgba(255,255,255,0.5);">Need help? Tap the Support button inside your Inbox tab at any time.</span></div>
             </div>
             <div class="hiw-scene" id="hiw-scene-1">
                 <div class="hiw-scene-art purple">
