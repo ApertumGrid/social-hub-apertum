@@ -140,7 +140,7 @@
             --radius-lg:  20px;
             --font-body: 'Sora', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
-            --bottom-nav-h: 62px;
+            --bottom-nav-h: 66px;
             --sidebar-w:  210px;
             --rp-w:       290px;
             --font-mono-gem: 'Space Mono', 'Fira Code', 'Courier New', monospace;
@@ -4948,7 +4948,7 @@
 
             /* â”€â”€ BOTTOM NAV â”€â”€ */
             #bottom-nav { box-shadow: 0 -1px 0 var(--border), 0 -8px 24px rgba(0,0,0,0.3) !important; }
-            .bnav-item { font-size: 0.44rem !important; letter-spacing: 0.1px !important; white-space: nowrap !important; padding: 0 2px !important; }
+            .bnav-item { font-size: 0.42rem !important; letter-spacing: 0.1px !important; white-space: normal !important; padding: 0 2px !important; text-align: center !important; }
             .bnav-item .bnav-icon { font-size: 1.05rem !important; }
         }
         /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -5055,10 +5055,11 @@
                 display: inline-block;
             }
 
-            /* Fix 4 â€” bottom nav: nowrap labels so 'Communities' never wraps */
+            /* Bottom nav: allow wrapping for 7 buttons on narrow screens */
             .bnav-item {
-                white-space: nowrap;
-                font-size: 0.44rem !important;
+                white-space: normal;
+                text-align: center;
+                font-size: 0.42rem !important;
                 letter-spacing: 0.1px !important;
                 padding: 0 2px !important;
             }
@@ -5181,7 +5182,7 @@
 
             /* â”€â”€ BOTTOM NAV â”€â”€ */
             #bottom-nav { box-shadow: 0 -1px 0 var(--border), 0 -8px 24px rgba(0,0,0,0.3); }
-            .bnav-item { font-size: 0.44rem; letter-spacing: 0.1px; white-space: nowrap; padding: 0 2px; }
+            .bnav-item { font-size: 0.42rem; letter-spacing: 0.1px; white-space: normal; text-align: center; padding: 0 2px; }
             .bnav-item .bnav-icon { font-size: 1.05rem; }
 
             /* â”€â”€ MOBILE ACTION BAR: very small screens (â‰¤380px, e.g. iPhone SE) â”€â”€ */
@@ -5223,16 +5224,16 @@
             transition: color 0.15s;
             border: none; background: transparent;
             text-transform: uppercase;
-            white-space: nowrap;
+            white-space: normal;
+            text-align: center;
             -webkit-tap-highlight-color: transparent;
         }
         .bnav-item .bnav-icon { font-size: 1.15rem; line-height: 1; }
         .bnav-item.active { color: var(--purple-lt); }
         .bnav-item.active .bnav-icon { filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); }
         .bnav-item:hover  { color: var(--text-primary); }
-        #bnav-ledger.active { color: var(--teal); }
-        #bnav-info.active   { color: var(--gold); }
-        #bnav-wallet.active { color: var(--green); }
+        #bnav-live.active        { color: #ef4444; }
+        #bnav-marketplace.active { color: var(--gold); }
 
         /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            IMAGE LIGHTBOX â€” full-screen overlay (Index 19)
@@ -9603,8 +9604,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         <button class="mdash-btn"        id="mdash-profile"     onclick="showMobileTab('profile')">
             <span class="mbtn-icon">◉</span>My Profile
         </button>
-        <button class="mdash-btn"        id="mdash-info"        onclick="showMobileTab('tokenomics')">
-            <span class="mbtn-icon">◎</span>Tokenomics
+        <button class="mdash-btn"        id="mdash-marketplace" onclick="showMobileTab('marketplace')">
+            <span class="mbtn-icon">🛍</span>Marketplace
         </button>
         <button class="mdash-btn"        id="mdash-live"        onclick="showMobileTab('live')">
             <span class="mbtn-icon">🔴</span>Live
@@ -9644,7 +9645,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     <span class="notif-dot" id="notif-dot-inbox" style="position:absolute;top:6px;right:8px;" aria-label="New message"></span>
                     <span class="lbtn-label">Inbox</span>
                 </div>
-                <div class="lbtn btn-token" id="nav-marketplace" style="display:none;" onclick="_lbtnActivate(this);switchPage('marketplace',this)">
+                <div class="lbtn btn-token" id="nav-marketplace" onclick="_lbtnActivate(this);switchPage('marketplace',this)">
                     <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="3" y="10" width="22" height="15" rx="2.5" fill="rgba(240,180,41,0.2)" stroke="rgba(240,180,41,0.85)" stroke-width="1.8"/>
                         <path d="M9 10V8a5 5 0 0 1 10 0v2" stroke="rgba(240,180,41,0.85)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
@@ -11796,34 +11797,39 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     <button class="bnav-item active" id="bnav-home"
             onclick="switchPage('home', null); setBnav('home')">
         <span class="bnav-icon">⊞</span>
-        Feed
+        Home Feed
     </button>
     <button class="bnav-item" id="bnav-studio"
             onclick="switchPage('earnings', null); setBnav('studio')">
         <span class="bnav-icon">◆</span>
-        Studio
+        Creator Studio
         <span class="notif-dot bnav-notif-dot" id="notif-dot-studio" aria-label="New activity"></span>
-    </button>
-    <button class="bnav-item" id="bnav-ledger"
-            onclick="switchPage('earnings', null); setBnav('ledger'); setTimeout(()=>{ const el=document.getElementById('ledger-list'); if(el) el.scrollIntoView({behavior:'smooth'}); },120)">
-        <span class="bnav-icon">📋</span>
-        Ledger
-        <span class="notif-dot bnav-notif-dot" id="notif-dot-ledger" aria-label="New activity"></span>
-    </button>
-    <button class="bnav-item" id="bnav-wallet"
-            onclick="openWalletDrawer(); setBnav('wallet')">
-        <span class="bnav-icon">💰</span>
-        Wallet
-    </button>
-    <button class="bnav-item" id="bnav-marketplace" style="display:none;"
-            onclick="switchPage('marketplace', null); setBnav('marketplace')">
-        <span class="bnav-icon">🛍</span>
-        Market
     </button>
     <button class="bnav-item" id="bnav-communities"
             onclick="switchPage('communities', null); setBnav('communities')">
         <span class="bnav-icon">⬡</span>
-        Hubs
+        Communities
+    </button>
+    <button class="bnav-item" id="bnav-profile"
+            onclick="switchPage('profile', null); setBnav('profile')">
+        <span class="bnav-icon">◉</span>
+        My Profile
+    </button>
+    <button class="bnav-item" id="bnav-inbox"
+            onclick="switchPage('inbox', null); setBnav('inbox')">
+        <span class="bnav-icon">✉</span>
+        Inbox
+        <span class="notif-dot bnav-notif-dot" id="notif-dot-inbox-bnav" aria-label="New message"></span>
+    </button>
+    <button class="bnav-item" id="bnav-marketplace"
+            onclick="switchPage('marketplace', null); setBnav('marketplace')">
+        <span class="bnav-icon">🛍</span>
+        Marketplace
+    </button>
+    <button class="bnav-item" id="bnav-live"
+            onclick="switchPage('live', null); setBnav('live')">
+        <span class="bnav-icon">🔴</span>
+        Live
     </button>
 </div>
 
@@ -13248,12 +13254,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const _vb = document.getElementById('visitor-banner');
             if (_vb) _vb.style.display = userAddress ? 'none' : '';
 
-            // Marketplace nav — admin wallet only
-            const _isAdmin = !!(userAddress && userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase());
+            // Marketplace nav — open to all
             const _mktNav  = document.getElementById('nav-marketplace');
             const _mktBnav = document.getElementById('bnav-marketplace');
-            if (_mktNav)  _mktNav.style.display  = _isAdmin ? '' : 'none';
-            if (_mktBnav) _mktBnav.style.display = _isAdmin ? '' : 'none';
+            if (_mktNav)  _mktNav.style.display  = '';
+            if (_mktBnav) _mktBnav.style.display = '';
 
             // Available Stars = deposited stars + earned stars. 1 ★ = $0.01 in live APTM
             const depStars    = parseFloat(purchasedStars)    || 0;
@@ -15187,10 +15192,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (desktopNavEl) { desktopNavEl.classList.add('active'); desktopNavEl.classList.add('lbtn-active'); }
 
         // 5. Reset mobile dashboard button active states
-        const mobileTabMap = { home: 'mdash-home', earnings: 'mdash-studio', info: 'mdash-info', profile: 'mdash-profile', communities: 'mdash-communities' };
+        const mobileTabMap = { home: 'mdash-home', earnings: 'mdash-studio', profile: 'mdash-profile', communities: 'mdash-communities', marketplace: 'mdash-marketplace' };
         // also handle showMobileTab names
-        const mobileBtnMap = { home: 'mdash-home', studio: 'mdash-studio', tokenomics: 'mdash-info', profile: 'mdash-profile',
-                                earnings: 'mdash-studio', info: 'mdash-info', communities: 'mdash-communities', live: 'mdash-live' };
+        const mobileBtnMap = { home: 'mdash-home', studio: 'mdash-studio', profile: 'mdash-profile',
+                                earnings: 'mdash-studio', communities: 'mdash-communities', live: 'mdash-live',
+                                marketplace: 'mdash-marketplace' };
         Object.values(mobileBtnMap).forEach(id => { const b = document.getElementById(id); if (b) b.classList.remove('active'); });
         const activeMobileBtn = mobileBtnMap[tabName];
         if (activeMobileBtn) { const b = document.getElementById(activeMobileBtn); if (b) b.classList.add('active'); }
@@ -15276,14 +15282,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const pageId  = pageMap[tabName];
             const pg      = pageId ? document.getElementById('page-' + pageId) : null;
             if (pg) { pg.style.display = 'block'; pg.classList.add('active'); }
+            // On mobile, Creator Studio also shows Star Economy stacked below
+            if ((tabName === 'earnings' || tabName === 'studio') && window.innerWidth <= 900) {
+                if (pageInfo) { pageInfo.style.display = 'block'; pageInfo.classList.add('active'); }
+            }
             if (tabName === 'communities' && typeof loadCommunities === 'function') loadCommunities();
             if (tabName === 'live' && typeof window.loadStreamBrowser === 'function') window.loadStreamBrowser();
             if (tabName === 'marketplace') {
-                if (!userAddress || userAddress.toLowerCase() !== CONFIG.OWNER_ADDRESS.toLowerCase()) {
-                    showToast('Marketplace coming soon.');
-                    _activateTab('home', document.getElementById('nav-home'));
-                    return;
-                }
                 mktSelectMain('all', document.getElementById('mkt-main-all'));
             }
         if (tabName === 'home' && typeof renderTrendingHubs === 'function') renderTrendingHubs(_allCommunities);
@@ -23263,12 +23268,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // ── Inbox notification dot helpers ───────────────────────────────────────
     function _inboxDotShow() {
-        const el = document.getElementById('notif-dot-inbox');
-        if (el) el.classList.add('visible');
+        ['notif-dot-inbox', 'notif-dot-inbox-bnav'].forEach(function(id) {
+            const el = document.getElementById(id); if (el) el.classList.add('visible');
+        });
     }
     function _inboxDotClear() {
-        const el = document.getElementById('notif-dot-inbox');
-        if (el) el.classList.remove('visible');
+        ['notif-dot-inbox', 'notif-dot-inbox-bnav'].forEach(function(id) {
+            const el = document.getElementById(id); if (el) el.classList.remove('visible');
+        });
     }
     window._inboxDotShow  = _inboxDotShow;
     window._inboxDotClear = _inboxDotClear;
