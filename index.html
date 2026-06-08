@@ -13282,9 +13282,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const availStars  = Math.floor((depStars + earnedStars) * 10) / 10;
             const availStr    = availStars.toFixed(1) + " ★";
 
-            const depUsdt  = parseFloat(currentUsdtBalance) || 0;
-            const earnUsdt = parseFloat(currentEarnedUsdt)  || 0;
-            const myUsdtStr = (depUsdt + earnUsdt).toFixed(4) + ' APTM';
+            const depUsdt   = parseFloat(currentUsdtBalance) || 0;
+            const earnUsdt  = parseFloat(currentEarnedUsdt)  || 0;
+            // Convert USD balance back to APTM units for display (currentUsdtBalance is USD internally)
+            const _uiPrice  = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+            const myUsdtStr = ((depUsdt + earnUsdt) / _uiPrice).toFixed(4) + ' APTM';
 
             // Sidebar
             s('user-stars',              availStr);
