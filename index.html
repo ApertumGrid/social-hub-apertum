@@ -12227,10 +12227,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 "function token0() view returns (address)"
             ];
             const pair = new ethers.Contract(APTM_DEX_PAIR, pairAbi, getRpcProvider());
-            const [reserves, token0Addr] = await Promise.race([
+            const _dexFetch = () => Promise.race([
                 Promise.all([pair.getReserves(), pair.token0()]),
-                new Promise((_, rej) => setTimeout(() => rej(new Error('dex timeout')), 6000))
+                new Promise((_, rej) => setTimeout(() => rej(new Error('dex timeout')), 15000))
             ]);
+            let _dexData;
+            try { _dexData = await _dexFetch(); }
+            catch (_) { _dexData = await _dexFetch(); } // one retry before falling back to contract oracle
+            const [reserves, token0Addr] = _dexData;
             const r0 = parseFloat(ethers.utils.formatUnits(reserves[0], 18));
             const r1 = parseFloat(ethers.utils.formatUnits(reserves[1], 18));
             if (r0 > 0 && r1 > 0) {
@@ -12259,7 +12263,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const ro = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, getRpcProvider());
             const raw = await Promise.race([
                 ro.aptmPriceUSD(),
-                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))
             ]);
             const price = parseFloat(ethers.utils.formatUnits(raw, 18));
             if (price > 0) {
@@ -13102,11 +13106,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const withdrawableHuman = parseFloat(ethers.utils.formatUnits(balResult.withdrawable || 0, 18)) || 0;
             const _spentStars       = window._totalSpentStars || 0;
 
-            // Spendable = deposited minus already-spent stars (tracked in Firestore)
-            currentUsdtBalance = Math.max(0, depositedHuman - (_spentStars * CONFIG.STAR_USD));
+            // Convert on-chain APTM → USD using live price; 1 ★ = $0.01 USD
+            const _aptmPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+            const depositedUsdValue = depositedHuman * _aptmPrice;
+            currentUsdtBalance = Math.max(0, depositedUsdValue - (_spentStars * CONFIG.STAR_USD));
             currentAptmBalance = currentUsdtBalance; // legacy alias
 
-            // Stars = spendable USDT / $0.01
+            // Stars = spendable USD / $0.01
             purchasedStars  = Math.max(0, Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10);
             // creatorEarnings comes from Firestore only — on-chain withdrawableAPTM is 0
             // until settlement and must not overwrite the Firestore value
@@ -13122,13 +13128,20 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     // Combine: Firestore unsettled + on-chain settled (withdrawableAPTM)
                     const fbCreatorStars = Math.max(0, parseFloat(d.creatorStars || 0));
                     window._firestoreCreatorStars = fbCreatorStars;
-                    const onChainSettled = Math.floor(withdrawableHuman / CONFIG.STAR_USD * 10) / 10;
+                    const onChainSettled = Math.floor(withdrawableHuman * _aptmPrice / CONFIG.STAR_USD * 10) / 10;
                     window._onChainEarned = onChainSettled;
                     window._onChainWithdrawableUsdt = withdrawableHuman;
+                    window._onChainDepositedUsdt = depositedUsdValue;
                     creatorEarnings   = fbCreatorStars + onChainSettled;
                     currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
-                    console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} | withdrawableAPTM=${withdrawableHuman.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
-                    await window.fs.updateDoc(userRef, { lastSync: Date.now() }).catch(() => {});
+                    console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} @ $${_aptmPrice.toFixed(4)} | depositedUSD=${depositedUsdValue.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
+                    // Write live USD value back to Firestore so onSnapshot displays correct Stars
+                    const _syncPayload = { lastSync: Date.now() };
+                    if (depositedUsdValue > 0) {
+                        _syncPayload.depositedUsdt = depositedUsdValue;
+                        window._firestoreDepositedUsdt = depositedUsdValue;
+                    }
+                    await window.fs.updateDoc(userRef, _syncPayload).catch(() => {});
                 }
             }
             updateUI();
