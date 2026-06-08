@@ -12374,18 +12374,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
         const depStars  = parseFloat(purchasedStars)  || 0;
         const earnStars = parseFloat(creatorEarnings) || 0;
-        const availStars = Math.floor((depStars + earnStars) * 10) / 10;
+        const availStars = Math.floor((depStars + earnStars) * 100) / 100;
 
         const depUsdt  = parseFloat(currentUsdtBalance) || 0;
         const earnUsdt = parseFloat(currentEarnedUsdt)  || 0;
 
-        s('drawer-stars',           availStars.toFixed(1) + " ★");
+        s('drawer-stars',           availStars.toFixed(2) + " ★");
         const _lp = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
         s('drawer-price',           '1 APTM = ' + Math.round(_lp / CONFIG.STAR_USD) + ' ★  |  1 ★ = $0.01');
         s('drawer-aptm-val',        '$' + fmtUsdt(depUsdt + earnUsdt) + ' APTM');
-        s('drawer-purchased-stars', depStars.toFixed(1)  + " ★");
-        s('drawer-earned-display',  earnStars.toFixed(1) + " ★");
-        s('drawer-earned-stars',    earnStars.toFixed(1) + " ★");
+        s('drawer-purchased-stars', depStars.toFixed(2)  + " ★");
+        s('drawer-earned-display',  earnStars.toFixed(2) + " ★");
+        s('drawer-earned-stars',    earnStars.toFixed(2) + " ★");
         s('drawer-vault-aptm',      depUsdt.toFixed(2));
 
         // Show/hide connect prompt
@@ -13112,8 +13112,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             currentUsdtBalance = Math.max(0, depositedUsdValue - (_spentStars * CONFIG.STAR_USD));
             currentAptmBalance = currentUsdtBalance; // legacy alias
 
-            // Stars = spendable USD / $0.01
-            purchasedStars  = Math.max(0, Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10);
+            // Stars = spendable USD / $0.01 — 2 decimal precision so 2.58 shows as 2.58 not 2.5 or 2.6
+            purchasedStars  = Math.max(0, Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 100) / 100);
             // creatorEarnings comes from Firestore only — on-chain withdrawableAPTM is 0
             // until settlement and must not overwrite the Firestore value
             creatorEarnings = 0;
@@ -13128,7 +13128,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     // Combine: Firestore unsettled + on-chain settled (withdrawableAPTM)
                     const fbCreatorStars = Math.max(0, parseFloat(d.creatorStars || 0));
                     window._firestoreCreatorStars = fbCreatorStars;
-                    const onChainSettled = Math.floor(withdrawableHuman * _aptmPrice / CONFIG.STAR_USD * 10) / 10;
+                    const onChainSettled = Math.floor(withdrawableHuman * _aptmPrice / CONFIG.STAR_USD * 100) / 100;
                     window._onChainEarned = onChainSettled;
                     window._onChainWithdrawableUsdt = withdrawableHuman;
                     window._onChainDepositedUsdt = depositedUsdValue;
@@ -13170,7 +13170,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const earnHuman = parseFloat(ethers.utils.formatUnits(balResult.withdrawable || 0, 18)) || 0;
                 const _spent    = window._totalSpentStars || 0;
 
-                const onChainEarned = Math.max(0, Math.floor(earnHuman / CONFIG.STAR_USD * 10) / 10);
+                const onChainEarned = Math.max(0, Math.floor(earnHuman / CONFIG.STAR_USD * 100) / 100);
                 window._onChainEarned = onChainEarned;
                 window._onChainWithdrawableUsdt = earnHuman;
 
@@ -13181,8 +13181,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     // fees) and must NOT override Firestore — doing so causes double-deduction flicker.
                     const _fbDep = window._firestoreDepositedUsdt || 0;
                     const _fbSpent = window._totalSpentStars || 0;
-                    const _grossFb = Math.round(_fbDep / CONFIG.STAR_USD * 10) / 10;
-                    purchasedStars     = Math.max(0, Math.floor((_grossFb - _fbSpent) * 10) / 10);
+                    const _grossFb = Math.floor(_fbDep / CONFIG.STAR_USD * 100) / 100;
+                    purchasedStars     = Math.max(0, Math.floor((_grossFb - _fbSpent) * 100) / 100);
                     currentUsdtBalance = Math.max(0, _fbDep - (_fbSpent * CONFIG.STAR_USD));
                     currentAptmBalance = currentUsdtBalance;
                     // Only update earnings from chain
@@ -13279,8 +13279,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Available Stars = deposited stars + earned stars. 1 ★ = $0.01 in live APTM
             const depStars    = parseFloat(purchasedStars)    || 0;
             const earnedStars = parseFloat(creatorEarnings)   || 0;
-            const availStars  = Math.floor((depStars + earnedStars) * 10) / 10;
-            const availStr    = availStars.toFixed(1) + " ★";
+            const availStars  = Math.floor((depStars + earnedStars) * 100) / 100;
+            const availStr    = availStars.toFixed(2) + " ★";
 
             const depUsdt   = parseFloat(currentUsdtBalance) || 0;
             const earnUsdt  = parseFloat(currentEarnedUsdt)  || 0;
@@ -13290,8 +13290,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             // Sidebar
             s('user-stars',              availStr);
-            s('sidebar-purchased-stars', depStars.toFixed(1));
-            s('sidebar-earned-stars',    earnedStars.toFixed(1));
+            s('sidebar-purchased-stars', depStars.toFixed(2));
+            s('sidebar-earned-stars',    earnedStars.toFixed(2));
             // Only show the earned row when there are actual earnings
             const earnedRow = document.getElementById('sidebar-earned-row');
             if (earnedRow) earnedRow.style.display = earnedStars > 0 ? '' : 'none';
@@ -13310,8 +13310,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             // Creator Studio
             s('creator-revenue-display', availStr);
-            s('studio-purchased-stars',  depStars.toFixed(1));
-            s('studio-earned-stars',     earnedStars.toFixed(1));
+            s('studio-purchased-stars',  depStars.toFixed(2));
+            s('studio-earned-stars',     earnedStars.toFixed(2));
             s('earnings-aptm-value',     myUsdtStr);
 
             // Only show identity in nav when wallet is actually connected
@@ -13599,7 +13599,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const usdtCost     = amount * CONFIG.STAR_USD;
             currentUsdtBalance = Math.max(0, (parseFloat(currentUsdtBalance) || 0) - usdtCost);
             currentAptmBalance = currentUsdtBalance;
-            purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10;
+            purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 100) / 100;
             _lastSpendTime     = Date.now();
             updateUI();
         }
@@ -13608,7 +13608,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const snap      = await txn.get(ref);
             const _depUsdt  = snap.exists() ? (parseFloat(snap.data().depositedUsdt  || snap.data().depositedAptm || 0)) : 0;
             const _sp2      = snap.exists() ? (parseFloat(snap.data().spentStarsTotal || 0)) : 0;
-            const _depositStarsGross = Math.floor(_depUsdt / CONFIG.STAR_USD * 10) / 10;
+            const _depositStarsGross = Math.floor(_depUsdt / CONFIG.STAR_USD * 100) / 100;
             let purchased   = Math.max(0, _depositStarsGross - _sp2);
             let earned      = snap.exists() ? (snap.data().creatorStars || 0) : 0;
             let remaining   = amount;
@@ -13713,10 +13713,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 // USDT model: available = deposited minus spent (both tracked in Firestore)
                 const _depUsdt  = Math.max(0, parseFloat(snap.data().depositedUsdt || snap.data().depositedAptm || 0));
                 const _spent    = Math.max(0, parseFloat(snap.data().spentStarsTotal || 0));
-                // Use Math.round for gross conversion to avoid IEEE-754 drift
-                // e.g. 4.015/0.01 gives 401.4999... in JS, flooring gives 401.4 instead of 401.5
-                const _grossStars = Math.round(_depUsdt / CONFIG.STAR_USD * 10) / 10;
-                purchasedStars     = Math.max(0, Math.floor((_grossStars - _spent) * 10) / 10);
+                // Floor at 2 decimal places — never overstate stars (2.58 stays 2.58, not rounded to 2.6)
+                const _grossStars = Math.floor(_depUsdt / CONFIG.STAR_USD * 100) / 100;
+                purchasedStars     = Math.max(0, Math.floor((_grossStars - _spent) * 100) / 100);
                 currentUsdtBalance = Math.max(0, _depUsdt - (_spent * CONFIG.STAR_USD));
                 window._totalSpentStars       = _spent;
                 window._firestoreDepositedUsdt = _depUsdt;
@@ -14668,7 +14667,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Optimistic local update
             currentUsdtBalance = (parseFloat(currentUsdtBalance) || 0) + usdValue;
             currentAptmBalance = currentUsdtBalance;
-            purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10;
+            purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 100) / 100;
 
             // Record in Firebase
             if (userAddress && window.db) {
@@ -14730,7 +14729,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             return;
         }
 
-        var label = 'Withdraw $' + fmtUsdt(totalUsdt) + ' APTM →';
+        var _wdPrice  = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+        var totalAptm = (totalUsdt / _wdPrice).toFixed(4);
+        var label = 'Withdraw ' + totalAptm + ' APTM →';
         btns.forEach(function(b) {
             if (!b.disabled || b.textContent.indexOf('progress') === -1) {
                 b.textContent = label; b.disabled = false;
@@ -14807,7 +14808,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             var withdrawAptm     = Math.max(0, depositAptmOwed + earnedAptmOwed);
 
             // Equivalent star display values for the confirm dialog
-            var depositStarsDisplay = (livePrice > 0) ? Math.floor((depositAptmOwed * livePrice) / CONFIG.STAR_USD * 10) / 10 : 0;
+            var depositStarsDisplay = (livePrice > 0) ? Math.floor((depositAptmOwed * livePrice) / CONFIG.STAR_USD * 100) / 100 : 0;
             var totalStarsDisplay   = depositStarsDisplay + fbEarned;
 
             if (withdrawAptm <= 0) {
@@ -15561,7 +15562,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window.fs.doc(window.db, "user_balances", userAddress.toLowerCase())
                 );
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars  || 0;
                 }
             } catch (_) { livePurchased = purchasedStars; liveEarned = creatorEarnings; }
@@ -15629,7 +15630,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const userRef  = window.fs.doc(window.db, "user_balances", userAddress.toLowerCase());
                 const snap     = await window.fs.getDoc(userRef);
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars  || 0;
                 }
             } catch (_) { livePurchased = purchasedStars; liveEarned = creatorEarnings; }
@@ -15868,7 +15869,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const userRef  = window.fs.doc(window.db, "user_balances", userAddress.toLowerCase());
                 const snap     = await window.fs.getDoc(userRef);
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars  || 0;
                 }
             } catch (_) { livePurchased = purchasedStars; liveEarned = creatorEarnings; }
@@ -16185,7 +16186,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const usdtCost     = amount * CONFIG.STAR_USD;
         currentUsdtBalance = Math.max(0, (parseFloat(currentUsdtBalance) || 0) - usdtCost);
         currentAptmBalance = currentUsdtBalance;
-        purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 10) / 10;
+        purchasedStars     = Math.floor(currentUsdtBalance / CONFIG.STAR_USD * 100) / 100;
         _lastSpendTime = Date.now();
         updateUI();
 
@@ -16224,8 +16225,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const spent       = parseFloat(d.spentStarsTotal || 0);
                 currentUsdtBalance = Math.max(0, deposited - (spent * CONFIG.STAR_USD));
                 currentAptmBalance = currentUsdtBalance;
-                const _grossRefetch = Math.round(deposited / CONFIG.STAR_USD * 10) / 10;
-                purchasedStars      = Math.max(0, Math.floor((_grossRefetch - spent) * 10) / 10);
+                const _grossRefetch = Math.floor(deposited / CONFIG.STAR_USD * 100) / 100;
+                purchasedStars      = Math.max(0, Math.floor((_grossRefetch - spent) * 100) / 100);
                 creatorEarnings    = parseFloat(d.creatorStars || 0);
                 currentEarnedUsdt  = creatorEarnings * CONFIG.STAR_USD;
             }
@@ -16245,7 +16246,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (window.db) {
             try {
                 const snap = await window.fs.getDoc(window.fs.doc(window.db, "user_balances", userAddress.toLowerCase()));
-                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10; liveEarned = snap.data().creatorStars || 0; }
+                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100; liveEarned = snap.data().creatorStars || 0; }
             } catch (_) { livePurchased = purchasedStars; liveEarned = creatorEarnings; }
         }
         if ((livePurchased + liveEarned) < 1) return showToast("Not enough Stars! Deposit APTM.");
@@ -16308,7 +16309,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (window.db) {
             try {
                 const snap = await window.fs.getDoc(window.fs.doc(window.db, "user_balances", userAddress.toLowerCase()));
-                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10; liveEarned = snap.data().creatorStars || 0; }
+                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100; liveEarned = snap.data().creatorStars || 0; }
             } catch (_) { livePurchased = purchasedStars; liveEarned = creatorEarnings; }
         }
         if ((livePurchased + liveEarned) < 1) return showToast("Not enough Stars! Deposit APTM.");
@@ -17811,7 +17812,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (window.db) {
             try {
                 const snap = await window.fs.getDoc(window.fs.doc(window.db, 'user_balances', userAddress.toLowerCase()));
-                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10; liveEarned = snap.data().creatorStars || 0; }
+                if (snap.exists()) { livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100; liveEarned = snap.data().creatorStars || 0; }
             } catch(_) {}
         }
         if ((livePurchased + liveEarned) < 1) return showToast('Not enough Stars!');
@@ -18374,7 +18375,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window.fs.doc(window.db, 'user_balances', userAddress.toLowerCase())
                 );
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars || 0;
                 }
             } catch (e) { console.warn('Balance check failed:', e); }
@@ -18784,7 +18785,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window.fs.doc(window.db, 'user_balances', userAddress.toLowerCase())
                 );
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars || 0;
                 }
             } catch (e) { console.warn('[promoteToSignal] Balance read failed:', e); }
@@ -19044,7 +19045,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         window.fs.doc(window.db, 'user_balances', userAddress.toLowerCase())
                     );
                     if (snap.exists()) {
-                        livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                        livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                         liveEarned    = snap.data().creatorStars || 0;
                     }
                 } catch (e) { console.warn('[handleCommBroadcast] balance check failed:', e); }
@@ -20517,7 +20518,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window.fs.doc(window.db, 'user_balances', userAddress.toLowerCase())
                 );
                 if (snap.exists()) {
-                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 10) / 10;
+                    livePurchased = Math.floor(((snap.data().depositedUsdt || snap.data().depositedAptm || 0)) / CONFIG.STAR_USD * 100) / 100;
                     liveEarned    = snap.data().creatorStars || 0;
                 }
             } catch (e) { console.warn('[submitStartCommunity] balance check failed:', e); }
