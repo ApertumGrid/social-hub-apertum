@@ -10110,7 +10110,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         </div>
                         <div class="mcd-sol-right">
                             <div class="mcd-sol-ratio" id="mcd-sol-ratio">— / —</div>
-                            <div class="mcd-sol-sub">Contract APTM (USD) / Liability APTM (USD)</div>
+                            <div class="mcd-sol-sub">Contract APTM / Liability APTM owed</div>
                         </div>
                     </div>
 
@@ -14486,32 +14486,39 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 ? ((contractBalUsdt / userLiabilityUsdt) * 100).toFixed(1)
                 : '∞';
 
+            // Convert USD values → APTM for display
+            const _mcPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+            const contractAptm    = (contractBalUsdt   / _mcPrice).toFixed(4);
+            const liabilityAptm   = (userLiabilityUsdt / _mcPrice).toFixed(4);
+            const adminRevAptm    = (adminRevUsdt       / _mcPrice).toFixed(4);
+            const discrepancyAptm = (discrepancyUsd     / _mcPrice).toFixed(4);
+
             if (bar) bar.className = 'mcd-solvency ' + (isSolvent ? 'solvent' : 'insolvent');
             if (ratioEl) ratioEl.textContent =
-                '$' + contractBalUsdt.toFixed(2) + ' APTM (USD) / $' + userLiabilityUsdt.toFixed(2) + ' owed';
+                contractAptm + ' APTM / ' + liabilityAptm + ' APTM owed';
 
             const pendingEl = document.getElementById('mcd-pending');
-            if (pendingEl) pendingEl.textContent = '$' + userLiabilityUsdt.toFixed(2) + ' (APTM)';
+            if (pendingEl) pendingEl.textContent = liabilityAptm + ' APTM';
 
             if (isSolvent) {
                 if (statusEl) statusEl.textContent = 'SYSTEM SOLVENT';
                 if (detailEl) detailEl.textContent =
-                    'Coverage: ' + coverageRatio + '% · Surplus: $' + discrepancyUsd.toFixed(2) +
-                    ' · Users owed: $' + userLiabilityUsdt.toFixed(2) + ' APTM (USD)' +
-                    ' · Admin rev: $' + adminRevUsdt.toFixed(2) + ' APTM';
+                    'Coverage: ' + coverageRatio + '% · Surplus: ' + discrepancyAptm + ' APTM' +
+                    ' · Users owed: ' + liabilityAptm + ' APTM' +
+                    ' · Admin rev: ' + adminRevAptm + ' APTM';
             } else {
                 if (statusEl) statusEl.textContent = 'RESERVE DISCREPANCY';
                 if (detailEl) detailEl.textContent =
-                    'Shortfall: $' + discrepancyUsd.toFixed(2) +
+                    'Shortfall: ' + discrepancyAptm + ' APTM' +
                     ' · Coverage: ' + coverageRatio + '%' +
-                    ' · Users owed: $' + userLiabilityUsdt.toFixed(2) + ' APTM (USD)' +
-                    ' · Admin rev: $' + adminRevUsdt.toFixed(2) + ' APTM';
+                    ' · Users owed: ' + liabilityAptm + ' APTM' +
+                    ' · Admin rev: ' + adminRevAptm + ' APTM';
             }
 
             console.log(
-                '[Solvency] Contract: $' + contractBalUsdt.toFixed(4) + ' APTM (USD)' +
-                ' | userLiability=$' + userLiabilityUsdt.toFixed(4) + ' APTM (USD)' +
-                ' | adminRev=$' + adminRevUsdt.toFixed(4) + ' APTM (USD)' +
+                '[Solvency] Contract: ' + contractAptm + ' APTM' +
+                ' | userLiability: ' + liabilityAptm + ' APTM' +
+                ' | adminRev: ' + adminRevAptm + ' APTM' +
                 ' | ' + (isSolvent ? 'SOLVENT ✓' : 'DISCREPANCY ✗') +
                 ' (' + coverageRatio + '% coverage)'
             );
