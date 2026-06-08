@@ -16450,11 +16450,17 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // depositedAPTM on-chain minus Firestore-tracked spend = true spendable deposit
             const onChainDeposited    = parseFloat(ethers.utils.formatUnits(bal.deposited,    18)) || 0;
             const onChainWithdrawable = parseFloat(ethers.utils.formatUnits(bal.withdrawable, 18)) || 0;
-            // earnUsdt = on-chain already-settled + Firestore not-yet-settled (no double-count)
+            // Convert on-chain APTM → USD using live price, then deduct spent stars
+            const _swPrice  = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
             const firestoreCreatorUsdt = (window._firestoreCreatorStars || 0) * CONFIG.STAR_USD;
-            const depUsdt   = Math.max(0, onChainDeposited - ((window._totalSpentStars || 0) * CONFIG.STAR_USD));
-            const earnUsdt  = onChainWithdrawable + firestoreCreatorUsdt;
+            const depUsdt   = Math.max(0, (onChainDeposited * _swPrice) - ((window._totalSpentStars || 0) * CONFIG.STAR_USD));
+            const earnUsdt  = (onChainWithdrawable * _swPrice) + firestoreCreatorUsdt;
             const totalUsdt = depUsdt + earnUsdt;
+
+            // Convert USD back to APTM for display
+            const depAptm   = (depUsdt   / _swPrice).toFixed(4);
+            const earnAptm  = (earnUsdt  / _swPrice).toFixed(4);
+            const totalAptm = (totalUsdt / _swPrice).toFixed(4);
 
             if (totalUsdt <= 0) {
                 if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
@@ -16463,10 +16469,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
             const confirmed = confirm(
                 'Withdraw APTM\n\n' +
-                'Deposited balance:  $' + fmtUsdt(depUsdt)   + ' (APTM)\n' +
-                'Earned balance:     $' + fmtUsdt(earnUsdt)  + ' (APTM)\n' +
+                'Deposited balance:  ' + depAptm  + ' APTM\n' +
+                'Earned balance:     ' + earnAptm + ' APTM\n' +
                 '─'.repeat(30) + '\n' +
-                'Total to withdraw:  $' + fmtUsdt(totalUsdt) + ' (APTM)\n\n' +
+                'Total to withdraw:  ' + totalAptm + ' APTM\n\n' +
                 'The platform will verify your balance and authorize the withdrawal.\nProceed?'
             );
             if (!confirmed) {
