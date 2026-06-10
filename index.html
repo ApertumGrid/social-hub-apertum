@@ -831,6 +831,120 @@
         .live-tab:hover:not(.active) { background:var(--bg-hover); color:var(--text-primary); }
 
         /* ── Studio Tabs ──────────────────────────────────────────────── */
+        
+        /* Voice Rooms */
+        #live-rooms-panel { padding:0; }
+        .vr-room-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; padding:4px 0; }
+        .vr-room-card { background:linear-gradient(160deg,rgba(15,13,28,0.95) 0%,rgba(10,9,18,0.98) 100%); border:1px solid rgba(124,92,191,0.25); border-radius:16px; padding:16px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+        .vr-room-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#7c5cbf,#2dd4bf); opacity:0.5; }
+        .vr-room-card:hover { border-color:rgba(124,92,191,0.6); transform:translateY(-2px); box-shadow:0 8px 32px rgba(124,92,191,0.2); }
+        .vr-host-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .vr-host-av { width:36px; height:36px; border-radius:50%; border:2px solid rgba(240,180,41,0.5); object-fit:cover; flex-shrink:0; }
+        .vr-host-name { font-size:0.8rem; font-weight:700; color:var(--text-primary); }
+        .vr-card-title { font-size:0.88rem; font-weight:700; color:var(--text-primary); margin-bottom:6px; line-height:1.3; }
+        .vr-card-meta { display:flex; align-items:center; gap:12px; font-size:0.65rem; color:var(--text-muted); margin-bottom:12px; }
+        .vr-join-btn { width:100%; padding:8px; border-radius:10px; border:1px solid rgba(124,92,191,0.4); cursor:pointer; background:linear-gradient(135deg,rgba(124,92,191,0.18),rgba(45,212,191,0.1)); color:var(--purple-lt); font-family:var(--font-body); font-size:0.72rem; font-weight:700; transition:all 0.15s; }
+        .vr-join-btn:hover { background:linear-gradient(135deg,rgba(124,92,191,0.35),rgba(45,212,191,0.2)); }
+        .vr-start-room-btn { display:flex; align-items:center; gap:8px; margin-bottom:18px; padding:12px 20px; border-radius:14px; border:1px solid rgba(45,212,191,0.4); background:linear-gradient(135deg,rgba(45,212,191,0.1),rgba(124,92,191,0.08)); color:var(--teal); font-family:var(--font-body); font-size:0.82rem; font-weight:700; cursor:pointer; transition:all 0.18s; }
+        .vr-start-room-btn:hover { background:linear-gradient(135deg,rgba(45,212,191,0.2),rgba(124,92,191,0.15)); }
+        .vr-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:0.8rem; line-height:1.9; }
+        #vr-room-overlay { position:fixed; inset:0; z-index:6000; background:linear-gradient(160deg,#07051a 0%,#0b0819 60%,#050810 100%); display:flex; flex-direction:column; font-family:var(--font-body); overflow:hidden; }
+        #vr-room-overlay::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 15% 20%, rgba(124,92,191,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 85% 80%, rgba(45,212,191,0.05) 0%, transparent 60%); animation:vr-bg-drift 9s ease-in-out infinite alternate; pointer-events:none; z-index:0; }
+        @keyframes vr-bg-drift { 0%{ opacity:0.4; } 100%{ opacity:1; } }
+        #vr-overlay-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px 12px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+        .vr-live-dot { width:7px; height:7px; border-radius:50%; background:#ef4444; box-shadow:0 0 6px rgba(239,68,68,0.7); animation:vr-dot-pulse 1.4s ease-in-out infinite; flex-shrink:0; }
+        @keyframes vr-dot-pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+        .vr-room-title-hd { font-size:0.9rem; font-weight:700; color:var(--text-primary); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #vr-stars-counter { font-family:var(--font-mono); font-size:0.72rem; color:var(--gold); font-weight:700; background:rgba(240,180,41,0.1); border:1px solid rgba(240,180,41,0.25); border-radius:20px; padding:3px 10px; }
+        .vr-close-btn { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+        .vr-close-btn:hover { background:rgba(255,255,255,0.14); color:var(--text-primary); }
+        #vr-stage-card { margin:16px 16px 0; background:linear-gradient(160deg,rgba(22,16,44,0.9),rgba(12,10,26,0.95)); border:1px solid rgba(124,92,191,0.22); border-radius:22px; padding:22px 16px 18px; display:flex; flex-direction:column; align-items:center; gap:14px; flex-shrink:0; position:relative; overflow:hidden; box-shadow:0 4px 32px rgba(0,0,0,0.5); }
+        #vr-stage-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(124,92,191,0.6),rgba(45,212,191,0.35),transparent); }
+        #vr-stage-card::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 50% 0%, rgba(124,92,191,0.08) 0%, transparent 70%); pointer-events:none; }
+        #vr-speakers-row { display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap; position:relative; z-index:1; }
+        .vr-orb-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; }
+        .vr-orb { position:relative; border-radius:50%; }
+        .vr-orb-host { width:80px; height:80px; }
+        .vr-orb-speaker { width:64px; height:64px; }
+        .vr-orb img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+        .vr-orb-ring { position:absolute; inset:-5px; border-radius:50%; border:2.5px solid rgba(240,180,41,0.55); pointer-events:none; transition:border-color 0.2s, box-shadow 0.2s; }
+        .vr-orb-ring.spk { border-color:rgba(124,92,191,0.6); }
+        .vr-orb-host .vr-orb-ring { border-color:rgba(240,180,41,0.75); box-shadow:0 0 14px rgba(240,180,41,0.22); }
+        .vr-orb.speaking .vr-orb-ring { border-color:#22c55e; animation:vr-speak 0.85s ease-in-out infinite; }
+        @keyframes vr-speak { 0%,100%{ box-shadow:0 0 0 0 rgba(34,197,94,0.7), 0 0 6px rgba(34,197,94,0.2); } 50%{ box-shadow:0 0 0 14px rgba(34,197,94,0), 0 0 28px rgba(34,197,94,0.45); } }
+        .vr-orb-name { font-size:0.62rem; color:var(--text-secondary); max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; letter-spacing:0.01em; }
+        .vr-orb-name.host-lbl { color:var(--gold); font-weight:700; }
+        .vr-orb-balance { font-family:var(--font-mono); font-size:0.56rem; color:var(--gold); font-weight:700; background:rgba(240,180,41,0.12); border:1px solid rgba(240,180,41,0.22); border-radius:20px; padding:1px 8px; }
+        .vr-role-badge { font-size:0.46rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:1px 6px; border-radius:4px; }
+        .vr-role-badge.host { background:rgba(240,180,41,0.14); color:var(--gold); border:1px solid rgba(240,180,41,0.28); }
+        .vr-role-badge.speaker { background:rgba(124,92,191,0.14); color:var(--purple-lt); border:1px solid rgba(124,92,191,0.28); }
+        #vr-queue-strip { margin:8px 14px 0; padding:8px 12px; background:rgba(124,92,191,0.06); border:1px solid rgba(124,92,191,0.15); border-radius:12px; flex-shrink:0; }
+        .vr-q-label { font-size:0.58rem; color:var(--purple-lt); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:8px; }
+        #vr-queue-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
+        .vr-q-item { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
+        .vr-q-av { width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px dashed rgba(240,180,41,0.4); }
+        .vr-q-bid { font-size:0.58rem; font-family:var(--font-mono); color:var(--gold); font-weight:700; }
+        .vr-q-name { font-size:0.55rem; color:var(--text-muted); max-width:48px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .vr-q-btns { display:flex; gap:4px; }
+        .vr-admit-btn { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); color:#22c55e; border-radius:6px; padding:2px 8px; font-size:0.6rem; font-weight:700; cursor:pointer; }
+        .vr-deny-btn  { background:rgba(239,68,68,0.1);  border:1px solid rgba(239,68,68,0.3);  color:#ef4444; border-radius:6px; padding:2px 8px; font-size:0.6rem; font-weight:700; cursor:pointer; }
+        #vr-listener-section { margin:10px 16px 0; flex-shrink:0; }
+        .vr-l-label { font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.2px; font-weight:600; margin-bottom:7px; }
+        #vr-listener-grid { display:flex; flex-wrap:wrap; gap:6px; }
+        .vr-l-av { width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(255,255,255,0.1); opacity:0.8; }
+        .vr-l-more { width:32px; height:32px; border-radius:50%; background:rgba(124,92,191,0.15); border:1.5px solid rgba(124,92,191,0.3); display:flex; align-items:center; justify-content:center; font-size:0.55rem; color:var(--purple-lt); font-weight:700; }
+        #vr-chat-panel { flex:1; margin:10px 16px 0; min-height:0; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; display:flex; flex-direction:column; overflow:hidden; }
+        #vr-chat-feed { flex:1; overflow-y:auto; padding:10px 12px 6px; display:flex; flex-direction:column; gap:7px; }
+        .vr-msg { font-size:0.73rem; color:var(--text-secondary); line-height:1.45; }
+        .vr-msg .vr-handle { color:var(--purple-lt); font-weight:700; margin-right:5px; }
+        .vr-msg.ev { color:var(--teal); font-style:italic; font-size:0.68rem; opacity:0.85; }
+        .vr-msg.gft { color:var(--gold); font-weight:600; font-size:0.68rem; }
+        #vr-chat-input-row { display:flex; gap:8px; padding:8px 12px; border-top:1px solid rgba(255,255,255,0.07); flex-shrink:0; align-items:center; }
+        #vr-chat-input { flex:1; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:7px 14px; color:var(--text-primary); font-family:var(--font-body); font-size:0.73rem; }
+        #vr-chat-input:focus { outline:none; border-color:rgba(124,92,191,0.5); background:rgba(255,255,255,0.08); }
+        #vr-chat-send-btn { background:linear-gradient(135deg,#7c5cbf,#2dd4bf); border:none; color:#fff; border-radius:20px; padding:7px 16px; font-size:0.7rem; font-weight:700; cursor:pointer; white-space:nowrap; }
+        #vr-controls { display:flex; align-items:center; justify-content:center; gap:14px; padding:12px 20px 16px; flex-shrink:0; border-top:1px solid rgba(255,255,255,0.06); }
+        .vr-ctrl { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:transform 0.15s; background:none; border:none; padding:0; min-width:56px; }
+        .vr-ctrl:active { transform:scale(0.93); }
+        .vr-ctrl-icon { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,255,255,0.12); transition:all 0.15s; }
+        .vr-ctrl:hover .vr-ctrl-icon { background:rgba(255,255,255,0.13); }
+        .vr-ctrl-lbl { font-size:0.58rem; font-weight:600; color:var(--text-muted); letter-spacing:0.02em; }
+        .vr-ctrl.hand .vr-ctrl-icon { background:rgba(240,180,41,0.1); border-color:rgba(240,180,41,0.35); }
+        .vr-ctrl.hand .vr-ctrl-lbl { color:var(--gold); }
+        .vr-ctrl.leave .vr-ctrl-icon { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.3); }
+        .vr-ctrl.leave .vr-ctrl-lbl { color:#ef4444; }
+        .vr-ctrl.end .vr-ctrl-icon { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.5); }
+        .vr-ctrl.end .vr-ctrl-lbl { color:#ef4444; }
+        .vr-ctrl.req-off .vr-ctrl-icon { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.35); }
+        .vr-ctrl.req-off .vr-ctrl-lbl { color:#ef4444; }
+        .vr-ctrl.muted .vr-ctrl-icon { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.5); }
+        #vr-gift-picker { display:none; position:absolute; bottom:88px; left:14px; right:14px; background:rgba(14,11,30,0.97); border:1px solid rgba(124,92,191,0.35); border-radius:16px; padding:12px 12px 10px; z-index:100; backdrop-filter:blur(12px); }
+        #vr-gift-picker.open { display:block; }
+        .vr-gift-picker-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .vr-gift-to-row { font-size:0.65rem; color:var(--gold); font-weight:700; }
+        .vr-gift-close-btn { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:var(--text-muted); width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; }
+        .vr-gift-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .vr-gift-tile { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:rgba(255,255,255,0.03); transition:all 0.15s; font-size:0.6rem; color:var(--text-muted); }
+        .vr-gift-tile:hover { border-color:rgba(240,180,41,0.5); background:rgba(240,180,41,0.08); color:var(--gold); }
+        .vr-gift-tile .gi { font-size:1.4rem; }
+        #vr-orb-popup { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(14,11,30,0.97); border:1px solid rgba(124,92,191,0.4); border-radius:18px; padding:20px 18px 16px; z-index:200; display:none; flex-direction:column; align-items:center; gap:10px; min-width:170px; box-shadow:0 8px 40px rgba(0,0,0,0.7); backdrop-filter:blur(16px); }
+        #vr-orb-popup.open { display:flex; }
+        .vr-popup-av { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2.5px solid rgba(124,92,191,0.5); }
+        .vr-popup-name { font-size:0.85rem; font-weight:700; color:var(--text-primary); text-align:center; }
+        .vr-popup-actions { display:flex; gap:8px; width:100%; }
+        .vr-popup-btn { flex:1; padding:8px 0; border-radius:10px; font-size:0.68rem; font-weight:700; cursor:pointer; border:none; transition:all 0.15s; }
+        .vr-popup-btn.follow { background:rgba(124,92,191,0.18); border:1px solid rgba(124,92,191,0.4); color:var(--purple-lt); }
+        .vr-popup-btn.follow:hover { background:rgba(124,92,191,0.3); }
+        .vr-popup-btn.gift { background:rgba(240,180,41,0.12); border:1px solid rgba(240,180,41,0.35); color:var(--gold); }
+        .vr-popup-btn.gift:hover { background:rgba(240,180,41,0.22); }
+        .vr-popup-close { position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:var(--text-muted); width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; }
+        .vr-popup-btn.mod-mute { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; }
+        .vr-popup-btn.mod-mute:hover { background:rgba(239,68,68,0.2); }
+        .vr-popup-btn.mod-remove { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; }
+        .vr-popup-btn.mod-remove:hover { background:rgba(239,68,68,0.2); }
+        #vr-start-modal { position:fixed; inset:0; z-index:2200; background:rgba(0,0,0,0.75); display:none; align-items:center; justify-content:center; padding:20px; }
+        #vr-start-modal.open { display:flex; }
+        #vr-start-modal-inner { background:var(--bg-panel); border:1px solid rgba(124,92,191,0.3); border-radius:18px; padding:22px; max-width:340px; width:100%; }
         .studio-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
         .studio-tab {
             padding:7px 16px; font-size:0.72rem; font-weight:700; letter-spacing:0.5px;
@@ -4653,8 +4767,11 @@
             /* â”€â”€ Hide old mobile nav bar â”€â”€ */
             #mobile-nav-bar { display: none !important; }
 
+            /* iOS scroll fix */
+            body { height: auto !important; min-height: 100%; overflow-y: auto !important; }
+
             /* â”€â”€ Hide wallet drawer on mobile â”€â”€ */
-            #wallet-drawer { display: none !important; }
+            #wallet-drawer:not(.open) { display: none !important; }
 
             /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                NEW MOBILE ACTION BAR â€” #mobile-dashboard
@@ -9870,6 +9987,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     <div class="hero-btn-row">
                       <button id="hero-edit-identity-btn" style="display:none;" onclick="openHeroEditForm()" title="Edit Profile"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                       <button id="hero-network-btn" style="display:none;" onclick="toggleNetworkDrawer()">🌐 My Network</button>
+                      <button id="hero-ref-btn" style="display:none;" onclick="toggleReferralPanel()">🔗 Refer &amp; Earn</button>
                       <span id="hero-mailbox-btn" style="display:none!important;"></span>
                       <button id="hero-msg-btn" style="display:none; font-size:0.68rem; padding:7px 14px; border-radius:50px; border:1px solid rgba(45,212,191,0.45); background:rgba(45,212,191,0.08); color:var(--teal); cursor:pointer; font-weight:700; transition:all 0.18s;" onclick="startConversation()">✉ Message</button>
                     </div>
@@ -9992,6 +10110,23 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
                   </div><!-- /hero-inner -->
 
+                  <!-- Referral panel — shown on own wall only -->
+                  <div id="hero-referral-panel" style="display:none; margin-top:14px; border-top:1px solid rgba(255,255,255,0.07); padding-top:14px; padding:14px 18px;">
+                    <div style="font-size:0.72rem; font-weight:700; color:var(--text-primary); margin-bottom:12px;">&#x1F517; Your Referral Link</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                      <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center;">
+                        <div style="font-size:0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:4px;">Referred</div>
+                        <div style="font-family:var(--font-mono); font-size:1.3rem; font-weight:700; color:var(--teal);" id="ref-count-profile">--</div>
+                      </div>
+                      <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center;">
+                        <div style="font-size:0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:4px;">Stars Earned</div>
+                        <div style="font-family:var(--font-mono); font-size:1.3rem; font-weight:700; color:var(--gold);" id="ref-earned-profile">--</div>
+                      </div>
+                    </div>
+                    <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:10px; line-height:1.6;">500&#x2605; spent &rarr; +15&#x2605; &nbsp;&middot;&nbsp; 2,000&#x2605; &rarr; +50&#x2605; &nbsp;&middot;&nbsp; 10,000&#x2605; &rarr; +180&#x2605;</div>
+                    <button onclick="copyReferralLink()" style="padding:8px 18px; border-radius:50px; border:1px solid rgba(45,212,191,0.45); background:rgba(45,212,191,0.1); color:var(--teal); font-size:0.68rem; font-weight:700; cursor:pointer; transition:all 0.18s;">&#x1F517; Copy Referral Link</button>
+                  </div>
+
                   <!-- QR share section — shown on own wall only -->
                   <div id="hero-qr-section">
                     <button class="hero-share-profile-btn" onclick="openProfileQRModal()">📲 Share Profile</button>
@@ -10088,6 +10223,29 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         <span style="font-family:var(--font-mono); font-size:0.55rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; width:58px; text-align:right;">Amount</span>
                     </div>
                     <div id="ledger-list"><div class="ledger-empty">Connect wallet to view history.</div></div>
+                </div>
+
+                <!-- Referral Program Card -->
+                <div class="card" id="referral-card">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                        <div style="font-size:1.2rem;">&#x1F517;</div>
+                        <div style="font-size:0.88rem; font-weight:700; color:var(--text-primary);">Referral Program</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px; text-align:center;">
+                            <div style="font-size:0.55rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:6px;">People Referred</div>
+                            <div style="font-family:var(--font-mono); font-size:1.5rem; font-weight:700; color:var(--teal);" id="ref-count">--</div>
+                        </div>
+                        <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px; text-align:center;">
+                            <div style="font-size:0.55rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:6px;">Stars Earned</div>
+                            <div style="font-family:var(--font-mono); font-size:1.5rem; font-weight:700; color:var(--gold);" id="ref-earned">--</div>
+                        </div>
+                    </div>
+                    <div class="info-box" style="margin-bottom:14px;">
+                        Share your referral link. When someone joins through it and spends Stars on the platform, you earn automatically.<br><br>
+                        <strong>500&#x2605; spent &rarr; +15&#x2605; &nbsp;&middot;&nbsp; 2,000&#x2605; spent &rarr; +50&#x2605; &nbsp;&middot;&nbsp; 10,000&#x2605; spent &rarr; +180&#x2605;</strong>
+                    </div>
+                    <button class="btn btn-teal" style="width:auto; padding:10px 24px;" onclick="copyReferralLink()">&#x1F517; Copy My Referral Link</button>
                 </div>
 
                 <!-- ADMIN PANEL — visible only to admin wallet -->
@@ -10902,6 +11060,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div class="live-tabs" id="live-tabs">
                     <button class="live-tab active" id="ltab-watch" onclick="setLiveTab('watch')">📺 Watch Streams</button>
                     <button class="live-tab" id="ltab-broadcast" onclick="setLiveTab('broadcast')">🎙 Go Live</button>
+                    <button class="live-tab" id="ltab-rooms" onclick="setLiveTab('rooms')">🎤 Voice Rooms</button>
                 </div>
 
                 <!-- ── WATCH TAB ── -->
@@ -11642,6 +11801,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     </div>
                 </div>
             </div>
+
+                <!-- Voice Rooms Panel -->
+                <div id="live-rooms-panel" style="display:none;">
+                    <button class="vr-start-room-btn" onclick="openStartRoomModal()">
+                        <span style="font-size:1.2rem;">🎧</span>
+                        <span>Start a Voice Room</span>
+                    </button>
+                    <div id="vr-rooms-loading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.75rem;">Loading rooms…</div>
+                    <div class="vr-room-grid" id="vr-room-grid" style="display:none;"></div>
+                    <div class="vr-empty" id="vr-rooms-empty" style="display:none;">
+                        <div style="font-size:2rem;margin-bottom:8px;">🎧</div>
+                        <strong style="color:var(--text-secondary);">No rooms open right now</strong><br>
+                        <span style="font-size:0.72rem;opacity:0.6;">Start one and your followers will be notified</span>
+                    </div>
+                </div>
 
         </div><!-- /feed-col -->
 
@@ -12657,7 +12831,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         var walletBtn = document.getElementById('wallet-btn');
         var walletDot = document.getElementById('wallet-indicator-dot');
         var addrEl    = document.getElementById('wdd-address');
-        if (statusEl)  statusEl.textContent = address.slice(0,6) + '…' + address.slice(-4);
+        if (statusEl)  statusEl.textContent = '★ Buy Stars';
         if (walletBtn) walletBtn.classList.remove('not-connected');
         if (walletDot) walletDot.className = 'wallet-online-dot';
         if (addrEl)    addrEl.textContent  = address.slice(0,6) + '…' + address.slice(-4);
@@ -12966,6 +13140,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (typeof updateUI === 'function') updateUI();
 
             _setWalletConnectedUI(userAddress);
+
+            // Write referredBy if user arrived via referral link
+            if (typeof _writeReferredBy === 'function') _writeReferredBy(userAddress);
 
             // Store wallet type and eth ref so we can auto-reconnect after sleep/wake
             window._shLastWalletType = walletType;
@@ -13733,6 +13910,96 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             updateUI();
         });
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // REFERRAL PROGRAM
+    // ═══════════════════════════════════════════════════════════════════
+
+    async function _writeReferredBy(addr) {
+        if (!window.db || !window.fs || !addr) return;
+        var storedRef = localStorage.getItem('sh_ref');
+        if (!storedRef || storedRef === addr.toLowerCase()) return;
+        try {
+            var uRef  = window.fs.doc(window.db, 'users', addr.toLowerCase());
+            var uSnap = await window.fs.getDoc(uRef);
+            if (uSnap.exists() && uSnap.data().referredBy) { localStorage.removeItem('sh_ref'); return; }
+            await window.fs.updateDoc(uRef, { referredBy: storedRef });
+            localStorage.removeItem('sh_ref');
+            window.fs.setDoc(window.fs.doc(window.db, 'referral_stats', storedRef), { totalReferred: window.fs.increment(1) }, { merge: true }).catch(function(){});
+        } catch(e) { console.warn('[referral] writeReferredBy:', e); }
+    }
+
+    async function _checkReferralMilestones(spenderAddr, amount) {
+        if (!window.db || !window.fs || !spenderAddr) return;
+        var MILESTONES = [500, 2000, 10000];
+        try {
+            var uRef = window.fs.doc(window.db, 'users', spenderAddr);
+            await window.fs.updateDoc(uRef, { referralSpendTotal: window.fs.increment(amount) });
+            var uSnap = await window.fs.getDoc(uRef);
+            if (!uSnap.exists()) return;
+            var d = uSnap.data();
+            if (!d.referredBy) return;
+            var total   = d.referralSpendTotal || 0;
+            var awarded = d.referralMilestonesAwarded || [];
+            var next = MILESTONES.find(function(m) { return total >= m && awarded.indexOf(m) === -1; });
+            if (!next) return;
+            fetch('https://us-central1-socialhubaptm.cloudfunctions.net/awardReferralMilestone', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spenderAddr: spenderAddr, milestone: next })
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                if (data.success) {
+                    showToast('Referral reward unlocked! +' + (next === 500 ? 15 : next === 2000 ? 50 : 180) + '★ earned by your referrer');
+                    loadReferralStats(spenderAddr);
+                }
+            }).catch(function(e) { console.warn('[referral] milestone CF:', e); });
+        } catch(e) { console.warn('[referral] checkMilestones:', e); }
+    }
+
+    async function loadReferralStats(addr) {
+        if (!window.db || !window.fs || !addr) return;
+        try {
+            var snap = await window.fs.getDoc(window.fs.doc(window.db, 'referral_stats', addr.toLowerCase()));
+            var data = snap.exists() ? snap.data() : {};
+            var referred = data.totalReferred || 0;
+            var earned   = data.totalEarned   || 0;
+            var countEl  = document.getElementById('ref-count');
+            var earnedEl = document.getElementById('ref-earned');
+            if (countEl)  countEl.textContent = referred;
+            if (earnedEl) earnedEl.textContent = earned + '★';
+            var cpEl = document.getElementById('ref-count-profile');
+            var epEl = document.getElementById('ref-earned-profile');
+            if (cpEl) cpEl.textContent = referred;
+            if (epEl) epEl.textContent = earned + '★';
+        } catch(e) {}
+    }
+    window.loadReferralStats = loadReferralStats;
+
+    function toggleReferralPanel() {
+        var panel = document.getElementById('hero-referral-panel');
+        var btn   = document.getElementById('hero-ref-btn');
+        if (!panel) return;
+        var isOpen = panel.style.display !== 'none';
+        panel.style.display = isOpen ? 'none' : 'block';
+        if (btn) btn.innerHTML = isOpen ? '🔗 Refer &amp; Earn' : '✕ Referral';
+        if (!isOpen) {
+            var nd = document.getElementById('network-drawer');
+            if (nd) nd.style.display = 'none';
+        }
+    }
+    window.toggleReferralPanel = toggleReferralPanel;
+
+    function copyReferralLink() {
+        var addr = (typeof userAddress !== 'undefined') ? userAddress : window.userAddress;
+        if (!addr) { showToast('Connect your wallet first'); return; }
+        var link = 'https://socialhubglobal.com?ref=' + addr.toLowerCase();
+        navigator.clipboard.writeText(link).then(function() {
+            showToast('Referral link copied!');
+        }).catch(function() {
+            showToast('Copy failed — copy manually: ' + link);
+        });
+    }
+    window.copyReferralLink = copyReferralLink;
 
     // ═══════════════════════════════════════════════════════════════════
     // TRANSACTION LEDGER
@@ -17294,6 +17561,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         });
     }
 
+    // Capture referral code from URL param ?ref=0xADDRESS
+    (function() {
+        var _rp = new URLSearchParams(location.search).get('ref');
+        if (_rp && _rp.length > 5) localStorage.setItem('sh_ref', _rp.toLowerCase());
+    })();
+
     // ═══════════════════════════════════════════════════════════════════
     // DEPOSIT ESTIMATE LIVE UPDATE (drawer)
     // ═══════════════════════════════════════════════════════════════════
@@ -17461,12 +17734,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (loadMore)  loadMore.style.display  = 'none';
         if (feedHead)  feedHead.style.display  = 'none';
 
-        // 9. Show 'My Network' button only on own wall
+        // 9. Show 'My Network' + referral buttons only on own wall
         const heroNetBtn = document.getElementById('hero-network-btn');
         if (heroNetBtn) heroNetBtn.style.display = isOwnWall ? '' : 'none';
+        const heroRefBtn = document.getElementById('hero-ref-btn');
+        if (heroRefBtn) heroRefBtn.style.display = isOwnWall ? '' : 'none';
+        if (isOwnWall && typeof loadReferralStats === 'function') loadReferralStats(wallAddr);
         // Collapse the drawer whenever we switch walls
         const netDrawer = document.getElementById('network-drawer');
         if (netDrawer) netDrawer.style.display = 'none';
+        // Collapse referral panel too
+        const refPanel = document.getElementById('hero-referral-panel');
+        if (refPanel) refPanel.style.display = 'none';
 
         // 7. Re-render the feed filtered by wall
         loadGlobalFeed();
@@ -25997,6 +26276,666 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 // App ID: 59f975efccbf40a7b36eb30778da13a5
 // ═══════════════════════════════════════════════════════════════════
 (function initLiveStream() {
+    // ══════════════════════════════════════════════════════════════════
+    // VOICE ROOMS
+    // ══════════════════════════════════════════════════════════════════
+    const VR_CF_BASE = 'https://us-central1-socialhubaptm.cloudfunctions.net/';
+    const VR_COL     = 'voice_rooms';
+    const VR_QUEUE   = 'voice_room_queue';
+    const VR_LISTEN  = 'voice_room_listeners';
+    const VR_CHAT    = 'voice_room_chat';
+    const AGORA_APP_ID_VR = 'e32b02aab43a4762b385498535b0f51d';
+
+    let _vrRoomId      = null;
+    let _vrIsHost      = false;
+    let _vrIsSpeaker   = false;
+    let _vrAgoraClient = null;
+    let _vrAudioTrack  = null;
+    let _vrMuted       = false;
+    let _vrRoomUnsub   = null;
+    let _vrChatUnsub   = null;
+    let _vrQueueUnsub  = null;
+    let _vrGiftOpen    = false;
+    let _vrPrevQueueSize = 0;
+
+    function _vrDoorbellSound() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            function playTone(freq, startTime, duration) {
+                var osc  = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.35, startTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+            playTone(587, ctx.currentTime, 0.35);
+            playTone(440, ctx.currentTime + 0.38, 0.55);
+        } catch(e) {}
+    }
+
+    function openStartRoomModal() {
+        const m = document.getElementById('vr-start-modal');
+        if (m) m.classList.add('open');
+    }
+    window.openStartRoomModal = openStartRoomModal;
+
+    function closeStartRoomModal() {
+        const m = document.getElementById('vr-start-modal');
+        if (m) m.classList.remove('open');
+    }
+    window.closeStartRoomModal = closeStartRoomModal;
+
+    window.loadVoiceRooms = async function() {
+        if (!window.db || !window.fs) return;
+        const grid    = document.getElementById('vr-room-grid');
+        const loading = document.getElementById('vr-rooms-loading');
+        const empty   = document.getElementById('vr-rooms-empty');
+        if (loading) loading.style.display = 'block';
+        if (grid)    grid.style.display    = 'none';
+        if (empty)   empty.style.display   = 'none';
+        try {
+            const q = window.fs.query(
+                window.fs.collection(window.db, VR_COL),
+                window.fs.where('active', '==', true),
+                window.fs.orderBy('startedAt', 'desc'),
+                window.fs.limit(20)
+            );
+            const snap = await window.fs.getDocs(q);
+            if (loading) loading.style.display = 'none';
+            if (snap.empty) { if (empty) empty.style.display = 'block'; return; }
+            if (grid) {
+                grid.style.display = 'grid';
+                grid.innerHTML = '';
+                snap.forEach(doc => grid.insertAdjacentHTML('beforeend', _vrBuildCard(doc.id, doc.data())));
+            }
+        } catch(e) {
+            console.error('[loadVoiceRooms]', e);
+            if (loading) loading.style.display = 'none';
+        }
+    };
+
+    function _vrBuildCard(roomId, r) {
+        const av   = escHtml(r.hostAvatar || '');
+        const name = escHtml(r.hostName || 'Anonymous');
+        const ttl  = escHtml(r.title || 'Voice Room');
+        const top  = escHtml(r.topic || '');
+        const fee  = parseFloat(r.entryFee || 0);
+        const lbl  = fee > 0 ? 'Join · ' + fee + '★' : 'Join Free';
+        return '<div class="vr-room-card" onclick="window.joinVoiceRoom(\'' + roomId + '\',false)">' +
+            '<div class="vr-host-row">' +
+            '<img class="vr-host-av" src="' + av + '" onerror="this.src=\'https://placehold.co/36/7c5cbf/fff?text=?\'">' +
+            '<div><div class="vr-host-name">' + name + '</div><div style="font-size:0.6rem;color:var(--text-muted);">' + top + '</div></div>' +
+            '</div>' +
+            '<div class="vr-card-title">' + ttl + '</div>' +
+            '<div class="vr-card-meta">' +
+            '<span>👥 ' + (r.listenerCount||0) + '</span>' +
+            '<span>⭐ ' + parseFloat(r.starsEarned||0).toFixed(1) + '★</span>' +
+            (r.handRaisePrice ? '<span>🙋 ' + r.handRaisePrice + '★ to speak</span>' : '') +
+            '</div>' +
+            '<button class="vr-join-btn" onclick="event.stopPropagation();window.joinVoiceRoom(\'' + roomId + '\',false)">' + lbl + '</button>' +
+            '</div>';
+    }
+
+    window.startVoiceRoom = async function() {
+        if (!userAddress) { showToast('Connect wallet first'); return; }
+        const titleEl = document.getElementById('vr-new-title');
+        const priceEl = document.getElementById('vr-new-price');
+        const title   = (titleEl ? titleEl.value.trim() : '') || 'Voice Room';
+        const price   = Math.max(1, parseInt(priceEl ? priceEl.value : '5') || 5);
+        closeStartRoomModal();
+        showToast('Opening room…');
+        try {
+            const res  = await fetch(VR_CF_BASE + 'createVoiceRoom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hostAddr: userAddress, hostName: userHandle || 'Anonymous', hostAvatar: userAvatar || '', title, handRaisePrice: price, entryFee: 0 })
+            });
+            const data = await res.json();
+            if (!data.roomId) throw new Error(data.error || 'Failed to create room');
+            await window.joinVoiceRoom(data.roomId, true, data.token, data.uid);
+        } catch(e) {
+            showToast('Could not open room: ' + (e.message || 'error'));
+            console.error('[startVoiceRoom]', e);
+        }
+    };
+
+    window.joinVoiceRoom = async function(roomId, isHost, preToken, preUid) {
+        if (!userAddress) { showToast('Connect wallet first'); return; }
+        _vrRoomId = roomId;
+        try {
+            const roomDocSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, roomId)).catch(() => null);
+            if (!roomDocSnap || !roomDocSnap.exists()) { showToast('Room not found'); return; }
+            const roomData = roomDocSnap.data();
+            _vrIsHost    = userAddress.toLowerCase() === (roomData.hostAddr || '').toLowerCase();
+            _vrIsSpeaker = _vrIsHost || (roomData.currentSpeakers || []).some(s => s.addr === userAddress.toLowerCase());
+
+            let token = preToken, uid = preUid;
+            if (!token) {
+                const ch  = 'vr_' + roomId;
+                const res = await fetch(VR_CF_BASE + 'getAgoraToken?channel=' + encodeURIComponent(ch) + '&walletAddress=' + encodeURIComponent(userAddress));
+                const d   = await res.json();
+                if (!d.token) throw new Error('Token fetch failed');
+                token = d.token; uid = d.uid;
+            }
+            _vrShowOverlay();
+            await _vrConnectAgora(roomId, token, uid, _vrIsHost);
+            _vrSubscribeRoom(roomId);
+            _vrSubscribeChat(roomId);
+            if (_vrIsHost) _vrSubscribeQueue(roomId);
+            if (window.db && window.fs) {
+                window.fs.setDoc(
+                    window.fs.doc(window.db, VR_LISTEN, roomId, 'presence', userAddress.toLowerCase()),
+                    { addr: userAddress.toLowerCase(), name: userHandle || 'Anonymous', avatar: userAvatar || '', joinedAt: Date.now(), starsSpent: 0 }
+                ).catch(() => {});
+            }
+        } catch(e) {
+            showToast('Could not join room');
+            console.error('[joinVoiceRoom]', e);
+            _vrLeaveCleanup();
+        }
+    };
+
+    async function _vrConnectAgora(roomId, token, uid, isHost) {
+        const ch = 'vr_' + roomId;
+        _vrAgoraClient = window.AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        await _vrAgoraClient.join(AGORA_APP_ID_VR, ch, token, uid);
+        if (isHost) {
+            try {
+                _vrAudioTrack = await window.AgoraRTC.createMicrophoneAudioTrack();
+                await _vrAgoraClient.publish([_vrAudioTrack]);
+            } catch(micErr) {
+                console.warn('[VR] Mic unavailable:', micErr.message);
+                showToast('Microphone not available — you\'re muted');
+            }
+        }
+        _vrAgoraClient.on('user-published', async (user, mediaType) => {
+            if (mediaType === 'audio') {
+                await _vrAgoraClient.subscribe(user, 'audio');
+                user.audioTrack.play();
+            }
+        });
+        _vrAgoraClient.on('user-unpublished', (user) => {
+            if (user.audioTrack) user.audioTrack.stop();
+        });
+        _vrAgoraClient.enableAudioVolumeIndicator();
+        _vrAgoraClient.on('volume-indicator', (vols) => {
+            vols.forEach(v => {
+                const orb = document.querySelector('.vr-orb[data-uid="' + v.uid + '"]');
+                if (orb) orb.classList.toggle('speaking', v.level > 15);
+            });
+        });
+    }
+
+    function _vrShowOverlay() {
+        const ov = document.getElementById('vr-room-overlay');
+        if (ov) ov.style.display = 'flex';
+        const feed = document.getElementById('vr-chat-feed');
+        if (feed) feed.innerHTML = '';
+        const qs = document.getElementById('vr-queue-strip');
+        if (qs) qs.style.display = 'none';
+        const muteBtn  = document.getElementById('vr-ctrl-mute');
+        const endBtn   = document.getElementById('vr-ctrl-end');
+        const handBtn  = document.getElementById('vr-ctrl-hand');
+        const leaveBtn = document.getElementById('vr-ctrl-leave');
+        const reqBtn   = document.getElementById('vr-ctrl-requests');
+        if (muteBtn)  muteBtn.style.display  = _vrIsHost ? 'flex' : 'none';
+        if (endBtn)   endBtn.style.display   = _vrIsHost ? 'flex' : 'none';
+        if (reqBtn)   reqBtn.style.display   = _vrIsHost ? 'flex' : 'none';
+        if (handBtn)  handBtn.style.display  = _vrIsHost ? 'none' : 'flex';
+        if (leaveBtn) leaveBtn.style.display = _vrIsHost ? 'none' : 'flex';
+    }
+
+    function _vrSubscribeRoom(roomId) {
+        if (_vrRoomUnsub) { try { _vrRoomUnsub(); } catch(_) {} _vrRoomUnsub = null; }
+        if (!window.db || !window.fs) return;
+        _vrRoomUnsub = window.fs.onSnapshot(window.fs.doc(window.db, VR_COL, roomId), snap => {
+            if (!snap.exists()) { _vrLeaveCleanup(); return; }
+            const r = snap.data();
+            if (!r.active) { _vrLeaveCleanup(); showToast('Room ended'); return; }
+            const sc = document.getElementById('vr-stars-counter');
+            const _myVrBal = parseFloat(purchasedStars || 0) + parseFloat(creatorEarnings || 0);
+            if (sc) sc.textContent = '★ ' + _myVrBal.toFixed(1);
+            const th = document.getElementById('vr-room-title-hd');
+            if (th) th.textContent = r.title || 'Voice Room';
+            const reqsOpen = r.stageRequestsOpen !== false;
+            const _reqBtn  = document.getElementById('vr-ctrl-requests');
+            const _reqLbl  = document.getElementById('vr-requests-lbl');
+            if (_reqBtn) { _reqBtn.classList.toggle('req-on', reqsOpen); _reqBtn.classList.toggle('req-off', !reqsOpen); }
+            if (_reqLbl) _reqLbl.textContent = reqsOpen ? 'Requests' : 'Requests ✗';
+            if (!_vrIsHost) {
+                const _hBtn = document.getElementById('vr-ctrl-hand');
+                if (_hBtn) { _hBtn.style.opacity = reqsOpen ? '' : '0.35'; _hBtn.style.pointerEvents = reqsOpen ? '' : 'none'; }
+            }
+            if (!_vrIsHost && userAddress) {
+                const myAddr  = userAddress.toLowerCase();
+                const myEntry = (r.currentSpeakers || []).find(s => s.addr === myAddr);
+                if (_vrIsSpeaker && !myEntry) {
+                    _vrIsSpeaker = false;
+                    if (_vrAudioTrack) { try { _vrAgoraClient.unpublish([_vrAudioTrack]); _vrAudioTrack.stop(); _vrAudioTrack.close(); } catch(_) {} _vrAudioTrack = null; }
+                    showToast('You were removed from the stage');
+                } else if (myEntry && myEntry.hostMuted && _vrAudioTrack && !_vrMuted) {
+                    _vrMuted = true;
+                    _vrAudioTrack.setMuted(true).catch(() => {});
+                    showToast('You were muted by the host');
+                    const btn = document.getElementById('vr-ctrl-mute');
+                    if (btn) btn.classList.add('muted');
+                } else if (myEntry && !myEntry.hostMuted && _vrAudioTrack && _vrMuted) {
+                    _vrMuted = false;
+                    _vrAudioTrack.setMuted(false).catch(() => {});
+                    showToast('You were unmuted by the host');
+                    const btn = document.getElementById('vr-ctrl-mute');
+                    if (btn) btn.classList.remove('muted');
+                } else if (myEntry && !_vrIsSpeaker) {
+                    _vrIsSpeaker = true;
+                    (async () => {
+                        try {
+                            _vrAudioTrack = await window.AgoraRTC.createMicrophoneAudioTrack();
+                            await _vrAgoraClient.publish([_vrAudioTrack]);
+                            showToast('You\'re on stage! 🎤');
+                        } catch(micErr) {
+                            showToast('Mic unavailable — you\'re muted on stage');
+                        }
+                        const muteBtn = document.getElementById('vr-ctrl-mute');
+                        const handBtn = document.getElementById('vr-ctrl-hand');
+                        if (muteBtn) muteBtn.style.display = 'flex';
+                        if (handBtn) handBtn.style.display = 'none';
+                    })();
+                }
+            }
+            _vrRenderSpeakers(r);
+            _vrRenderListeners(roomId, r);
+        });
+    }
+
+    function _vrUidFromAddr(addr) {
+        return (parseInt((addr||'0x00000000').toLowerCase().slice(2,10), 16) % 1000000) + 10000;
+    }
+
+    function _vrRenderSpeakers(r) {
+        const row = document.getElementById('vr-speakers-row');
+        if (!row) return;
+        row.innerHTML = '';
+        const hav    = escHtml(r.hostAvatar || '');
+        const hn     = escHtml(r.hostName || 'Host');
+        const hAddr  = escHtml(r.hostAddr || '');
+        const hUid   = _vrUidFromAddr(r.hostAddr);
+        const myAddr = (userAddress || '').toLowerCase();
+        const _myBal = (parseFloat(purchasedStars || 0) + parseFloat(creatorEarnings || 0)).toFixed(1);
+        const isHostMe    = myAddr && (r.hostAddr || '').toLowerCase() === myAddr;
+        const hostBalHtml = isHostMe ? '<div class="vr-orb-balance">★ ' + _myBal + '</div>' : '';
+        row.insertAdjacentHTML('beforeend',
+            '<div class="vr-orb-wrap" onclick="vrOpenOrbPopup(\'' + hAddr + '\',\'' + hn + '\',\'' + hav + '\')" style="cursor:pointer;">' +
+            '<div class="vr-orb vr-orb-host" data-uid="' + hUid + '">' +
+            '<img src="' + hav + '" onerror="this.src=\'https://placehold.co/80/f0b441/000?text=H\'">' +
+            '<div class="vr-orb-ring"></div>' +
+            '</div>' +
+            '<div class="vr-orb-name host-lbl">' + hn + '</div>' +
+            '<div class="vr-role-badge host">HOST</div>' +
+            hostBalHtml + '</div>');
+        (r.currentSpeakers || []).forEach(sp => {
+            const sUid  = _vrUidFromAddr(sp.addr);
+            const sAddr = escHtml(sp.addr || '');
+            const sName = escHtml(sp.name || 'Speaker');
+            const sAv   = escHtml(sp.avatar || '');
+            const isSpeakerMe = myAddr && (sp.addr || '').toLowerCase() === myAddr;
+            const spkBalHtml  = isSpeakerMe ? '<div class="vr-orb-balance">★ ' + _myBal + '</div>' : '';
+            row.insertAdjacentHTML('beforeend',
+                '<div class="vr-orb-wrap" onclick="vrOpenOrbPopup(\'' + sAddr + '\',\'' + sName + '\',\'' + sAv + '\')" style="cursor:pointer;">' +
+                '<div class="vr-orb vr-orb-speaker" data-uid="' + sUid + '">' +
+                '<img src="' + sAv + '" onerror="this.src=\'https://placehold.co/64/7c5cbf/fff?text=S\'">' +
+                '<div class="vr-orb-ring spk"></div>' +
+                '</div>' +
+                '<div class="vr-orb-name">' + sName + '</div>' +
+                '<div class="vr-role-badge speaker">ON STAGE</div>' +
+                spkBalHtml + '</div>');
+        });
+    }
+
+    function _vrRenderListeners(roomId, r) {
+        if (!window.db || !window.fs) return;
+        const stageAddrs = new Set([(r.hostAddr || '').toLowerCase()]);
+        (r.currentSpeakers || []).forEach(s => stageAddrs.add((s.addr || '').toLowerCase()));
+        window.fs.getDocs(window.fs.collection(window.db, VR_LISTEN, roomId, 'presence')).then(snap => {
+            const grid = document.getElementById('vr-listener-grid');
+            const lbl  = document.getElementById('vr-listener-label');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const MAX = 24;
+            let shown = 0, listenerCount = 0;
+            snap.forEach(doc => {
+                const l = doc.data();
+                if (stageAddrs.has((l.addr || '').toLowerCase())) return;
+                listenerCount++;
+                if (shown >= MAX) return;
+                grid.insertAdjacentHTML('beforeend', '<img class="vr-l-av" src="' + escHtml(l.avatar||'') + '" title="' + escHtml(l.name||'') + '" onerror="this.src=\'https://placehold.co/32/1a1535/fff?text=?\'>');
+                shown++;
+            });
+            const extra = listenerCount - shown;
+            if (extra > 0) grid.insertAdjacentHTML('beforeend', '<div class="vr-l-more">+' + extra + '</div>');
+            if (lbl) lbl.textContent = 'Listening (' + listenerCount + ')';
+            if (_vrIsHost && window.db && window.fs) {
+                window.fs.updateDoc(window.fs.doc(window.db, VR_COL, roomId), { listenerCount }).catch(() => {});
+            }
+        }).catch(() => {});
+    }
+
+    function _vrSubscribeQueue(roomId) {
+        if (_vrQueueUnsub) { try { _vrQueueUnsub(); } catch(_) {} _vrQueueUnsub = null; }
+        if (!window.db || !window.fs) return;
+        _vrQueueUnsub = window.fs.onSnapshot(
+            window.fs.collection(window.db, VR_QUEUE, roomId, 'requests'),
+            snap => {
+                const strip = document.getElementById('vr-queue-strip');
+                const qRow  = document.getElementById('vr-queue-row');
+                if (!strip || !qRow) return;
+                const pending = [];
+                snap.forEach(doc => { const q = doc.data(); if (q.status === 'pending') pending.push(Object.assign({ id: doc.id }, q)); });
+                pending.sort((a, b) => (b.bidStars || 0) - (a.bidStars || 0));
+                if (pending.length === 0) { _vrPrevQueueSize = 0; strip.style.display = 'none'; return; }
+                if (pending.length > _vrPrevQueueSize) _vrDoorbellSound();
+                _vrPrevQueueSize = pending.length;
+                strip.style.display = 'block';
+                qRow.innerHTML = '';
+                pending.forEach(q => {
+                    qRow.insertAdjacentHTML('beforeend',
+                        '<div class="vr-q-item">' +
+                        '<img class="vr-q-av" src="' + escHtml(q.avatar||'') + '" onerror="this.src=\'https://placehold.co/38/1a1535/fff?text=?\'" title="' + escHtml(q.name||'') + '">' +
+                        '<div class="vr-q-bid">' + q.bidStars + '★</div>' +
+                        '<div class="vr-q-name">' + escHtml(q.name||'') + '</div>' +
+                        '<div class="vr-q-btns">' +
+                        '<button class="vr-admit-btn" onclick="vrAdmitSpeaker(\'' + roomId + '\',\'' + q.id + '\')">✓ Let in</button>' +
+                        '<button class="vr-deny-btn"  onclick="vrDenySpeaker(\'' + roomId + '\',\'' + q.id + '\')">✕</button>' +
+                        '</div></div>');
+                });
+            },
+            err => console.error('[vrQueue]', err.code)
+        );
+    }
+
+    function _vrSubscribeChat(roomId) {
+        if (_vrChatUnsub) { try { _vrChatUnsub(); } catch(_) {} _vrChatUnsub = null; }
+        if (!window.db || !window.fs) return;
+        _vrChatUnsub = window.fs.onSnapshot(
+            window.fs.query(
+                window.fs.collection(window.db, VR_CHAT, roomId, 'messages'),
+                window.fs.orderBy('ts', 'asc'),
+                window.fs.limitToLast(60)
+            ),
+            snap => {
+                const feed = document.getElementById('vr-chat-feed');
+                if (!feed) return;
+                snap.docChanges().forEach(ch => {
+                    if (ch.type !== 'added') return;
+                    const m = ch.doc.data();
+                    let cls = 'vr-msg', html = '';
+                    if (m.type === 'event') { cls += ' ev';  html = escHtml(m.text || ''); }
+                    else if (m.type === 'gift') { cls += ' gft'; html = escHtml(m.text || ''); }
+                    else { html = '<span class="vr-handle">' + escHtml(m.name||'') + '</span>' + escHtml(m.text||''); }
+                    feed.insertAdjacentHTML('beforeend', '<div class="' + cls + '">' + html + '</div>');
+                    feed.scrollTop = feed.scrollHeight;
+                });
+            },
+            err => console.error('[vrChat]', err.code, err.message)
+        );
+    }
+
+    window.sendVRChat = async function() {
+        if (!userAddress || !_vrRoomId || !window.db || !window.fs) return;
+        const inp  = document.getElementById('vr-chat-input');
+        const text = inp ? inp.value.trim() : '';
+        if (!text) return;
+        inp.value = '';
+        try {
+            await window.fs.addDoc(window.fs.collection(window.db, VR_CHAT, _vrRoomId, 'messages'), {
+                type: 'chat', name: userHandle || 'Anonymous', addr: userAddress.toLowerCase(), text, ts: Date.now()
+            });
+        } catch(e) { console.error('[sendVRChat]', e); }
+    };
+
+    window.vrRaiseHand = async function() {
+        if (!userAddress || !_vrRoomId || _vrIsHost || _vrIsSpeaker) return;
+        if (!window.db || !window.fs) return;
+        const roomSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
+        if (!roomSnap || !roomSnap.exists()) return;
+        const _rdVR  = roomSnap.data();
+        if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
+        const price = parseFloat(_rdVR.handRaisePrice || 1);
+        if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
+        try {
+            const res  = await fetch(VR_CF_BASE + 'raiseHandVR', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: _vrRoomId, userAddr: userAddress, userName: userHandle||'Anonymous', userAvatar: userAvatar||'', bidStars: price })
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error); return; }
+            showToast('Hand raised! Waiting for host…');
+            const btn = document.getElementById('vr-ctrl-hand');
+            if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
+        } catch(e) { showToast('Could not raise hand'); }
+    };
+
+    window.vrAdmitSpeaker = async function(roomId, reqAddr) {
+        if (!_vrIsHost || !userAddress) return;
+        showToast('Admitting…');
+        try {
+            const res  = await fetch(VR_CF_BASE + 'admitSpeakerVR', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId, hostAddr: userAddress, reqAddr })
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error); return; }
+            showToast('Speaker admitted');
+        } catch(e) { showToast('Could not admit speaker'); }
+    };
+
+    window.vrToggleRequests = async function() {
+        if (!_vrIsHost || !_vrRoomId || !window.db || !window.fs) return;
+        const roomRef  = window.fs.doc(window.db, VR_COL, _vrRoomId);
+        const roomSnap = await window.fs.getDoc(roomRef).catch(() => null);
+        if (!roomSnap || !roomSnap.exists()) return;
+        const cur = roomSnap.data().stageRequestsOpen !== false;
+        await window.fs.updateDoc(roomRef, { stageRequestsOpen: !cur }).catch(() => {});
+        showToast(!cur ? 'Stage requests opened' : 'Stage requests closed');
+    };
+
+    window.vrDenySpeaker = async function(roomId, reqAddr) {
+        if (!_vrIsHost || !window.db || !window.fs) return;
+        await window.fs.updateDoc(
+            window.fs.doc(window.db, VR_QUEUE, roomId, 'requests', reqAddr), { status: 'denied' }
+        ).catch(() => {});
+    };
+
+    window.vrToggleMute = async function() {
+        if (!_vrAudioTrack) return;
+        _vrMuted = !_vrMuted;
+        await _vrAudioTrack.setMuted(_vrMuted);
+        const btn = document.getElementById('vr-ctrl-mute');
+        if (btn) btn.classList.toggle('muted', _vrMuted);
+        const ic = btn ? btn.querySelector('.vci') : null;
+        if (ic) ic.textContent = _vrMuted ? '🔇' : '🎤';
+        const lb = document.getElementById('vr-mute-lbl');
+        if (lb) lb.textContent = _vrMuted ? 'Unmute' : 'Mute';
+    };
+
+    let _vrGiftTarget  = null;
+    let _vrOrbTarget   = null;
+
+    window.vrOpenOrbPopup = function(addr, name, avatar) {
+        _vrOrbTarget = { addr, name, avatar };
+        const popup = document.getElementById('vr-orb-popup');
+        if (!popup) return;
+        const av = document.getElementById('vr-popup-av');
+        if (av) { av.src = avatar || ''; av.onerror = () => { av.src = 'https://placehold.co/60/7c5cbf/fff?text=' + encodeURIComponent((name||'?')[0]); }; }
+        const nm = document.getElementById('vr-popup-name');
+        if (nm) nm.textContent = name || 'Speaker';
+        const modRow = document.getElementById('vr-popup-mod-row');
+        if (modRow) modRow.style.display = (_vrIsHost && addr.toLowerCase() !== userAddress.toLowerCase()) ? 'flex' : 'none';
+        popup.classList.add('open');
+    };
+
+    window.vrCloseOrbPopup = function() {
+        _vrOrbTarget = null;
+        const popup = document.getElementById('vr-orb-popup');
+        if (popup) popup.classList.remove('open');
+    };
+
+    window.vrPopupGift = function() {
+        if (!_vrOrbTarget) return;
+        _vrGiftTarget = { addr: _vrOrbTarget.addr, name: _vrOrbTarget.name };
+        const lbl = document.getElementById('vr-gift-to-lbl');
+        if (lbl) lbl.textContent = _vrGiftTarget.name;
+        vrCloseOrbPopup();
+        _vrGiftOpen = true;
+        const picker = document.getElementById('vr-gift-picker');
+        if (picker) picker.classList.add('open');
+    };
+
+    window.vrPopupFollow = async function() {
+        if (!_vrOrbTarget || !userAddress) { showToast('Connect wallet first'); return; }
+        const them = _vrOrbTarget.addr.toLowerCase();
+        const me   = userAddress.toLowerCase();
+        if (them === me) { showToast("You can't follow yourself"); return; }
+        const name = _vrOrbTarget.name;
+        vrCloseOrbPopup();
+        if (typeof _heroTargetAddr !== 'undefined') {
+            _heroTargetAddr = them;
+            if (typeof heroFollow === 'function') { await heroFollow(); return; }
+        }
+        try {
+            const docId = me + '_' + them;
+            await window.fs.setDoc(window.fs.doc(window.db, 'social_graph', docId), { follower: me, following: them, followedAt: Date.now() });
+            showToast('Following ' + name + '!');
+        } catch(e) { showToast('Could not follow'); }
+    };
+
+    window.vrCloseGiftPicker = function() {
+        _vrGiftOpen = false;
+        const picker = document.getElementById('vr-gift-picker');
+        if (picker) picker.classList.remove('open');
+    };
+
+    window.vrHostMuteSpeaker = async function() {
+        if (!_vrIsHost || !_vrOrbTarget || !_vrRoomId || !window.db || !window.fs) return;
+        const targetAddr = _vrOrbTarget.addr.toLowerCase();
+        vrCloseOrbPopup();
+        const roomRef  = window.fs.doc(window.db, VR_COL, _vrRoomId);
+        const roomSnap = await window.fs.getDoc(roomRef).catch(() => null);
+        if (!roomSnap || !roomSnap.exists()) return;
+        const speakers = (roomSnap.data().currentSpeakers || []).map(sp => {
+            if (sp.addr === targetAddr) return Object.assign({}, sp, { hostMuted: !sp.hostMuted });
+            return sp;
+        });
+        await window.fs.updateDoc(roomRef, { currentSpeakers: speakers }).catch(() => {});
+        showToast('Speaker mute toggled');
+    };
+
+    window.vrRemoveSpeaker = async function() {
+        if (!_vrIsHost || !_vrOrbTarget || !_vrRoomId || !window.db || !window.fs) return;
+        const targetAddr = _vrOrbTarget.addr.toLowerCase();
+        vrCloseOrbPopup();
+        const roomRef  = window.fs.doc(window.db, VR_COL, _vrRoomId);
+        const roomSnap = await window.fs.getDoc(roomRef).catch(() => null);
+        if (!roomSnap || !roomSnap.exists()) return;
+        const speakers = (roomSnap.data().currentSpeakers || []).filter(sp => sp.addr !== targetAddr);
+        await window.fs.updateDoc(roomRef, { currentSpeakers: speakers }).catch(() => {});
+        window.fs.addDoc(window.fs.collection(window.db, VR_CHAT, _vrRoomId, 'messages'), {
+            type: 'event', text: '🎤 A speaker was removed from the stage.', ts: Date.now()
+        }).catch(() => {});
+    };
+
+    window.vrToggleGiftPicker = async function() {
+        if (!_vrGiftOpen) {
+            if (!_vrGiftTarget && _vrRoomId && window.db && window.fs) {
+                const snap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
+                if (snap && snap.exists()) {
+                    const r = snap.data();
+                    _vrGiftTarget = { addr: r.hostAddr, name: r.hostName || 'Host' };
+                    const lbl = document.getElementById('vr-gift-to-lbl');
+                    if (lbl) lbl.textContent = '→ ' + _vrGiftTarget.name;
+                }
+            }
+        }
+        _vrGiftOpen = !_vrGiftOpen;
+        const picker = document.getElementById('vr-gift-picker');
+        if (picker) picker.classList.toggle('open', _vrGiftOpen);
+    };
+
+    window.vrSendGift = async function(tierKey) {
+        _vrGiftOpen = false;
+        const picker = document.getElementById('vr-gift-picker');
+        if (picker) picker.classList.remove('open');
+        if (!_vrRoomId || !userAddress) return;
+        if (!_vrGiftTarget) { showToast('Tap a speaker to gift them'); return; }
+        try {
+            const res = await fetch(VR_CF_BASE + 'sendVoiceRoomGift', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    senderAddr: userAddress, senderHandle: userHandle || 'Anonymous', senderAvatar: userAvatar || '',
+                    recipientAddr: _vrGiftTarget.addr, tierKey, roomId: _vrRoomId
+                })
+            });
+            const data = await res.json();
+            if (data.error) { showToast(data.error); return; }
+            const _VR_TIERS = {
+                spark:   { icon:'⚡', name:'Spark',   cost:1  },
+                fire:    { icon:'🔥', name:'Fire',    cost:5  },
+                diamond: { icon:'💎', name:'Diamond', cost:20 },
+                rocket:  { icon:'🚀', name:'Rocket',  cost:50 }
+            };
+            const _t = _VR_TIERS[tierKey];
+            if (_t && window.logTransaction && _vrGiftTarget) {
+                const _recip = (_vrGiftTarget.addr || '').toLowerCase();
+                const _cut   = Math.round(_t.cost * 0.8 * 10) / 10;
+                window.logTransaction('spend', _t.cost, {
+                    from: userAddress, to: _recip,
+                    description: _t.icon + ' ' + _t.name + ' Gift sent in Voice Room (-' + _t.cost + '★)'
+                });
+                window.logTransaction('earn', _cut, {
+                    from: userAddress, to: _recip,
+                    description: _t.icon + ' ' + _t.name + ' Gift received in Voice Room (+' + _cut.toFixed(1) + '★)'
+                });
+            }
+            showToast('Gift sent to ' + _vrGiftTarget.name + '!');
+            _vrGiftTarget = null;
+            const lbl = document.getElementById('vr-gift-to-lbl');
+            if (lbl) lbl.textContent = '';
+        } catch(e) { showToast('Gift failed'); console.error('[vrSendGift]', e); }
+    };
+
+    window.vrLeave = async function() {
+        if (_vrIsHost) {
+            if (!confirm('End the room for everyone?')) return;
+            if (_vrRoomId && window.db && window.fs) {
+                await window.fs.updateDoc(window.fs.doc(window.db, VR_COL, _vrRoomId), { active: false, endedAt: Date.now() }).catch(() => {});
+            }
+        }
+        _vrLeaveCleanup();
+    };
+
+    function _vrLeaveCleanup() {
+        if (_vrAudioTrack) { try { _vrAudioTrack.stop(); _vrAudioTrack.close(); } catch(_) {} _vrAudioTrack = null; }
+        if (_vrAgoraClient) { try { _vrAgoraClient.leave(); } catch(_) {} _vrAgoraClient = null; }
+        if (_vrRoomUnsub)  { try { _vrRoomUnsub();  } catch(_) {} _vrRoomUnsub  = null; }
+        if (_vrChatUnsub)  { try { _vrChatUnsub();  } catch(_) {} _vrChatUnsub  = null; }
+        if (_vrQueueUnsub) { try { _vrQueueUnsub(); } catch(_) {} _vrQueueUnsub = null; }
+        if (userAddress && _vrRoomId && window.db && window.fs) {
+            window.fs.deleteDoc(window.fs.doc(window.db, VR_LISTEN, _vrRoomId, 'presence', userAddress.toLowerCase())).catch(() => {});
+        }
+        _vrRoomId = null; _vrIsHost = false; _vrIsSpeaker = false; _vrMuted = false;
+        _vrGiftOpen = false; _vrGiftTarget = null; _vrOrbTarget = null; _vrPrevQueueSize = 0;
+        const popup = document.getElementById('vr-orb-popup');
+        if (popup) popup.classList.remove('open');
+        const ov = document.getElementById('vr-room-overlay');
+        if (ov) ov.style.display = 'none';
+    }
+
+
 
     // ── Config ────────────────────────────────────────────────────
     const AGORA_APP_ID  = 'e32b02aab43a4762b385498535b0f51d';
@@ -26057,14 +26996,17 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // ── Tab switching ─────────────────────────────────────────────
     window.setLiveTab = function(tab) {
-        ['watch','broadcast'].forEach(t => {
+        ['watch','broadcast','rooms'].forEach(t => {
             const btn = $('ltab-' + t);
             if (btn) btn.classList.toggle('active', t === tab);
         });
         const watchEl = $('live-watch-panel');
         const bcEl    = $('live-broadcast-panel');
+        const rmEl    = $('live-rooms-panel');
         if (watchEl) watchEl.style.display = tab === 'watch' ? '' : 'none';
         if (bcEl)    bcEl.style.display    = tab === 'broadcast' ? '' : 'none';
+        if (rmEl)    rmEl.style.display    = tab === 'rooms' ? '' : 'none';
+        if (tab === 'rooms' && typeof window.loadVoiceRooms === 'function') window.loadVoiceRooms();
         if (tab === 'watch') {
             window.loadStreamBrowser();
             // Stop preview camera when leaving broadcast tab (unless actively streaming)
@@ -33365,6 +34307,119 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
   });
 })();
 </script>
+<!-- Voice Room Start Modal -->
+<div id="vr-start-modal">
+    <div id="vr-start-modal-inner">
+        <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:16px;">🎧 Start a Voice Room</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">Room title</div>
+        <input id="vr-new-title" class="field" placeholder="What are we talking about?" style="margin-bottom:14px;margin-top:0;" maxlength="80">
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">🙋 Hand raise price (★ to speak)</div>
+        <input id="vr-new-price" class="field" type="number" value="5" min="1" max="500" style="margin-bottom:18px;margin-top:0;">
+        <div style="display:flex;gap:8px;">
+            <button class="btn btn-teal" style="flex:1;" onclick="startVoiceRoom()">Open Room</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="closeStartRoomModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Voice Room Overlay -->
+<div id="vr-room-overlay" style="display:none;">
+
+    <!-- Header -->
+    <div id="vr-overlay-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="vr-live-dot"></div>
+            <span class="vr-room-title-hd" id="vr-room-title-hd">Voice Room</span>
+        </div>
+        <span id="vr-stars-counter">⭐ 0★</span>
+        <button class="vr-close-btn" onclick="vrLeave()">✕</button>
+    </div>
+
+    <!-- Speaker Stage -->
+    <div id="vr-stage-card">
+        <div id="vr-speakers-row"></div>
+    </div>
+
+    <!-- Queue strip (host-only, hidden when empty) -->
+    <div id="vr-queue-strip" style="display:none;">
+        <div class="vr-q-label">🙋 Waiting to speak</div>
+        <div id="vr-queue-row"></div>
+    </div>
+
+    <!-- Listener grid -->
+    <div id="vr-listener-section">
+        <div class="vr-l-label" id="vr-listener-label">Listening (0)</div>
+        <div id="vr-listener-grid"></div>
+    </div>
+
+    <!-- Chat panel -->
+    <div id="vr-chat-panel">
+        <div id="vr-chat-feed"></div>
+        <div id="vr-chat-input-row">
+            <input id="vr-chat-input" placeholder="Say something…" onkeydown="if(event.key==='Enter')sendVRChat()" maxlength="200">
+            <button id="vr-chat-send-btn" onclick="sendVRChat()">Send</button>
+        </div>
+    </div>
+
+    <!-- Gift picker (floats above controls) -->
+    <div id="vr-gift-picker">
+        <div class="vr-gift-picker-header">
+            <div class="vr-gift-to-row">🎁 <span id="vr-gift-to-lbl">Select a speaker</span></div>
+            <button class="vr-gift-close-btn" onclick="vrCloseGiftPicker()">×</button>
+        </div>
+        <div class="vr-gift-tiles">
+            <div class="vr-gift-tile" onclick="vrSendGift('spark')"><span class="gi">⚡</span><span>Spark</span><span style="color:var(--gold);">1★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('fire')"><span class="gi">🔥</span><span>Fire</span><span style="color:var(--gold);">5★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('diamond')"><span class="gi">💎</span><span>Diamond</span><span style="color:var(--gold);">20★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('rocket')"><span class="gi">🚀</span><span>Rocket</span><span style="color:var(--gold);">50★</span></div>
+        </div>
+    </div>
+
+    <!-- Orb tap popup: follow + gift + host controls -->
+    <div id="vr-orb-popup">
+        <button class="vr-popup-close" onclick="vrCloseOrbPopup()">×</button>
+        <img id="vr-popup-av" class="vr-popup-av" src="" alt="">
+        <div id="vr-popup-name" class="vr-popup-name"></div>
+        <div class="vr-popup-actions">
+            <button class="vr-popup-btn follow" onclick="vrPopupFollow()">+ Follow</button>
+            <button class="vr-popup-btn gift" onclick="vrPopupGift()">🎁 Gift</button>
+        </div>
+        <div id="vr-popup-mod-row" style="display:none;gap:8px;width:100%;">
+            <button class="vr-popup-btn mod-mute" onclick="vrHostMuteSpeaker()">🔇 Mute</button>
+            <button class="vr-popup-btn mod-remove" onclick="vrRemoveSpeaker()">⬇ Remove</button>
+        </div>
+    </div>
+
+    <!-- Controls bar -->
+    <div id="vr-controls">
+        <button class="vr-ctrl" id="vr-ctrl-mute" onclick="vrToggleMute()" style="display:none;">
+            <span class="vr-ctrl-icon"><span class="vci">🎙</span></span>
+            <span class="vr-ctrl-lbl" id="vr-mute-lbl">Mute</span>
+        </button>
+        <button class="vr-ctrl hand" id="vr-ctrl-hand" onclick="vrRaiseHand()">
+            <span class="vr-ctrl-icon"><span class="vci">✋</span></span>
+            <span class="vr-ctrl-lbl" id="vr-hand-lbl">Raise Hand</span>
+        </button>
+        <button class="vr-ctrl" id="vr-ctrl-gift" onclick="vrToggleGiftPicker()">
+            <span class="vr-ctrl-icon"><span class="vci">🎁</span></span>
+            <span class="vr-ctrl-lbl">Gift</span>
+        </button>
+        <button class="vr-ctrl req-on" id="vr-ctrl-requests" onclick="vrToggleRequests()" style="display:none;">
+            <span class="vr-ctrl-icon"><span class="vci">🙋</span></span>
+            <span class="vr-ctrl-lbl" id="vr-requests-lbl">Requests</span>
+        </button>
+        <button class="vr-ctrl end" id="vr-ctrl-end" onclick="vrLeave()" style="display:none;">
+            <span class="vr-ctrl-icon"><span class="vci">⏹</span></span>
+            <span class="vr-ctrl-lbl">End Room</span>
+        </button>
+        <button class="vr-ctrl leave" id="vr-ctrl-leave" onclick="vrLeave()">
+            <span class="vr-ctrl-icon"><span class="vci">🚪</span></span>
+            <span class="vr-ctrl-lbl">Leave</span>
+        </button>
+    </div>
+
+</div>
+
 </body>
 </html>
 
