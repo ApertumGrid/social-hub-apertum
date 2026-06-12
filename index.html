@@ -13307,7 +13307,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window._firestoreCreatorStars = fbCreatorStars;
                     const onChainSettled = Math.floor(withdrawableHuman * _aptmPrice / CONFIG.STAR_USD * 100) / 100;
                     window._onChainEarned = onChainSettled;
-                    window._onChainWithdrawableUsdt = withdrawableHuman;
+                    window._onChainWithdrawableUsdt = withdrawableHuman * _aptmPrice;
                     window._onChainDepositedUsdt = depositedUsdValue;
                     creatorEarnings   = fbCreatorStars + onChainSettled;
                     currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
@@ -13347,9 +13347,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const earnHuman = parseFloat(ethers.utils.formatUnits(balResult.withdrawable || 0, 18)) || 0;
                 const _spent    = window._totalSpentStars || 0;
 
-                const onChainEarned = Math.max(0, Math.floor(earnHuman / CONFIG.STAR_USD * 100) / 100);
+                const _aptmPrice    = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+                const onChainEarned = Math.max(0, Math.floor(earnHuman * _aptmPrice / CONFIG.STAR_USD * 100) / 100);
                 window._onChainEarned = onChainEarned;
-                window._onChainWithdrawableUsdt = earnHuman;
+                window._onChainWithdrawableUsdt = earnHuman * _aptmPrice;
 
                 const spendLockActive = (Date.now() - _lastSpendTime) < SPEND_LOCK_MS;
                 if (!spendLockActive) {
