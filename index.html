@@ -2020,47 +2020,98 @@
         /* â”€â”€ Gift System CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         /* ── TikTok viewer layout — applied when body has class is-watching ── */
         body.is-watching #mobile-dashboard { display: none !important; }
+        /* Viewer icon strip — shown on mobile only when watching */
+        #viewer-icon-strip{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:10px;z-index:30}
+        @media(max-width:900px){
+            /* Hide page heading — info bar replaces it */
+            body.is-watching #page-live>.page-heading,
+            body.is-hosting  #page-live>.page-heading{display:none!important;}
+            body.is-watching.is-cohost #cohost-stage-wrap{display:none!important;}
+            /* Show viewer icon strip */
+            body.is-watching #viewer-icon-strip{display:flex;}
+        }
         @media(max-width:900px) {
-            body.is-watching #live-player-wrap {
-                position: fixed !important;
-                top: 0; right: 0; bottom: 0; left: 0;
-                display: flex !important;
-                flex-direction: column !important;
-                z-index: 500;
-                background: #090715;
-                overflow: hidden;
-            }
-            body.is-watching #live-remote-video-container {
-                flex: 0 0 auto !important;
-                height: 360px !important;
-                min-height: 240px !important;
-                max-height: 360px !important;
-                border-radius: 16px;
-                position: relative;
-            }
-            body.is-watching #viewer-panel-chat-card {
-                flex: 1 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                background: rgba(9,7,21,0.98);
-                overflow: hidden;
-            }
-            body.is-watching .live-chat-feed {
-                flex: 1 !important;
-                max-height: none !important;
-                justify-content: flex-end;
-            }
-            body.is-watching .live-chat-input-row {
-                flex-shrink: 0 !important;
-                background: rgba(15,11,28,0.97);
-                border-top: 1px solid rgba(124,92,191,0.2);
-            }
-            body.is-watching #topnav { display: none !important; }
-            body.is-watching #bottom-nav { display: none !important; }
+            body.is-watching #topnav{display:none!important;}
+            body.is-watching #bottom-nav{display:none!important;}
             body.is-watching #hype-ticker { display: none !important; }
             body.is-watching #live-stream-meta { display: none !important; }
-            body.is-watching #viewer-floating-chat { display: none !important; }
             body.is-watching #cmd-orb, body.is-watching #cmd-wheel, body.is-watching #cmd-scrim { display: none !important; }
+
+            /* Live player becomes full-viewport overlay */
+            body.is-watching #live-player-wrap{
+                position:fixed!important;
+                top:0!important;left:0!important;right:0!important;bottom:0!important;
+                width:100%!important;height:100%!important;
+                z-index:500!important;overflow:hidden!important;max-height:none!important;background:#000!important;
+            }
+
+            /* Video fills entire screen */
+            body.is-watching #live-player-wrap #live-remote-video-container{
+                position:absolute!important;
+                top:0!important;left:0!important;right:0!important;bottom:0!important;
+                width:100%!important;height:100%!important;
+                min-height:auto!important;max-height:none!important;
+                border-radius:0!important;overflow:hidden!important;flex-shrink:unset!important;
+            }
+
+            /* Bottom-to-mid gradient so chat is readable over video */
+            body.is-watching #live-player-wrap #live-remote-video-container::after{
+                content:'';position:absolute;bottom:0;left:0;right:0;height:60%;
+                background:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,0.6) 100%);
+                pointer-events:none;z-index:2;
+            }
+
+            /* Hide action buttons, gift panel, reactions — icon strip replaces them */
+            body.is-watching #live-player-wrap .live-action-row,
+            body.is-watching #live-player-wrap #viewer-reactions-bar,
+            body.is-watching #live-player-wrap #viewer-gift-panel,
+            body.is-watching #live-player-wrap #viewer-star-goal,
+            body.is-watching #live-player-wrap #viewer-leaderboard{display:none!important;}
+
+            /* Chat card: transparent overlay at bottom — input row only */
+            body.is-watching #live-player-wrap #viewer-panel-chat-card{
+                position:absolute!important;bottom:0!important;left:0!important;right:0!important;
+                z-index:25!important;background:transparent!important;
+                border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;
+            }
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-head,
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-feed{display:none!important;}
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-input-row{
+                background:rgba(0,0,0,0.5)!important;
+                backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
+                border-top:1px solid rgba(255,255,255,0.08)!important;
+                border-bottom:none!important;border-left:none!important;border-right:none!important;
+                padding:10px 12px 14px!important;
+                display:flex!important;gap:8px!important;align-items:center!important;border-radius:0!important;
+            }
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-input-row .field{
+                background:rgba(255,255,255,0.1)!important;
+                border:1.5px solid rgba(255,255,255,0.13)!important;
+                color:#fff!important;border-radius:24px!important;
+                padding:9px 15px!important;font-size:0.82rem!important;flex:1!important;
+            }
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-input-row .field::placeholder{
+                color:rgba(255,255,255,0.38)!important;
+            }
+            body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-input-row .btn-purple{
+                background:linear-gradient(135deg,rgba(124,92,191,0.92),rgba(79,50,153,0.88))!important;
+                border:1.5px solid rgba(168,139,250,0.4)!important;border-radius:24px!important;
+                padding:9px 16px!important;font-size:0.78rem!important;font-weight:800!important;
+                color:#fff!important;white-space:nowrap!important;
+                box-shadow:0 2px 10px rgba(124,92,191,0.3)!important;
+            }
+
+            /* Floating chat — sits above the input row, clears icon strip on right */
+            body.is-watching .stream-floating-chat{
+                bottom:68px!important;right:66px!important;left:10px!important;
+                width:auto!important;max-width:none!important;
+            }
+
+            /* Icon strip — centered vertically on right edge */
+            body.is-watching #viewer-icon-strip{
+                top:50%!important;transform:translateY(-50%)!important;
+                right:10px!important;gap:12px!important;
+            }
         }
 
         .live-gift-card {
@@ -11197,6 +11248,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                             <!-- ★ TikTok-style FLOATING CHAT OVERLAY (viewer) — messages only, input stays in panel -->
                             <div class="stream-floating-chat" id="viewer-floating-chat" style="display:none;">
                                 <div class="sfc-feed" id="viewer-sfc-feed"></div>
+                            </div>
+
+                            <!-- Viewer icon strip — right-side controls, shown mobile + is-watching only -->
+                            <div id="viewer-icon-strip">
+                                <button class="his-btn" onclick="_openViewerGiftDrawer()" title="Send a Gift">🎁</button>
+                                <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
+                                <button class="his-btn" id="vis-stage-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="his-btn" onclick="leaveLiveStream()" title="Leave" style="background:rgba(220,38,38,.35);border-color:rgba(220,38,38,.6);">✕</button>
                             </div>
                         </div>
 
@@ -28129,74 +28188,22 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             show('live-player-wrap');
             document.body.classList.add('is-watching');
 
-            // TikTok-style fullscreen layout on mobile
+            // Move info bar inside video container as top overlay (CSS handles the rest)
             (function() {
-                var _oldVfs = document.getElementById('vfs-style');
-                if (_oldVfs) _oldVfs.remove();
-                var _vfsStyle = document.createElement('style');
-                _vfsStyle.id = 'vfs-style';
-                _vfsStyle.textContent = [
-                    '#live-remote-video-container{height:360px!important;min-height:240px!important;max-height:360px!important;}',
-                    '#viewer-panel-chat-card{flex:1!important;display:flex!important;flex-direction:column!important;}',
-                    '.live-chat-feed{flex:1!important;max-height:none!important;min-height:0!important;}'
-                ].join('');
-                document.head.appendChild(_vfsStyle);
-
-                if (window.innerWidth <= 900) {
-                    var _lp = document.getElementById('live-player-wrap');
-                    var _vc = document.getElementById('live-remote-video-container');
-                    var _cc = document.getElementById('viewer-panel-chat-card');
-                    var _cf = _cc ? _cc.querySelector('.live-chat-feed') : null;
-                    if (_lp) { _lp.style.setProperty('position','fixed','important'); _lp.style.setProperty('display','flex','important'); _lp.style.setProperty('flex-direction','column','important'); _lp.style.setProperty('background','#090715','important'); _lp.style.setProperty('overflow','hidden','important'); }
-                    if (_vc) { _vc.style.setProperty('height','360px','important'); _vc.style.setProperty('min-height','240px','important'); _vc.style.setProperty('max-height','360px','important'); }
-                    if (_cc) { _cc.style.setProperty('flex','1','important'); _cc.style.setProperty('display','flex','important'); _cc.style.setProperty('flex-direction','column','important'); }
-                    if (_cf) { _cf.style.setProperty('flex','1','important'); _cf.style.setProperty('max-height','none','important'); _cf.style.setProperty('min-height','0','important'); }
-                }
-
                 var _infoBar = document.getElementById('live-stream-info-bar');
-                if (_infoBar) {
-                    if (window.innerWidth <= 900) {
-                        _infoBar.style.display = 'flex';
-                        _infoBar.style.alignItems = 'center';
-                        _infoBar.style.background = '#090715';
-                        _infoBar.style.flexShrink = '0';
-                        _infoBar.style.position = 'relative';
-                        _infoBar.style.top = '';
-                        _infoBar.style.left = '';
-                        var _lp2 = document.getElementById('live-player-wrap');
-                        if (_lp2 && _infoBar.parentNode !== _lp2) _lp2.insertBefore(_infoBar, _lp2.firstChild);
-                    } else {
-                        _infoBar.style.position = 'absolute';
-                        _infoBar.style.top = '0';
-                        _infoBar.style.left = '0';
-                        _infoBar.style.right = '0';
-                        _infoBar.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)';
-                        var _vc2 = document.getElementById('live-remote-video-container');
-                        if (_vc2 && _infoBar.parentNode !== _vc2) _vc2.insertBefore(_infoBar, _vc2.firstChild);
-                    }
+                var _vc = document.getElementById('live-remote-video-container');
+                if (_infoBar && _vc && _infoBar.parentNode !== _vc) {
+                    _vc.insertBefore(_infoBar, _vc.firstChild);
                 }
-
-                // TikTok-style fullscreen layout is handled by CSS (body.is-watching position:fixed)
-                // Do NOT call requestFullscreen — native fullscreen breaks Agora video on mobile
-
-                var _liveChatInputVfs = document.getElementById('live-chat-input');
-                if (_liveChatInputVfs && window.innerWidth <= 900) {
-                    if (window.visualViewport) {
-                        window.visualViewport.addEventListener('resize', function() {
-                            var kbH = window.innerHeight - window.visualViewport.height;
-                            var _vc3 = document.getElementById('live-remote-video-container');
-                            if (!_vc3) return;
-                            if (kbH > 150) {
-                                _vc3.style.setProperty('height','130px','important');
-                                _vc3.style.setProperty('min-height','130px','important');
-                                _vc3.style.setProperty('max-height','130px','important');
-                            } else {
-                                _vc3.style.setProperty('height','360px','important');
-                                _vc3.style.setProperty('min-height','240px','important');
-                                _vc3.style.setProperty('max-height','360px','important');
-                            }
-                        });
-                    }
+                if (_infoBar) {
+                    _infoBar.style.display = 'flex';
+                    _infoBar.style.position = 'absolute';
+                    _infoBar.style.top = '0';
+                    _infoBar.style.left = '0';
+                    _infoBar.style.right = '0';
+                    _infoBar.style.zIndex = '20';
+                    _infoBar.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)';
+                    _infoBar.style.paddingBottom = '20px';
                 }
             })();
             // Reset waiting room so it shows while video connects (fixes subsequent joins
@@ -28377,9 +28384,16 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             rvContainer.style.cssText = '';
         }
 
-        // Hide stream info bar
+        // Hide stream info bar and move it back before the video container
         var sib = document.getElementById('live-stream-info-bar');
-        if(sib) sib.style.display='none';
+        if(sib) {
+            sib.style.display = 'none';
+            sib.style.cssText = 'display:none';
+            var _vc4 = document.getElementById('live-remote-video-container');
+            if (_vc4 && _vc4.parentNode && sib.parentNode === _vc4) {
+                _vc4.parentNode.insertBefore(sib, _vc4);
+            }
+        }
 
         hide('live-player-wrap');
         show('live-stream-browser');
@@ -34715,9 +34729,28 @@ body.is-hosting #live-broadcaster-video-container.layout-battle #live-broadcaste
 @media(max-width:700px){body.has-battle.is-hosting #host-icon-strip{top:68px!important}}
 body.has-battle #his-battle{display:none!important}
 @media(max-width:700px){body.has-battle.is-hosting #host-icon-strip{right:calc(50% + 8px)!important}}
-.his-btn{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.52);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:1.25rem;cursor:pointer;position:relative;transition:transform .12s,background .12s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff}
-.his-btn:active{transform:scale(.88)}
-.his-btn.his-active{background:rgba(124,92,191,.6);border-color:rgba(124,92,191,.85)}
+.his-btn{
+    width:52px!important;height:52px!important;border-radius:50%!important;
+    background:radial-gradient(ellipse at 32% 22%,rgba(255,255,255,0.07) 0%,transparent 60%),rgba(8,6,24,0.62)!important;
+    border:1.5px solid rgba(255,255,255,0.17)!important;
+    box-shadow:0 4px 16px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.09)!important;
+    backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;
+    font-size:1.4rem!important;cursor:pointer;
+    transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s,background 0.22s,border-color 0.22s!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;position:relative;
+}
+.his-btn:hover{
+    transform:scale(1.12)!important;
+    background:radial-gradient(ellipse at 32% 22%,rgba(168,139,250,0.16) 0%,transparent 60%),rgba(124,92,191,0.28)!important;
+    border-color:rgba(168,139,250,0.52)!important;
+    box-shadow:0 6px 22px rgba(124,92,191,0.38),inset 0 1px 0 rgba(255,255,255,0.1)!important;
+}
+.his-btn:active{transform:scale(0.84)!important;}
+.his-btn.his-active{
+    background:radial-gradient(ellipse at 32% 22%,rgba(168,139,250,0.22) 0%,transparent 60%),rgba(124,92,191,0.52)!important;
+    border-color:rgba(168,139,250,0.72)!important;
+    box-shadow:0 4px 18px rgba(124,92,191,0.5),inset 0 1px 0 rgba(255,255,255,0.1)!important;
+}
 .his-badge{position:absolute;top:-2px;right:-2px;background:#e03e3e;color:#fff;font-size:.5rem;font-weight:900;min-width:16px;height:16px;border-radius:8px;padding:0 3px;display:none;align-items:center;justify-content:center;line-height:1;pointer-events:none;box-sizing:border-box}
 .his-badge.vis{display:flex}
 /* More drawer */
