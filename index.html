@@ -9055,7 +9055,7 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
     /* Studio toolbar: 4-col grid */
     body.is-hosting #live-active-panel .studio-toolbar {
         flex: 0 0 auto !important;
-        display: grid !important;
+        display: none !important;
         grid-template-columns: repeat(4, 1fr) !important;
         gap: 3px !important;
         padding: 3px !important;
@@ -32857,10 +32857,40 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         }
     }
     var _patchedStart = async function() {
+        if (window.innerWidth <= 768) {
+            await _origStart.apply(this, arguments);
+            // _origStart may itself set cinema-mode — strip it back off
+            document.body.classList.remove('cinema-mode');
+            var vc = document.getElementById('live-broadcaster-video-container');
+            if (vc && vc.parentElement && vc.parentElement.id !== 'live-active-panel') {
+                // If enterCinema moved it, move it back
+                var panel = document.getElementById('live-active-panel');
+                if (panel) panel.insertBefore(vc, panel.firstChild);
+            }
+            // Ensure Agora video fills container on mobile
+            function _fixAgoraChildren(container) {
+                if (!container) return;
+                Array.from(container.querySelectorAll('.agora_video_player, video')).forEach(function(el) {
+                    el.style.setProperty('width', '100%', 'important');
+                    el.style.setProperty('height', '100%', 'important');
+                    el.style.setProperty('object-fit', 'cover', 'important');
+                    el.style.setProperty('position', 'absolute', 'important');
+                    el.style.setProperty('top', '0', 'important');
+                    el.style.setProperty('left', '0', 'important');
+                });
+            }
+            var _bcCon = document.getElementById('live-broadcaster-video-container');
+            if (_bcCon && !window._vcStyleObs) {
+                window._vcStyleObs = new MutationObserver(function() {
+                    _fixAgoraChildren(document.getElementById('live-broadcaster-video-container'));
+                });
+                window._vcStyleObs.observe(_bcCon, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+            }
+            setTimeout(function(){ _fixAgoraChildren(document.getElementById('live-broadcaster-video-container')); }, 500);
+            setTimeout(function(){ _fixAgoraChildren(document.getElementById('live-broadcaster-video-container')); }, 1500);
+            return;
+        }
         await _origStart.apply(this, arguments);
-        // Mobile (≤768px): use direct #live-active-panel full-screen layout via CSS — skip cinema shell
-        if (window.innerWidth <= 768) return;
-        // Apply cinema-mode class immediately so raw panel is hidden via CSS
         document.body.classList.add('cinema-mode');
         setTimeout(function(){
             var vc = document.getElementById('live-broadcaster-video-container');
