@@ -11157,7 +11157,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 <div class="live-tabs" id="live-tabs">
                     <button class="live-tab active" id="ltab-watch" onclick="setLiveTab('watch')">📺 Watch Streams</button>
                     <button class="live-tab" id="ltab-broadcast" onclick="setLiveTab('broadcast')">🎙 Go Live</button>
-                    <button class="live-tab" id="ltab-rooms" onclick="setLiveTab('rooms')">🎤 Voice Rooms</button>
+                    <button class="live-tab" id="ltab-rooms" onclick="setLiveTab('rooms')">🎧 Rooms</button>
                 </div>
 
                 <!-- ── WATCH TAB ── -->
@@ -11175,7 +11175,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 <button onclick="toggleCoHostCam()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:600;cursor:pointer;">📷 Cam Off</button>
                             </div>
                         </div>
-                        <!-- Stream info bar — outside the video box, anchored to video container by JS -->
+                        <!-- Stream info bar — outside the video box -->
                         <div id="live-stream-info-bar">
                             <div class="lsib-left">
                                 <img id="lsib-av" class="lsib-av" src="" onerror="this.style.opacity='.2'">
@@ -11188,9 +11188,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                             </div>
                         </div>
                         <div class="live-stream-box" id="live-remote-video-container">
-                            <div class="live-stream-overlay-top">
-                                <span class="live-badge-pill" id="live-stream-badge-watch">🔴 LIVE</span>
-                                <span class="live-viewer-chip" id="live-watch-viewers">👁 0 watching</span>
+                            <div class="live-stream-overlay-top" id="viewer-overlay-top" style="justify-content:flex-end;">
+                                <span class="live-viewer-chip" id="live-watch-viewers" style="display:none;">👁 0</span>
                             </div>
                             <div id="live-remote-video" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
                             <!-- Waiting room placeholder — hidden once stream connects -->
@@ -11219,7 +11218,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 <button class="btn btn-outline btn-sm" onclick="leaveLiveStream()">← Leave</button>
                             </div>
                             <div class="live-stream-meta" id="live-stream-meta">
-                                <div class="live-stream-host" id="live-stream-host-name">Loading…</div><span id="stream-host-streak-badge" style="display:none;background:linear-gradient(135deg,#ffd700,#ff9500);color:#111;font-size:.55rem;font-weight:900;padding:2px 8px;border-radius:10px;margin-left:6px;letter-spacing:.5px;"></span>
+                                <div class="live-stream-host" id="live-stream-host-name" style="display:none;"></div><span id="stream-host-streak-badge" class="battle-streak-badge" style="display:none;"></span>
                                 <div class="live-stream-title-sm" id="live-stream-title-sm"></div>
                             </div>
 
@@ -11250,7 +11249,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 <div class="sfc-feed" id="viewer-sfc-feed"></div>
                             </div>
 
-                            <!-- Viewer icon strip — right-side controls, shown mobile + is-watching only -->
+                            <!-- Viewer icon strip — mirrors host strip -->
                             <div id="viewer-icon-strip">
                                 <button class="his-btn" onclick="_openViewerGiftDrawer()" title="Send a Gift">🎁</button>
                                 <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
@@ -11581,16 +11580,39 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     <!-- Active broadcast dashboard (hidden until live) -->
                     <div id="live-active-panel" style="display:none;">
 
+                        <!-- Broadcast info bar — outside the video box -->
+                        <div id="live-broadcast-info-bar">
+                            <div class="lsib-left">
+                                <img id="lbib-av" class="lsib-av" src="" onerror="this.style.opacity='.2'">
+                                <span id="lbib-name" class="lsib-name"></span>
+                                <span class="lsib-live">LIVE</span>
+                            </div>
+                            <div class="lsib-right">
+                                <span id="lbib-viewers" class="lsib-viewers">👁 0</span>
+                            </div>
+                        </div>
                         <!-- Video box with overlays -->
                         <div class="live-stream-box" id="live-broadcaster-video-container" style="height:clamp(300px, 40vh, 520px);">
-                            <!-- Top bar: LIVE badge + health + viewers -->
-                            <div class="live-stream-overlay-top">
-                                <span class="live-badge-pill">🔴 YOU ARE LIVE</span>
-                                <div id="stream-health">
-                                    <div class="health-dot good" id="health-dot"></div>
-                                    <span id="health-label">Good</span>
+                            <!-- Top bar: health indicator + mobile timer + stars overlay -->
+                            <div class="live-stream-overlay-top" style="justify-content:space-between;">
+                                <!-- Mobile host timer pill (left) -->
+                                <div id="host-mobile-topleft" style="display:none;align-items:center;gap:8px;">
+                                    <div id="host-timer-pill">
+                                        <span class="htp-dot"></span>
+                                        <span id="host-timer-elapsed">00:00</span>
+                                    </div>
+                                    <div id="host-stars-pill">
+                                        ⭐ <span id="host-stars-earned-display">0</span>
+                                    </div>
                                 </div>
-                                <span class="live-viewer-chip" id="live-broadcast-viewers">👁 0 watching</span>
+                                <!-- Right: health + viewers -->
+                                <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+                                    <div id="stream-health" style="display:none">
+                                        <div class="health-dot good" id="health-dot"></div>
+                                        <span id="health-label">Good</span>
+                                    </div>
+                                    <span class="live-viewer-chip" id="live-broadcast-viewers" style="display:none;">👁 0</span>
+                                </div>
                             </div>
 
                             <!-- Screen share label -->
@@ -11698,7 +11720,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 </div>
                             </div>
 
-                            <!-- Host icon strip (TikTok-style right-side controls) -->
+                            <!-- Host icon strip (TikTok-style) -->
                             <div id="host-icon-strip">
                                 <button class="his-btn" id="his-battle" onclick="openBattleModal()" title="Battle">⚔️</button>
                                 <button class="his-btn" id="his-stage" onclick="toggleCohostPanel()" title="Stage Requests">🎤<span class="his-badge" id="his-stage-badge">0</span></button>
@@ -11929,9 +11951,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         </div>
                     </div>
                 </div>
-            </div>
 
-                <!-- Voice Rooms Panel -->
+                <!-- ── VOICE ROOMS TAB ── -->
                 <div id="live-rooms-panel" style="display:none;">
                     <button class="vr-start-room-btn" onclick="openStartRoomModal()">
                         <span style="font-size:1.2rem;">🎧</span>
@@ -11945,6 +11966,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         <span style="font-size:0.72rem;opacity:0.6;">Start one and your followers will be notified</span>
                     </div>
                 </div>
+
+            </div>
 
         </div><!-- /feed-col -->
 
@@ -12090,7 +12113,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     <span onclick="openLegal('privacy')" style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; transition:color 0.13s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='var(--text-secondary)'">🔒 Privacy Policy</span>
                 </div>
                 <div style="font-size:0.6rem; color:var(--text-muted); margin-top:14px; line-height:1.6; border-top:1px solid var(--border); padding-top:10px;">
-                    © 2026 SocialHub Protocol<br>Built on Apertum · <span style="color:var(--teal);">$APTM</span>
+                    © 2026 SocialHub Protocol<br>Built on BSC · <span style="color:var(--teal);">$USDT</span>
                 </div>
             </div>
         </div><!-- /right-panel -->
@@ -12103,39 +12126,34 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     <button class="bnav-item active" id="bnav-home"
             onclick="switchPage('home', null); setBnav('home')">
         <span class="bnav-icon">⊞</span>
-        Home Feed
+        Feed
     </button>
     <button class="bnav-item" id="bnav-studio"
             onclick="switchPage('earnings', null); setBnav('studio')">
         <span class="bnav-icon">◆</span>
-        Creator Studio
+        Studio
         <span class="notif-dot bnav-notif-dot" id="notif-dot-studio" aria-label="New activity"></span>
     </button>
-    <button class="bnav-item" id="bnav-communities"
-            onclick="switchPage('communities', null); setBnav('communities')">
-        <span class="bnav-icon">⬡</span>
-        Communities
+    <button class="bnav-item" id="bnav-ledger"
+            onclick="switchPage('earnings', null); setBnav('ledger'); setTimeout(()=>{ const el=document.getElementById('ledger-list'); if(el) el.scrollIntoView({behavior:'smooth'}); },120)">
+        <span class="bnav-icon">📋</span>
+        Ledger
+        <span class="notif-dot bnav-notif-dot" id="notif-dot-ledger" aria-label="New activity"></span>
     </button>
-    <button class="bnav-item" id="bnav-profile"
-            onclick="switchPage('profile', null); setBnav('profile')">
-        <span class="bnav-icon">◉</span>
-        My Profile
-    </button>
-    <button class="bnav-item" id="bnav-inbox"
-            onclick="switchPage('inbox', null); setBnav('inbox')">
-        <span class="bnav-icon">✉</span>
-        Inbox
-        <span class="notif-dot bnav-notif-dot" id="notif-dot-inbox-bnav" aria-label="New message"></span>
+    <button class="bnav-item" id="bnav-wallet"
+            onclick="openWalletDrawer(); setBnav('wallet')">
+        <span class="bnav-icon">💰</span>
+        Wallet
     </button>
     <button class="bnav-item" id="bnav-marketplace"
             onclick="switchPage('marketplace', null); setBnav('marketplace')">
         <span class="bnav-icon">🛍</span>
-        Marketplace
+        Market
     </button>
-    <button class="bnav-item" id="bnav-live"
-            onclick="switchPage('live', null); setBnav('live')">
-        <span class="bnav-icon">🔴</span>
-        Live
+    <button class="bnav-item" id="bnav-communities"
+            onclick="switchPage('communities', null); setBnav('communities')">
+        <span class="bnav-icon">⬡</span>
+        Hubs
     </button>
 </div>
 
@@ -12190,7 +12208,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     </div>
                 </div>
                 <div style="margin-top:8px; font-size:0.72rem; color:var(--text-muted);">
-                    My APTM Balance: <span style="color:var(--teal); font-family:var(--font-mono); font-weight:600;" id="drawer-aptm-val">$0.00 APTM</span>
+                    My USDT Balance: <span style="color:var(--teal); font-family:var(--font-mono); font-weight:600;" id="drawer-aptm-val">$0.00 USDT</span>
                 </div>
             </div>
 
@@ -12240,42 +12258,46 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             <div class="rp-card">
                 <div class="drawer-section-label" style="margin-bottom:10px;">Buy Stars</div>
                 <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; line-height:1.5;">
-                    Deposit native APTM to receive Stars. &nbsp;<span style="color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">1 ★ = $0.01 · live price</span>
+                    Deposit USDT (BEP-20) to receive Stars. &nbsp;<span style="color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">1 USDT = 100 ★</span>
                 </div>
 
                 <!-- How to fund guide (collapsible) -->
                 <div style="margin-bottom:14px;">
-                    <button onclick="(function(b){var g=document.getElementById('deposit-bsc-guide');var open=g.style.display!=='none';g.style.display=open?'none':'block';b.querySelector('.dep-guide-arrow').textContent=open?'▾':'▴';})(this)" style="background:rgba(124,92,191,0.08);border:1px solid rgba(124,92,191,0.25);border-radius:8px;color:rgba(124,92,191,0.9);font-size:0.72rem;font-weight:600;cursor:pointer;padding:7px 11px;width:100%;text-align:left;display:flex;align-items:center;gap:6px;">
-                        <span>💡</span><span style="flex:1;">New to Apertum? How to fund your wallet</span><span class="dep-guide-arrow">▾</span>
+                    <button onclick="(function(b){var g=document.getElementById('deposit-bsc-guide');var open=g.style.display!=='none';g.style.display=open?'none':'block';b.querySelector('.dep-guide-arrow').textContent=open?'▾':'▴';})(this)" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:8px;color:rgba(251,191,36,0.9);font-size:0.72rem;font-weight:600;cursor:pointer;padding:7px 11px;width:100%;text-align:left;display:flex;align-items:center;gap:6px;">
+                        <span>💡</span><span style="flex:1;">New to BSC? How to fund your wallet</span><span class="dep-guide-arrow">▾</span>
                     </button>
                     <div id="deposit-bsc-guide" style="display:none;margin-top:8px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px;font-size:0.74rem;line-height:1.7;color:var(--text-secondary);">
-                        <div style="color:var(--text-primary);font-weight:600;margin-bottom:8px;">You only need one thing in your Apertum wallet:</div>
+                        <div style="color:var(--text-primary);font-weight:600;margin-bottom:8px;">You need 2 things in your BSC wallet:</div>
+                        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">
+                            <span style="font-size:0.9rem;flex-shrink:0;">🟡</span>
+                            <div><span style="color:var(--text-primary);font-weight:600;">BNB</span> — for gas fees on BSC. Around <span style="color:var(--gold);">$0.50 worth</span> is enough for many transactions.</div>
+                        </div>
                         <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;">
-                            <span style="font-size:0.9rem;flex-shrink:0;">💜</span>
-                            <div><span style="color:var(--text-primary);font-weight:600;">APTM</span> — the native coin of Apertum. Used for both gas and Stars. Any amount works.</div>
+                            <span style="font-size:0.9rem;flex-shrink:0;">💵</span>
+                            <div><span style="color:var(--text-primary);font-weight:600;">USDT (BEP-20)</span> — any amount. Every $1 = 100 Stars.</div>
                         </div>
                         <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:10px;color:var(--text-primary);font-weight:600;margin-bottom:6px;">3 steps to get started:</div>
                         <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;">
                             <span style="background:rgba(124,92,191,0.35);color:var(--purple-light);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">1</span>
-                            <div>Buy <strong>APTM</strong> on any supported exchange or DEX.</div>
+                            <div>Buy <strong>BNB</strong> + <strong>USDT</strong> on Binance, OKX, Bybit, or any major exchange.</div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:5px;">
                             <span style="background:rgba(124,92,191,0.35);color:var(--purple-light);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">2</span>
-                            <div>Withdraw APTM to your wallet on the <span style="color:#a78bfa;font-weight:600;">Apertum network</span>. <span style="color:#ef4444;">Not Ethereum.</span></div>
+                            <div>Withdraw <strong>both</strong> to <span style="color:#f59e0b;font-weight:600;">BSC Network (BEP-20)</span>. <span style="color:#ef4444;">Not Ethereum. Not TRC-20.</span></div>
                         </div>
                         <div style="display:flex;gap:8px;align-items:flex-start;">
                             <span style="background:rgba(124,92,191,0.35);color:var(--purple-light);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-top:1px;">3</span>
-                            <div>Connect your wallet here, enter your APTM amount, and tap <strong>Convert →</strong></div>
+                            <div>Connect your wallet here, enter your USDT amount, and tap <strong>Convert →</strong></div>
                         </div>
                         <div style="margin-top:10px;padding:7px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:6px;font-size:0.7rem;color:rgba(239,68,68,0.85);">
-                            ⚠ Always select <strong>Apertum Network</strong> when withdrawing APTM from any exchange.
+                            ⚠ Wrong network = lost funds. Always select <strong>BNB Smart Chain (BSC)</strong> when withdrawing from any exchange.
                         </div>
                     </div>
                 </div>
 
                 <div style="display:flex; gap:8px; align-items:flex-end;">
                     <div style="flex:1;">
-                        <div style="font-size:0.62rem; color:var(--text-muted); margin-bottom:4px;">APTM Amount</div>
+                        <div style="font-size:0.62rem; color:var(--text-muted); margin-bottom:4px;">USDT Amount</div>
                         <input type="number" id="drawer-deposit-input" class="field" style="margin-top:0;" placeholder="5.0" min="0.1" step="0.1">
                     </div>
                     <button class="btn btn-teal btn-sm" style="flex-shrink:0; margin-bottom:0; height:40px;" onclick="drawerDeposit()">Convert →</button>
@@ -12309,7 +12331,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         <div style="font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--gold); margin-top:4px;" id="drawer-earned-stars">0 ★</div>
                     </div>
                     <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px;">
-                        <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700;">My APTM Balance</div>
+                        <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; font-weight:700;">My USDT Balance</div>
                         <div style="font-family:var(--font-mono); font-size:0.85rem; font-weight:700; color:var(--teal); margin-top:4px;" id="drawer-vault-aptm">0.0000</div>
                     </div>
                 </div>
@@ -26409,6 +26431,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 // App ID: 59f975efccbf40a7b36eb30778da13a5
 // ═══════════════════════════════════════════════════════════════════
 (function initLiveStream() {
+
     // ══════════════════════════════════════════════════════════════════
     // VOICE ROOMS
     // ══════════════════════════════════════════════════════════════════
@@ -26417,7 +26440,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     const VR_QUEUE   = 'voice_room_queue';
     const VR_LISTEN  = 'voice_room_listeners';
     const VR_CHAT    = 'voice_room_chat';
-    const AGORA_APP_ID_VR = 'e32b02aab43a4762b385498535b0f51d';
 
     let _vrRoomId      = null;
     let _vrIsHost      = false;
@@ -26447,8 +26469,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 osc.start(startTime);
                 osc.stop(startTime + duration);
             }
-            playTone(587, ctx.currentTime, 0.35);
-            playTone(440, ctx.currentTime + 0.38, 0.55);
+            playTone(587, ctx.currentTime, 0.35);        // D5 — "ding"
+            playTone(440, ctx.currentTime + 0.38, 0.55); // A4 — "dong"
         } catch(e) {}
     }
 
@@ -26499,20 +26521,20 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const ttl  = escHtml(r.title || 'Voice Room');
         const top  = escHtml(r.topic || '');
         const fee  = parseFloat(r.entryFee || 0);
-        const lbl  = fee > 0 ? 'Join · ' + fee + '★' : 'Join Free';
-        return '<div class="vr-room-card" onclick="window.joinVoiceRoom(\'' + roomId + '\',false)">' +
-            '<div class="vr-host-row">' +
-            '<img class="vr-host-av" src="' + av + '" onerror="this.src=\'https://placehold.co/36/7c5cbf/fff?text=?\'">' +
-            '<div><div class="vr-host-name">' + name + '</div><div style="font-size:0.6rem;color:var(--text-muted);">' + top + '</div></div>' +
-            '</div>' +
-            '<div class="vr-card-title">' + ttl + '</div>' +
-            '<div class="vr-card-meta">' +
-            '<span>👥 ' + (r.listenerCount||0) + '</span>' +
-            '<span>⭐ ' + parseFloat(r.starsEarned||0).toFixed(1) + '★</span>' +
-            (r.handRaisePrice ? '<span>🙋 ' + r.handRaisePrice + '★ to speak</span>' : '') +
-            '</div>' +
-            '<button class="vr-join-btn" onclick="event.stopPropagation();window.joinVoiceRoom(\'' + roomId + '\',false)">' + lbl + '</button>' +
-            '</div>';
+        const lbl  = fee > 0 ? `Join · ${fee}★` : 'Join Free';
+        return `<div class="vr-room-card" onclick="window.joinVoiceRoom('${roomId}',false)">
+            <div class="vr-host-row">
+                <img class="vr-host-av" src="${av}" onerror="this.src='https://placehold.co/36/7c5cbf/fff?text=?'">
+                <div><div class="vr-host-name">${name}</div><div style="font-size:0.6rem;color:var(--text-muted);">${top}</div></div>
+            </div>
+            <div class="vr-card-title">${ttl}</div>
+            <div class="vr-card-meta">
+                <span>👥 ${r.listenerCount||0}</span>
+                <span>⭐ ${parseFloat(r.starsEarned||0).toFixed(1)}★</span>
+                ${r.handRaisePrice ? `<span>🙋 ${r.handRaisePrice}★ to speak</span>` : ''}
+            </div>
+            <button class="vr-join-btn" onclick="event.stopPropagation();window.joinVoiceRoom('${roomId}',false)">${lbl}</button>
+        </div>`;
     }
 
     window.startVoiceRoom = async function() {
@@ -26542,6 +26564,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (!userAddress) { showToast('Connect wallet first'); return; }
         _vrRoomId = roomId;
         try {
+            // Always verify host status from room doc — don't trust the isHost param
             const roomDocSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, roomId)).catch(() => null);
             if (!roomDocSnap || !roomDocSnap.exists()) { showToast('Room not found'); return; }
             const roomData = roomDocSnap.data();
@@ -26551,7 +26574,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             let token = preToken, uid = preUid;
             if (!token) {
                 const ch  = 'vr_' + roomId;
-                const res = await fetch(VR_CF_BASE + 'getAgoraToken?channel=' + encodeURIComponent(ch) + '&walletAddress=' + encodeURIComponent(userAddress));
+                const res = await fetch(`${VR_CF_BASE}getAgoraToken?channel=${encodeURIComponent(ch)}&walletAddress=${encodeURIComponent(userAddress)}`);
                 const d   = await res.json();
                 if (!d.token) throw new Error('Token fetch failed');
                 token = d.token; uid = d.uid;
@@ -26599,7 +26622,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         _vrAgoraClient.enableAudioVolumeIndicator();
         _vrAgoraClient.on('volume-indicator', (vols) => {
             vols.forEach(v => {
-                const orb = document.querySelector('.vr-orb[data-uid="' + v.uid + '"]');
+                const orb = document.querySelector(`.vr-orb[data-uid="${v.uid}"]`);
                 if (orb) orb.classList.toggle('speaking', v.level > 15);
             });
         });
@@ -26608,15 +26631,17 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     function _vrShowOverlay() {
         const ov = document.getElementById('vr-room-overlay');
         if (ov) ov.style.display = 'flex';
+        // Reset
         const feed = document.getElementById('vr-chat-feed');
         if (feed) feed.innerHTML = '';
         const qs = document.getElementById('vr-queue-strip');
         if (qs) qs.style.display = 'none';
-        const muteBtn  = document.getElementById('vr-ctrl-mute');
-        const endBtn   = document.getElementById('vr-ctrl-end');
-        const handBtn  = document.getElementById('vr-ctrl-hand');
-        const leaveBtn = document.getElementById('vr-ctrl-leave');
-        const reqBtn   = document.getElementById('vr-ctrl-requests');
+        // Host vs audience controls
+        const muteBtn = document.getElementById('vr-ctrl-mute');
+        const endBtn  = document.getElementById('vr-ctrl-end');
+        const handBtn = document.getElementById('vr-ctrl-hand');
+        const leaveBtn= document.getElementById('vr-ctrl-leave');
+        const reqBtn  = document.getElementById('vr-ctrl-requests');
         if (muteBtn)  muteBtn.style.display  = _vrIsHost ? 'flex' : 'none';
         if (endBtn)   endBtn.style.display   = _vrIsHost ? 'flex' : 'none';
         if (reqBtn)   reqBtn.style.display   = _vrIsHost ? 'flex' : 'none';
@@ -26636,6 +26661,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (sc) sc.textContent = '★ ' + _myVrBal.toFixed(1);
             const th = document.getElementById('vr-room-title-hd');
             if (th) th.textContent = r.title || 'Voice Room';
+            // Sync stage requests toggle state
             const reqsOpen = r.stageRequestsOpen !== false;
             const _reqBtn  = document.getElementById('vr-ctrl-requests');
             const _reqLbl  = document.getElementById('vr-requests-lbl');
@@ -26645,26 +26671,32 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const _hBtn = document.getElementById('vr-ctrl-hand');
                 if (_hBtn) { _hBtn.style.opacity = reqsOpen ? '' : '0.35'; _hBtn.style.pointerEvents = reqsOpen ? '' : 'none'; }
             }
+
+            // React to host mute/remove if we're a non-host speaker
             if (!_vrIsHost && userAddress) {
                 const myAddr  = userAddress.toLowerCase();
                 const myEntry = (r.currentSpeakers || []).find(s => s.addr === myAddr);
                 if (_vrIsSpeaker && !myEntry) {
+                    // We were removed from the stage
                     _vrIsSpeaker = false;
                     if (_vrAudioTrack) { try { _vrAgoraClient.unpublish([_vrAudioTrack]); _vrAudioTrack.stop(); _vrAudioTrack.close(); } catch(_) {} _vrAudioTrack = null; }
                     showToast('You were removed from the stage');
                 } else if (myEntry && myEntry.hostMuted && _vrAudioTrack && !_vrMuted) {
+                    // Host muted us
                     _vrMuted = true;
                     _vrAudioTrack.setMuted(true).catch(() => {});
                     showToast('You were muted by the host');
                     const btn = document.getElementById('vr-ctrl-mute');
                     if (btn) btn.classList.add('muted');
                 } else if (myEntry && !myEntry.hostMuted && _vrAudioTrack && _vrMuted) {
+                    // Host unmuted us
                     _vrMuted = false;
                     _vrAudioTrack.setMuted(false).catch(() => {});
                     showToast('You were unmuted by the host');
                     const btn = document.getElementById('vr-ctrl-mute');
                     if (btn) btn.classList.remove('muted');
                 } else if (myEntry && !_vrIsSpeaker) {
+                    // Newly admitted to stage — start publishing mic
                     _vrIsSpeaker = true;
                     (async () => {
                         try {
@@ -26681,6 +26713,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     })();
                 }
             }
+
             _vrRenderSpeakers(r);
             _vrRenderListeners(roomId, r);
         });
@@ -26701,37 +26734,39 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const myAddr = (userAddress || '').toLowerCase();
         const _myBal = (parseFloat(purchasedStars || 0) + parseFloat(creatorEarnings || 0)).toFixed(1);
         const isHostMe    = myAddr && (r.hostAddr || '').toLowerCase() === myAddr;
-        const hostBalHtml = isHostMe ? '<div class="vr-orb-balance">★ ' + _myBal + '</div>' : '';
-        row.insertAdjacentHTML('beforeend',
-            '<div class="vr-orb-wrap" onclick="vrOpenOrbPopup(\'' + hAddr + '\',\'' + hn + '\',\'' + hav + '\')" style="cursor:pointer;">' +
-            '<div class="vr-orb vr-orb-host" data-uid="' + hUid + '">' +
-            '<img src="' + hav + '" onerror="this.src=\'https://placehold.co/80/f0b441/000?text=H\'">' +
-            '<div class="vr-orb-ring"></div>' +
-            '</div>' +
-            '<div class="vr-orb-name host-lbl">' + hn + '</div>' +
-            '<div class="vr-role-badge host">HOST</div>' +
-            hostBalHtml + '</div>');
+        const hostBalHtml = isHostMe ? `<div class="vr-orb-balance">` + '★ ' + `${_myBal}</div>` : '';
+        row.insertAdjacentHTML('beforeend', `
+            <div class="vr-orb-wrap" onclick="vrOpenOrbPopup('${hAddr}','${hn}','${hav}')" style="cursor:pointer;">
+                <div class="vr-orb vr-orb-host" data-uid="${hUid}">
+                    <img src="${hav}" onerror="this.src='https://placehold.co/80/f0b441/000?text=H'">
+                    <div class="vr-orb-ring"></div>
+                </div>
+                <div class="vr-orb-name host-lbl">${hn}</div>
+                <div class="vr-role-badge host">HOST</div>
+                ${hostBalHtml}
+            </div>`);
         (r.currentSpeakers || []).forEach(sp => {
             const sUid  = _vrUidFromAddr(sp.addr);
             const sAddr = escHtml(sp.addr || '');
             const sName = escHtml(sp.name || 'Speaker');
             const sAv   = escHtml(sp.avatar || '');
             const isSpeakerMe = myAddr && (sp.addr || '').toLowerCase() === myAddr;
-            const spkBalHtml  = isSpeakerMe ? '<div class="vr-orb-balance">★ ' + _myBal + '</div>' : '';
-            row.insertAdjacentHTML('beforeend',
-                '<div class="vr-orb-wrap" onclick="vrOpenOrbPopup(\'' + sAddr + '\',\'' + sName + '\',\'' + sAv + '\')" style="cursor:pointer;">' +
-                '<div class="vr-orb vr-orb-speaker" data-uid="' + sUid + '">' +
-                '<img src="' + sAv + '" onerror="this.src=\'https://placehold.co/64/7c5cbf/fff?text=S\'">' +
-                '<div class="vr-orb-ring spk"></div>' +
-                '</div>' +
-                '<div class="vr-orb-name">' + sName + '</div>' +
-                '<div class="vr-role-badge speaker">ON STAGE</div>' +
-                spkBalHtml + '</div>');
+            const spkBalHtml  = isSpeakerMe ? `<div class="vr-orb-balance">` + '★ ' + `${_myBal}</div>` : '';
+            row.insertAdjacentHTML('beforeend', `
+                <div class="vr-orb-wrap" onclick="vrOpenOrbPopup('${sAddr}','${sName}','${sAv}')" style="cursor:pointer;">
+                    <div class="vr-orb vr-orb-speaker" data-uid="${sUid}">
+                        <img src="${sAv}" onerror="this.src='https://placehold.co/64/7c5cbf/fff?text=S'">
+                        <div class="vr-orb-ring spk"></div>
+                    </div>
+                    <div class="vr-orb-name">${sName}</div>
+                    <div class="vr-role-badge speaker">ON STAGE</div>
+                    ${spkBalHtml}
+                </div>`);
         });
     }
-
     function _vrRenderListeners(roomId, r) {
         if (!window.db || !window.fs) return;
+        // Build set of on-stage addresses so they're excluded from the listener grid
         const stageAddrs = new Set([(r.hostAddr || '').toLowerCase()]);
         (r.currentSpeakers || []).forEach(s => stageAddrs.add((s.addr || '').toLowerCase()));
         window.fs.getDocs(window.fs.collection(window.db, VR_LISTEN, roomId, 'presence')).then(snap => {
@@ -26743,15 +26778,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             let shown = 0, listenerCount = 0;
             snap.forEach(doc => {
                 const l = doc.data();
-                if (stageAddrs.has((l.addr || '').toLowerCase())) return;
+                if (stageAddrs.has((l.addr || '').toLowerCase())) return; // skip host + speakers
                 listenerCount++;
                 if (shown >= MAX) return;
-                grid.insertAdjacentHTML('beforeend', '<img class="vr-l-av" src="' + escHtml(l.avatar||'') + '" title="' + escHtml(l.name||'') + '" onerror="this.src=\'https://placehold.co/32/1a1535/fff?text=?\'>');
+                grid.insertAdjacentHTML('beforeend', `<img class="vr-l-av" src="${escHtml(l.avatar||'')}" title="${escHtml(l.name||'')}" onerror="this.src='https://placehold.co/32/1a1535/fff?text=?'">`);
                 shown++;
             });
             const extra = listenerCount - shown;
-            if (extra > 0) grid.insertAdjacentHTML('beforeend', '<div class="vr-l-more">+' + extra + '</div>');
-            if (lbl) lbl.textContent = 'Listening (' + listenerCount + ')';
+            if (extra > 0) grid.insertAdjacentHTML('beforeend', `<div class="vr-l-more">+${extra}</div>`);
+            if (lbl) lbl.textContent = `Listening (${listenerCount})`;
             if (_vrIsHost && window.db && window.fs) {
                 window.fs.updateDoc(window.fs.doc(window.db, VR_COL, roomId), { listenerCount }).catch(() => {});
             }
@@ -26767,24 +26802,27 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const strip = document.getElementById('vr-queue-strip');
                 const qRow  = document.getElementById('vr-queue-row');
                 if (!strip || !qRow) return;
+                // Filter pending + sort by bid desc — client-side, no composite index needed
                 const pending = [];
-                snap.forEach(doc => { const q = doc.data(); if (q.status === 'pending') pending.push(Object.assign({ id: doc.id }, q)); });
+                snap.forEach(doc => { const q = doc.data(); if (q.status === 'pending') pending.push({ id: doc.id, ...q }); });
                 pending.sort((a, b) => (b.bidStars || 0) - (a.bidStars || 0));
                 if (pending.length === 0) { _vrPrevQueueSize = 0; strip.style.display = 'none'; return; }
+                // Play doorbell when a new hand raise arrives
                 if (pending.length > _vrPrevQueueSize) _vrDoorbellSound();
                 _vrPrevQueueSize = pending.length;
                 strip.style.display = 'block';
                 qRow.innerHTML = '';
                 pending.forEach(q => {
-                    qRow.insertAdjacentHTML('beforeend',
-                        '<div class="vr-q-item">' +
-                        '<img class="vr-q-av" src="' + escHtml(q.avatar||'') + '" onerror="this.src=\'https://placehold.co/38/1a1535/fff?text=?\'" title="' + escHtml(q.name||'') + '">' +
-                        '<div class="vr-q-bid">' + q.bidStars + '★</div>' +
-                        '<div class="vr-q-name">' + escHtml(q.name||'') + '</div>' +
-                        '<div class="vr-q-btns">' +
-                        '<button class="vr-admit-btn" onclick="vrAdmitSpeaker(\'' + roomId + '\',\'' + q.id + '\')">✓ Let in</button>' +
-                        '<button class="vr-deny-btn"  onclick="vrDenySpeaker(\'' + roomId + '\',\'' + q.id + '\')">✕</button>' +
-                        '</div></div>');
+                    qRow.insertAdjacentHTML('beforeend', `
+                        <div class="vr-q-item">
+                            <img class="vr-q-av" src="${escHtml(q.avatar||'')}" onerror="this.src='https://placehold.co/38/1a1535/fff?text=?'" title="${escHtml(q.name||'')}">
+                            <div class="vr-q-bid">${q.bidStars}★</div>
+                            <div class="vr-q-name">${escHtml(q.name||'')}</div>
+                            <div class="vr-q-btns">
+                                <button class="vr-admit-btn" onclick="vrAdmitSpeaker('${roomId}','${q.id}')">✓ Let in</button>
+                                <button class="vr-deny-btn"  onclick="vrDenySpeaker('${roomId}','${q.id}')">✕</button>
+                            </div>
+                        </div>`);
                 });
             },
             err => console.error('[vrQueue]', err.code)
@@ -26809,8 +26847,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     let cls = 'vr-msg', html = '';
                     if (m.type === 'event') { cls += ' ev';  html = escHtml(m.text || ''); }
                     else if (m.type === 'gift') { cls += ' gft'; html = escHtml(m.text || ''); }
-                    else { html = '<span class="vr-handle">' + escHtml(m.name||'') + '</span>' + escHtml(m.text||''); }
-                    feed.insertAdjacentHTML('beforeend', '<div class="' + cls + '">' + html + '</div>');
+                    else { html = `<span class="vr-handle">${escHtml(m.name||'')}</span>${escHtml(m.text||'')}`; }
+                    feed.insertAdjacentHTML('beforeend', `<div class="${cls}">${html}</div>`);
                     feed.scrollTop = feed.scrollHeight;
                 });
             },
@@ -26839,8 +26877,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const _rdVR  = roomSnap.data();
         if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
         const price = parseFloat(_rdVR.handRaisePrice || 1);
-        const _vrMyBal = parseFloat(purchasedStars || 0) + parseFloat(creatorEarnings || 0);
-        if (_vrMyBal < price) { showToast('Not enough Stars — need ' + price + ' ★'); return; }
+        if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
         try {
             const res  = await fetch(VR_CF_BASE + 'raiseHandVR', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -26848,14 +26885,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             });
             const data = await res.json();
             if (data.error) { showToast(data.error); return; }
-            showToast('Stage request sent! Waiting for host to let you in…');
+            showToast('Hand raised! Waiting for host…');
             const btn = document.getElementById('vr-ctrl-hand');
-            if (btn) {
-                var lbl = btn.querySelector('#vr-hand-lbl');
-                if (lbl) lbl.textContent = 'Requested';
-                btn.style.opacity = '0.5';
-                btn.disabled = true;
-            }
+            if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
         } catch(e) { showToast('Could not raise hand'); }
     };
 
@@ -26897,13 +26929,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const btn = document.getElementById('vr-ctrl-mute');
         if (btn) btn.classList.toggle('muted', _vrMuted);
         const ic = btn ? btn.querySelector('.vci') : null;
-        if (ic) ic.textContent = _vrMuted ? '🔇' : '🎤';
+        if (ic) ic.textContent = _vrMuted ? '🔇' : '🎙';
         const lb = document.getElementById('vr-mute-lbl');
         if (lb) lb.textContent = _vrMuted ? 'Unmute' : 'Mute';
     };
 
-    let _vrGiftTarget  = null;
-    let _vrOrbTarget   = null;
+    let _vrGiftTarget  = null; // { addr, name } — null means gift picker will remind to tap an orb
+    let _vrOrbTarget   = null; // { addr, name, avatar } — current orb popup target
 
     window.vrOpenOrbPopup = function(addr, name, avatar) {
         _vrOrbTarget = { addr, name, avatar };
@@ -26913,6 +26945,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (av) { av.src = avatar || ''; av.onerror = () => { av.src = 'https://placehold.co/60/7c5cbf/fff?text=' + encodeURIComponent((name||'?')[0]); }; }
         const nm = document.getElementById('vr-popup-name');
         if (nm) nm.textContent = name || 'Speaker';
+        // Show host-only controls when host taps a speaker (not themselves)
         const modRow = document.getElementById('vr-popup-mod-row');
         if (modRow) modRow.style.display = (_vrIsHost && addr.toLowerCase() !== userAddress.toLowerCase()) ? 'flex' : 'none';
         popup.classList.add('open');
@@ -26942,12 +26975,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (them === me) { showToast("You can't follow yourself"); return; }
         const name = _vrOrbTarget.name;
         vrCloseOrbPopup();
+        // Reuse heroFollow — set the target addr it reads from
         if (typeof _heroTargetAddr !== 'undefined') {
             _heroTargetAddr = them;
             if (typeof heroFollow === 'function') { await heroFollow(); return; }
         }
+        // Fallback: direct write if heroFollow not in scope
         try {
-            const docId = me + '_' + them;
+            const docId  = me + '_' + them;
             await window.fs.setDoc(window.fs.doc(window.db, 'social_graph', docId), { follower: me, following: them, followedAt: Date.now() });
             showToast('Following ' + name + '!');
         } catch(e) { showToast('Could not follow'); }
@@ -26967,7 +27002,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const roomSnap = await window.fs.getDoc(roomRef).catch(() => null);
         if (!roomSnap || !roomSnap.exists()) return;
         const speakers = (roomSnap.data().currentSpeakers || []).map(sp => {
-            if (sp.addr === targetAddr) return Object.assign({}, sp, { hostMuted: !sp.hostMuted });
+            if (sp.addr === targetAddr) return { ...sp, hostMuted: !sp.hostMuted };
             return sp;
         });
         await window.fs.updateDoc(roomRef, { currentSpeakers: speakers }).catch(() => {});
@@ -26983,6 +27018,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (!roomSnap || !roomSnap.exists()) return;
         const speakers = (roomSnap.data().currentSpeakers || []).filter(sp => sp.addr !== targetAddr);
         await window.fs.updateDoc(roomRef, { currentSpeakers: speakers }).catch(() => {});
+        // Log to chat
         window.fs.addDoc(window.fs.collection(window.db, VR_CHAT, _vrRoomId, 'messages'), {
             type: 'event', text: '🎤 A speaker was removed from the stage.', ts: Date.now()
         }).catch(() => {});
@@ -26990,17 +27026,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     window.vrToggleGiftPicker = async function() {
         if (!_vrGiftOpen) {
+            // Default to host if no orb was tapped
             if (!_vrGiftTarget && _vrRoomId && window.db && window.fs) {
                 const snap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
                 if (snap && snap.exists()) {
                     const r = snap.data();
-                    const hostAddr = (r.hostAddr || '').toLowerCase();
-                    // Only default to host if the current user is NOT the host
-                    if (hostAddr && hostAddr !== (userAddress || '').toLowerCase()) {
-                        _vrGiftTarget = { addr: r.hostAddr, name: r.hostName || 'Host' };
-                        const lbl = document.getElementById('vr-gift-to-lbl');
-                        if (lbl) lbl.textContent = '→ ' + _vrGiftTarget.name;
-                    }
+                    _vrGiftTarget = { addr: r.hostAddr, name: r.hostName || 'Host' };
+                    const lbl = document.getElementById('vr-gift-to-lbl');
+                    if (lbl) lbl.textContent = '→ ' + (_vrGiftTarget.name);
                 }
             }
         }
@@ -27010,11 +27043,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     };
 
     window.vrSendGift = async function(tierKey) {
-        if ((_vrGiftTarget && (_vrGiftTarget.addr || '').toLowerCase() === (userAddress || '').toLowerCase())) {
-            showToast("You can't gift yourself — tap another speaker's orb first");
-            _vrGiftTarget = null;
-            return;
-        }
         _vrGiftOpen = false;
         const picker = document.getElementById('vr-gift-picker');
         if (picker) picker.classList.remove('open');
@@ -27030,22 +27058,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             });
             const data = await res.json();
             if (data.error) { showToast(data.error); return; }
+            // Write ledger entries client-side — same path as follow/comment/reply (reliable)
             const _VR_TIERS = {
-                bloom:   { icon:'🌹', name:'Bloom',   cost:1     },
-                blaze:   { icon:'🔥', name:'Blaze',   cost:5     },
-                rush:    { icon:'⚡', name:'Rush',    cost:10    },
-                crown:   { icon:'👑', name:'Crown',   cost:25    },
-                burst:   { icon:'🎊', name:'Burst',   cost:50    },
-                storm:   { icon:'🌩️', name:'Storm',   cost:100   },
-                dragon:  { icon:'🐉', name:'Dragon',  cost:250   },
-                comet:   { icon:'☄️', name:'Comet',   cost:500   },
-                fortune: { icon:'💰', name:'Fortune', cost:1000  },
-                phoenix: { icon:'🦅', name:'Phoenix', cost:5000  },
-                eclipse: { icon:'🌑', name:'Eclipse', cost:10000 },
-                aurora:  { icon:'🌌', name:'Aurora',  cost:25000 },
-                cosmos:  { icon:'🌠', name:'Cosmos',  cost:35000 },
-                reign:   { icon:'💎', name:'Reign',   cost:45000 },
-                genesis: { icon:'✨', name:'Genesis', cost:50000 }
+                spark:   { icon:'⚡', name:'Spark',   cost:1  },
+                fire:    { icon:'🔥', name:'Fire',    cost:5  },
+                diamond: { icon:'💎', name:'Diamond', cost:20 },
+                rocket:  { icon:'🚀', name:'Rocket',  cost:50 }
             };
             const _t = _VR_TIERS[tierKey];
             if (_t && window.logTransaction && _vrGiftTarget) {
@@ -27053,11 +27071,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const _cut   = Math.round(_t.cost * 0.8 * 10) / 10;
                 window.logTransaction('spend', _t.cost, {
                     from: userAddress, to: _recip,
-                    description: _t.icon + ' ' + _t.name + ' Gift sent in Voice Room (-' + _t.cost + '★)'
+                    description: `${_t.icon} ${_t.name} Gift sent in Voice Room (-${_t.cost}★)`
                 });
                 window.logTransaction('earn', _cut, {
                     from: userAddress, to: _recip,
-                    description: _t.icon + ' ' + _t.name + ' Gift received in Voice Room (+' + _cut.toFixed(1) + '★)'
+                    description: `${_t.icon} ${_t.name} Gift received in Voice Room (+${_cut.toFixed(1)}★)`
                 });
             }
             showToast('Gift sent to ' + _vrGiftTarget.name + '!');
@@ -27086,15 +27104,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (userAddress && _vrRoomId && window.db && window.fs) {
             window.fs.deleteDoc(window.fs.doc(window.db, VR_LISTEN, _vrRoomId, 'presence', userAddress.toLowerCase())).catch(() => {});
         }
-        _vrRoomId = null; _vrIsHost = false; _vrIsSpeaker = false; _vrMuted = false;
-        _vrGiftOpen = false; _vrGiftTarget = null; _vrOrbTarget = null; _vrPrevQueueSize = 0;
+        _vrRoomId = null; _vrIsHost = false; _vrIsSpeaker = false; _vrMuted = false; _vrGiftOpen = false; _vrGiftTarget = null; _vrOrbTarget = null;
         const popup = document.getElementById('vr-orb-popup');
         if (popup) popup.classList.remove('open');
         const ov = document.getElementById('vr-room-overlay');
         if (ov) ov.style.display = 'none';
     }
 
-
+    // Agora App ID shared with live streams
+    const AGORA_APP_ID_VR = 'e32b02aab43a4762b385498535b0f51d';
 
     // ── Config ────────────────────────────────────────────────────
     const AGORA_APP_ID  = 'e32b02aab43a4762b385498535b0f51d';
@@ -27162,10 +27180,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const watchEl = $('live-watch-panel');
         const bcEl    = $('live-broadcast-panel');
         const rmEl    = $('live-rooms-panel');
-        if (watchEl) watchEl.style.display = tab === 'watch' ? '' : 'none';
+        if (watchEl) watchEl.style.display = tab === 'watch'     ? '' : 'none';
         if (bcEl)    bcEl.style.display    = tab === 'broadcast' ? '' : 'none';
-        if (rmEl)    rmEl.style.display    = tab === 'rooms' ? '' : 'none';
-        if (tab === 'rooms' && typeof window.loadVoiceRooms === 'function') window.loadVoiceRooms();
+        if (rmEl)    rmEl.style.display    = tab === 'rooms'     ? '' : 'none';
+        if (tab === 'rooms') { window.loadVoiceRooms && window.loadVoiceRooms(); }
         if (tab === 'watch') {
             window.loadStreamBrowser();
             // Stop preview camera when leaving broadcast tab (unless actively streaming)
@@ -27273,7 +27291,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             <div class="live-stream-card" onclick="joinLiveStream('${s.id}')">
                 <div class="live-stream-thumb">
                     <span class="live-badge-pill" style="position:relative;">🔴 LIVE</span>
-                    <span class="live-viewer-chip" style="position:absolute;top:10px;right:12px;">👁 ${s.viewers || 0} watching</span>
+                    <span class="live-viewer-chip" style="position:absolute;top:10px;right:12px;">👁 ${s.viewers || 0}</span>
                     ${s.isPaid ? '<span class="paid-badge" style="position:absolute;bottom:10px;left:12px;">⭐ ' + s.entryFee + '★ entry</span>' : ''}
                 </div>
                 <div class="live-stream-card-body">
@@ -27521,9 +27539,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
                         const cohostPip = document.createElement('div');
                         cohostPip.id = 'cohost-pip-host';
-                        var _isMobPip = (window.innerWidth <= 700);
-                        var _pipPos = _isMobPip ? 'top:8px;left:8px;bottom:auto;right:auto;width:120px;height:80px;' : 'bottom:90px;right:10px;left:auto;width:140px;height:90px;';
-                        cohostPip.style.cssText = 'position:absolute;' + _pipPos + 'border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+                        var _pipSide = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
+                        cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSide + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
 
                         const label = document.createElement('div');
                         label.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;color:#fff;background:rgba(124,92,191,0.8);padding:1px 5px;border-radius:4px;z-index:1;';
@@ -27573,9 +27590,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 showToast('⛶ Co-host spotlighted for all viewers');
                             } else {
                                 spotBtn.textContent = '⛶ Spotlight';
-                                var _isMobPipR = (window.innerWidth <= 700);
-                                var _pipPosR = _isMobPipR ? 'top:8px;left:8px;bottom:auto;right:auto;width:120px;height:80px;' : 'bottom:90px;right:10px;left:auto;width:140px;height:90px;';
-                                cohostPip.style.cssText = 'position:absolute;' + _pipPosR + 'border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+                                var _pipSideR = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
+                                cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSideR + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
                                 spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
                                 showToast('⊠ Co-host restored to PiP');
                             }
@@ -27672,6 +27688,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             show('live-active-panel');
             _showBcFloatingChat();
             setText('live-broadcast-title-display', title + (streamEntryFee > 0 ? ' <span class="paid-badge">⭐ ' + streamEntryFee + '★ entry</span>' : ''));
+            // Populate broadcaster info bar
+            (function(){
+                var bar=document.getElementById('live-broadcast-info-bar');
+                if(!bar) return;
+                var av=document.getElementById('lbib-av'); if(av) av.src=window._liveUserAvatar||'';
+                var nm=document.getElementById('lbib-name'); if(nm) nm.textContent=window._liveUserHandle||userAddress.slice(0,8);
+                bar.style.display='flex';
+            })();
 
             // Update tab buttons
             const watchBtn = $('ltab-watch');
@@ -27708,6 +27732,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // 7. Start duration timer
             streamStartTime = Date.now();
             durationTimer = setInterval(updateDuration, 1000);
+            // Show mobile host overlay pills
+            const _mTopLeft = document.getElementById('host-mobile-topleft');
+            if (_mTopLeft) _mTopLeft.style.display = 'flex';
 
             // 8. Subscribe to live chat for broadcaster
             _sfcReset('bc-sfc-feed');
@@ -27769,6 +27796,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         // Capture and immediately null the stream id so no re-entrant calls can fire
         const _endingId = currentStreamId;
         currentStreamId = null;
+        window._currentStreamId = null;
         isHosting       = false;
         document.body.classList.remove('is-hosting');
         _isStartingLive = false; // reset mutex so a new stream can start after
@@ -27806,6 +27834,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         _pendingViewerLayout  = null;
         _activeLiveChannel    = null;
         _watchingStreamId     = null;
+        window._watchingStreamId = null;
         cohostRequests        = {};
         peakViewers           = 0;
         starGoalTarget        = 0;
@@ -27885,6 +27914,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         if (isHosting) { showToast('You are currently hosting a stream. End it first.'); return; }
         _isJoiningLive = true;
         _watchingStreamId = streamId; // set early so Guard 1 works on re-entry
+        window._watchingStreamId = streamId;
 
         try {
             // Fetch stream doc
@@ -28185,27 +28215,41 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Show player, hide browser and tabs
             hide('live-stream-browser');
             hide('live-tabs');
-            show('live-player-wrap');
             document.body.classList.add('is-watching');
-
-            // Move info bar inside video container as top overlay (CSS handles the rest)
-            (function() {
-                var _infoBar = document.getElementById('live-stream-info-bar');
-                var _vc = document.getElementById('live-remote-video-container');
-                if (_infoBar && _vc && _infoBar.parentNode !== _vc) {
-                    _vc.insertBefore(_infoBar, _vc.firstChild);
+            show('live-player-wrap');
+            // Full-screen viewer on mobile — JS setProperty beats all CSS cascade/specificity conflicts
+            if (window.innerWidth <= 700) {
+                var _fsWrap = document.getElementById('live-player-wrap');
+                var _fsCon  = document.getElementById('live-remote-video-container');
+                if (_fsWrap) {
+                    _fsWrap.style.setProperty('position',    'fixed',                  'important');
+                    _fsWrap.style.setProperty('top',         '0',                      'important');
+                    _fsWrap.style.setProperty('left',        '0',                      'important');
+                    _fsWrap.style.setProperty('width',       '100%',                   'important');
+                    _fsWrap.style.setProperty('height',      window.innerHeight+'px',  'important');
+                    _fsWrap.style.setProperty('max-height',  'none',                   'important');
+                    _fsWrap.style.setProperty('z-index',     '9000',                   'important');
+                    _fsWrap.style.setProperty('overflow',    'hidden',                 'important');
+                    _fsWrap.style.setProperty('background',  '#000',                   'important');
                 }
-                if (_infoBar) {
-                    _infoBar.style.display = 'flex';
-                    _infoBar.style.position = 'absolute';
-                    _infoBar.style.top = '0';
-                    _infoBar.style.left = '0';
-                    _infoBar.style.right = '0';
-                    _infoBar.style.zIndex = '20';
-                    _infoBar.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)';
-                    _infoBar.style.paddingBottom = '20px';
+                if (_fsCon) {
+                    _fsCon.style.setProperty('position',     'absolute', 'important');
+                    _fsCon.style.setProperty('top',          '0',        'important');
+                    _fsCon.style.setProperty('left',         '0',        'important');
+                    _fsCon.style.setProperty('right',        '0',        'important');
+                    _fsCon.style.setProperty('bottom',       '0',        'important');
+                    _fsCon.style.setProperty('width',        '100%',     'important');
+                    _fsCon.style.setProperty('height',       '100%',     'important');
+                    _fsCon.style.setProperty('max-height',   'none',     'important');
+                    _fsCon.style.setProperty('min-height',   '0',        'important');
                 }
-            })();
+            }
+            // Scroll to top so the info bar is visible (page may have been scrolled from a previous section)
+            try { window.scrollTo({top:0,behavior:'instant'}); } catch(_) { window.scrollTo(0,0); }
+            var _pw = document.getElementById('live-player-wrap');
+            if (_pw) _pw.scrollTop = 0;
+            // Scroll to top so fixed position:fixed player aligns with viewport top
+            document.body.style.setProperty('overflow','hidden','important');
             // Reset waiting room so it shows while video connects (fixes subsequent joins
             // where the waiting room was left hidden from a previous session)
             var _wrEl = document.getElementById('live-waiting-room');
@@ -28216,8 +28260,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             setText('live-stream-host-name', streamData.hostName || 'Creator');
             setText('live-stream-title-sm',  streamData.title    || '');
             setText('live-creator-stars-watch', (streamData.starsEarned || 0).toFixed(1));
-
-            // Populate viewer info bar (avatar, name, viewers, follow button)
+            // Populate viewer info bar and anchor it inside the video container as a top overlay.
+            // Moved inside the video container to bypass flex/sticky/scroll layout issues —
+            // the bar is pinned to the top of the video box which is always on screen.
             (function(){
                 var bar=document.getElementById('live-stream-info-bar');
                 if(!bar) return;
@@ -28233,6 +28278,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     var isF=typeof window._isFollowing==='function'?window._isFollowing(hostA):false;
                     fb.style.display=(!isOwn&&!isF)?'':'none';
                 }
+                var vCon=document.getElementById('live-remote-video-container');
+                if(vCon && bar.parentNode!==vCon) vCon.insertBefore(bar,vCon.firstChild);
+                bar.style.cssText='position:absolute;top:0;left:0;right:0;z-index:18;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:10px;background:linear-gradient(180deg,rgba(0,0,0,.7) 0%,transparent 100%);border:none;border-radius:0;pointer-events:auto;box-sizing:border-box;';
             })();
 
             // ── Paid admission gate check ─────────────────────────────
@@ -28307,18 +28355,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // ── Leave stream ──────────────────────────────────────────────
     window.leaveLiveStream = async function() {
-        // Fast teardown — run FIRST before any async calls
-        _watchingStreamId = null;
-        window._watchingStreamId = null;  // stops any setInterval from re-adding is-watching
-        document.body.classList.remove('is-watching');
-        var _vfsOld = document.getElementById('vfs-style');
-        if (_vfsOld) _vfsOld.remove();
-        var _vcLeave = document.getElementById('live-remote-video-container');
-        var _ccLeave = document.getElementById('viewer-panel-chat-card');
-        if (_vcLeave) _vcLeave.removeAttribute('style');
-        if (_ccLeave) _ccLeave.removeAttribute('style');
-        // TikTok layout uses CSS only — no native fullscreen to exit
-
         // Clean up co-host state first
         if (isCoHost) { await leaveCoHost().catch(() => {}); }
 
@@ -28380,21 +28416,24 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         // Reset video container layout classes
         var rvContainer = document.getElementById('live-remote-video-container');
         if (rvContainer) {
-            rvContainer.classList.remove('layout-split2','layout-pip-bottom','layout-grid4','layout-battle');
+            rvContainer.classList.remove('layout-split2','layout-pip-bottom','layout-grid4');
             rvContainer.style.cssText = '';
         }
 
-        // Hide stream info bar and move it back before the video container
+        // Hide stream info bar
         var sib = document.getElementById('live-stream-info-bar');
-        if(sib) {
-            sib.style.display = 'none';
-            sib.style.cssText = 'display:none';
-            var _vc4 = document.getElementById('live-remote-video-container');
-            if (_vc4 && _vc4.parentNode && sib.parentNode === _vc4) {
-                _vc4.parentNode.insertBefore(sib, _vc4);
-            }
-        }
+        if(sib) sib.style.display='none';
 
+        document.body.classList.remove('is-watching');
+        window._prevLiveStarsEarned = 0;
+        // Clear mobile full-screen inline styles (no DOM move needed — just clear styles)
+        if (window.innerWidth <= 700) {
+            var _fsClLp  = document.getElementById('live-player-wrap');
+            var _fsClVcc = document.getElementById('viewer-panel-chat-card');
+            if (_fsClLp) _fsClLp.style.cssText = '';
+            if (_fsClVcc) _fsClVcc.style.cssText = '';
+            document.body.style.removeProperty('overflow');
+        }
         hide('live-player-wrap');
         show('live-stream-browser');
         show('live-tabs');
@@ -28412,40 +28451,116 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     };
 
     // ── Hype button ───────────────────────────────────────────────
-    var _lastHypeTs = 0;
     window.sendLiveHype = async function() {
         if (!_watchingStreamId) return;
-        // Throttle: once per 2 seconds
-        var _now = Date.now();
-        if (_now - _lastHypeTs < 2000) return;
-        _lastHypeTs = _now;
 
-        const userHandle = window._liveUserHandle || 'Someone';
+        // Read shared state from main IIFE bridge
+        const userAddress = window._liveUserAddress || '';
+        const userHandle  = window._liveUserHandle  || 'Someone';
+        const available   = typeof window._liveTotalSpendable === 'number' ? window._liveTotalSpendable : 0;
+
+        if (available < HYPE_STAR_COST) { showToast('Not enough Stars to Hype! Deposit APTM first.'); return; }
 
         try {
-            const { doc, updateDoc, increment, collection: col, addDoc, serverTimestamp: sts } = window.fs;
+            const { doc, updateDoc, increment, getDoc } = window.fs;
 
-            // Increment hype counter on stream doc
+            // Deduct star from viewer — find host address to credit
+            const streamSnap = await getDoc(doc(window.db, LIVE_COL, _watchingStreamId));
+            if (!streamSnap.exists()) return;
+            const hostAddr = streamSnap.data().hostAddr;
+
+            // 1. Deduct from viewer via canonical spend waterfall (purchased first, then earned).
+            if (userAddress) {
+                await deductSpendableStars(userAddress.toLowerCase(), HYPE_STAR_COST);
+                // Update bridge balance
+                if (typeof window._liveTotalSpendable === 'number') {
+                    window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - HYPE_STAR_COST);
+                    window._liveAvailableStars = window._liveTotalSpendable;
+                }
+            }
+
+            // 2. 80/20 split — credit creator 80%, platform 20%
+            const creatorCut  = parseFloat((HYPE_STAR_COST * 0.8).toFixed(4));
+            const platformCut = parseFloat((HYPE_STAR_COST * 0.2).toFixed(4));
+
+            // Credit creator's earned balance instantly
+            if (hostAddr) {
+                const { collection: col, addDoc: adc, serverTimestamp: sts } = window.fs;
+                await updateDoc(doc(window.db, 'user_balances', hostAddr.toLowerCase()), {
+                    creatorStars: increment(creatorCut)
+                }).catch(() => {});
+                // Log earn entry to host's ledger
+                adc(col(window.db, 'user_transactions'), {
+                    type:           'earn',
+                    amount:         creatorCut,
+                    fromAddress:    (userAddress || '').toLowerCase(),
+                    toAddress:      hostAddr.toLowerCase(),
+                    address:        hostAddr.toLowerCase(),
+                    description:    `Live Stream Hype from ${userHandle} (+${creatorCut.toFixed(1)}★)`,
+                    timestamp:      Date.now(),
+                    schema_version: 2
+                }).catch(() => {});
+            }
+
+            // Credit platform revenue 20% — logAdminRevenue writes to platform_revenue
+            // collection (admin dashboard ledger) AND admin_revenue/global (withdrawable balance)
+            if (typeof window.logAdminRevenue === 'function') {
+                window.logAdminRevenue((userAddress || '').toLowerCase(), 'live_hype', platformCut);
+            } else {
+                // fallback: direct write to both collections
+                window.fs.addDoc(window.fs.collection(window.db, 'platform_revenue'), {
+                    sourceAddress: (userAddress || '').toLowerCase(),
+                    actionType: 'live_hype', amount: platformCut, timestamp: Date.now()
+                }).catch(() => {});
+                const { doc: d2, updateDoc: ud2, increment: inc2 } = window.fs;
+                ud2(d2(window.db, 'admin_revenue', 'global'), { total: inc2(platformCut) }).catch(() => {});
+            }
+
+            // Log spend entry to viewer's ledger
+            if (userAddress) {
+                const { collection: col2, addDoc: adc2 } = window.fs;
+                adc2(col2(window.db, 'user_transactions'), {
+                    type:           'spend',
+                    amount:         HYPE_STAR_COST,
+                    fromAddress:    userAddress.toLowerCase(),
+                    toAddress:      hostAddr || '',
+                    address:        userAddress.toLowerCase(),
+                    description:    `⚡ Live Hype sent (${HYPE_STAR_COST}★ · creator gets ${creatorCut.toFixed(1)}★)`,
+                    timestamp:      Date.now(),
+                    schema_version: 2
+                }).catch(() => {});
+            }
+
+            // 3. Update stream display counter
             await updateDoc(doc(window.db, LIVE_COL, _watchingStreamId), {
-                hypeCount: increment(1)
+                starsEarned: increment(HYPE_STAR_COST),
+                hypeCount:   increment(1)
             });
 
-            // Add hype message to chat
-            addDoc(col(window.db, LIVE_CHAT_COL, _watchingStreamId, 'messages'), {
+            // 4. Add hype message to chat (as user, not system)
+            addDoc(collection(window.db, LIVE_CHAT_COL, _watchingStreamId, 'messages'), {
                 author:   userHandle,
                 avatar:   userAvatar || '',
                 text:     `⚡ ${userHandle} hyped the stream!`,
-                ts:       sts(),
+                ts:       serverTimestamp(),
                 isSystem: false,
                 isHype:   true
             }).catch(() => {});
 
-            // Button animation
+            // 5. Feed into Live Activity ticker (right panel)
+            if (typeof window.tickerLog === 'function') {
+                window.tickerLog('spend', 'Live Hype', HYPE_STAR_COST, '⚡');
+            }
+
+            // Local UI update
             const hypeBtn = $('live-hype-btn');
             if (hypeBtn) {
                 hypeBtn.style.transform = 'scale(0.93)';
                 setTimeout(() => { hypeBtn.style.transform = ''; }, 140);
             }
+
+            showToast(`⚡ Hype sent! Creator gets ${creatorCut.toFixed(1)} ★ instantly.`);
+            if (typeof updateUI === 'function') updateUI();
 
         } catch(e) {
             console.warn('[Live] Hype error:', e);
@@ -28475,7 +28590,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         } catch(e) {
             console.warn('[Live chat]', e);
         }
-        if (input) input.blur();
     };
 
     // ── Broadcaster sends chat to their own stream ────────────────
@@ -28494,7 +28608,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             isSystem: false,
             isHost:   true
         }).catch(e => console.warn('[Broadcast chat]', e));
-        if (input) input.blur();
     };
 
     // ── Comments on/off (streamer controls) ──────────────────────
@@ -28893,11 +29006,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             return;
         }
 
-        const aptmPrice = window.aptmPriceUSD || 0;
-        if (aptmPrice <= 0) {
-            showToast('Waiting for price data — please try again in a moment.');
-            return;
-        }
+        // USDT model: 1 USDT = $1.00 fixed — there is NO price oracle. The old guard
+        // read window.aptmPriceUSD, which is never set anymore, so it blocked EVERY
+        // viewer gift with "Waiting for price data". Use the canonical fixed price.
+        const aptmPrice = (typeof currentAptmPriceUsd === 'number' && currentAptmPriceUsd > 0)
+            ? currentAptmPriceUsd
+            : 1.0;
 
         try {
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/sendGift', {
@@ -29275,9 +29389,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
 
             // Viewer side
-            setText('live-watch-viewers',       '👁 ' + (d.viewers || 0) + ((d.viewers === 1) ? ' person watching' : ' watching'));
+            setText('live-watch-viewers',       '👁 ' + (d.viewers || 0));
             setText('live-creator-stars-watch',  (d.starsEarned || 0).toFixed(1));
             setText('live-hype-count',           '(' + (d.hypeCount || 0) + ')');
+            // Info bars (viewer + broadcaster)
+            setText('lsib-viewers',  '👁 ' + (d.viewers || 0));
+            setText('lbib-viewers',  '👁 ' + (d.viewers || 0));
 
             // Broadcaster side
             liveStarsEarned  = d.starsEarned || 0;
@@ -29286,7 +29403,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             setText('live-stat-stars',   liveStarsEarned.toFixed(1) + ' ★');
             setText('live-stat-hypes',   String(liveHypeCount));
             setText('live-stat-viewers', String(liveViewerCount));
-            setText('live-broadcast-viewers', '👁 ' + liveViewerCount + (liveViewerCount === 1 ? ' person watching' : ' watching'));
+            setText('live-broadcast-viewers', '👁 ' + liveViewerCount);
             // Update host goal bar in real-time as stars come in
             if (isHosting && starGoalTarget > 0) _updateGoalBar(liveStarsEarned);
 
@@ -29384,21 +29501,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
             if (selfPip) {
                 // Restore selfPip to floating corner pip — undo any flex/grid parenting
-                var _isMobSelfR = (window.innerWidth <= 700);
                 selfPip.style.cssText = [
                     'position:absolute',
-                    _isMobSelfR ? 'top:8px' : 'bottom:60px',
-                    _isMobSelfR ? 'left:8px' : 'left:10px',
-                    _isMobSelfR ? 'bottom:auto' : '',
-                    _isMobSelfR ? 'right:auto' : '',
-                    _isMobSelfR ? 'width:120px' : 'width:160px',
-                    _isMobSelfR ? 'height:80px' : 'height:100px',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid #e03e3e',
-                    'z-index:22',
+                    'z-index:30',
                     'background:#000'
-                ].filter(Boolean).join(';');
+                ].join(';');
                 // Re-parent back into container if it was moved during split/grid
                 if (selfPip.parentElement !== container) container.appendChild(selfPip);
                 var svd = document.getElementById('cohost-self-video');
@@ -29406,21 +29520,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
             if (cohostPip) {
                 // Restore cohostPip to floating corner pip
-                var _isMobCH = (window.innerWidth <= 700);
                 cohostPip.style.cssText = [
                     'position:absolute',
-                    _isMobCH ? 'top:8px' : 'bottom:60px',
-                    _isMobCH ? 'left:8px' : 'right:10px',
-                    _isMobCH ? 'bottom:auto' : '',
-                    _isMobCH ? 'right:auto' : '',
-                    _isMobCH ? 'width:120px' : 'width:160px',
-                    _isMobCH ? 'height:80px' : 'height:100px',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid var(--purple)',
                     'z-index:22',
                     'background:#000'
-                ].filter(Boolean).join(';');
+                ].join(';');
                 if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
             }
         } else if (mode === 'split2') {
@@ -29505,7 +29616,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const secs  = Math.floor((Date.now() - streamStartTime) / 1000);
         const m     = Math.floor(secs / 60);
         const s     = secs % 60;
-        setText('live-stat-duration', m + ':' + String(s).padStart(2, '0'));
+        const formatted = m + ':' + String(s).padStart(2, '0');
+        setText('live-stat-duration', formatted);
+        const pill = document.getElementById('host-timer-elapsed');
+        if (pill) pill.textContent = formatted;
     }
 
     // ── Agora cleanup ─────────────────────────────────────────────
@@ -29556,9 +29670,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
             if (localAudioTrack) {
                 try {
-                    var _mstA = localAudioTrack.getMediaStreamTrack ? localAudioTrack.getMediaStreamTrack() : null;
-                    if (_mstA) _mstA.stop();
-                    localAudioTrack.stop();
+                    // Guard against operating on a track Agora already closed (e.g. from an outer endLiveStream wrapper)
+                    var _atClosed = localAudioTrack._isClosed || localAudioTrack.isPlaying === undefined;
+                    if (!_atClosed) {
+                        var _mstA = localAudioTrack.getMediaStreamTrack ? localAudioTrack.getMediaStreamTrack() : null;
+                        if (_mstA) _mstA.stop();
+                        localAudioTrack.stop();
+                    }
                     localAudioTrack.close();
                 } catch(_) {}
                 localAudioTrack = null; window._localAudioTrack_ref = null;
@@ -29943,6 +30061,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const docs = [];
             snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
             const pending = docs.filter(d => d.status === 'pending');
+            if(typeof _updateStageBadge==='function') _updateStageBadge(pending.length);
             // Notify streamer when a new stage request arrives
             if (pending.length > _prevPendingCount) {
                 const newest = pending[pending.length - 1];
@@ -30216,21 +30335,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (!selfPip) {
                 selfPip = document.createElement('div');
                 selfPip.id = 'cohost-self-pip';
-                var _isMobSelf = (window.innerWidth <= 700);
                 selfPip.style.cssText = [
                     'position:absolute',
-                    _isMobSelf ? 'top:8px' : 'bottom:60px',
-                    _isMobSelf ? 'left:8px' : 'left:10px',
-                    _isMobSelf ? 'bottom:auto' : '',
-                    _isMobSelf ? 'right:auto' : '',
-                    _isMobSelf ? 'width:120px' : 'width:160px',
-                    _isMobSelf ? 'height:80px' : 'height:100px',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid #e03e3e',
-                    'z-index:22',
+                    'z-index:30',
                     'background:#000'
-                ].filter(Boolean).join(';');
+                ].join(';');
 
                 var selfLabel = document.createElement('div');
                 selfLabel.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;font-weight:700;color:#fff;background:rgba(224,62,62,0.85);padding:1px 6px;border-radius:4px;z-index:3;pointer-events:none;letter-spacing:0.5px;';
@@ -30257,8 +30373,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 pipCamBtn.onclick = function() { window.toggleCoHostCam && window.toggleCoHostCam(); };
                 pipCamBtn.style.cssText = 'background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
 
+                var pipLeaveBtn = document.createElement('button');
+                pipLeaveBtn.textContent = '✕ Leave';
+                pipLeaveBtn.onclick = function() { window.leaveCoHost && window.leaveCoHost(); };
+                pipLeaveBtn.style.cssText = 'background:rgba(220,38,38,0.75);border:1px solid rgba(220,38,38,0.8);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+
                 selfControls.appendChild(pipMicBtn);
                 selfControls.appendChild(pipCamBtn);
+                selfControls.appendChild(pipLeaveBtn);
                 selfPip.appendChild(selfControls);
             }
 
@@ -31672,16 +31794,25 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (!snap.exists()) return;
             const d = snap.data();
 
-            setText('live-watch-viewers',       '👁 ' + (d.viewers || 0) + ((d.viewers === 1) ? ' person watching' : ' watching'));
+            setText('live-watch-viewers',       '👁 ' + (d.viewers || 0));
             setText('live-creator-stars-watch',  (d.starsEarned || 0).toFixed(1));
             setText('live-hype-count',           '(' + (d.hypeCount || 0) + ')');
 
+            var _prevStars = window._prevLiveStarsEarned || 0;
             liveStarsEarned  = d.starsEarned || 0;
             liveHypeCount    = d.hypeCount   || 0;
             liveViewerCount  = d.viewers     || 0;
             setText('live-stat-stars',   liveStarsEarned.toFixed(1) + ' ★');
             setText('live-stat-hypes',   String(liveHypeCount));
-            setText('live-broadcast-viewers', '👁 ' + liveViewerCount + ((liveViewerCount === 1) ? ' person watching' : ' watching'));
+            setText('live-broadcast-viewers', '👁 ' + liveViewerCount);
+            // Update host mobile stars pill + pop animation on gift received
+            var _hsd = document.getElementById('host-stars-earned-display');
+            if (_hsd) _hsd.textContent = liveStarsEarned.toFixed(1);
+            if (isHosting && liveStarsEarned > _prevStars) {
+                var _hsp = document.getElementById('host-stars-pill');
+                if (_hsp) { _hsp.classList.remove('stars-pop'); void _hsp.offsetWidth; _hsp.classList.add('stars-pop'); }
+            }
+            window._prevLiveStarsEarned = liveStarsEarned;
 
             // Update goal bar on broadcaster side
             if (starGoalTarget > 0) _updateGoalBar(liveStarsEarned);
@@ -32388,7 +32519,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         // Strip ALL layout classes and ALL inline display/grid/flex overrides on the container
         container.classList.remove('layout-split2', 'layout-pip-bottom', 'layout-grid4');
         container.style.display = '';
+        container.style.flexDirection = '';
         container.style.gridTemplateColumns = '';
+        container.style.gridTemplateRows = '';
+        container.style.gap = '';
+        container.style.overflow = '';
 
         // Mark active button
         ['solo','split2','pip-bottom','grid4'].forEach(function(m) {
@@ -32404,9 +32539,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
             if (pip)   pip.style.cssText   = 'position:absolute;bottom:50px;right:10px;width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
         } else if (mode === 'split2') {
+            // Use absolute positioning (same pattern as pip-bottom which works reliably).
+            // Flex/grid on the container fights the mobile display:block !important override
+            // and causes Agora to lose video when pip switches from absolute→relative position.
             container.classList.add('layout-split2');
             if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;top:0;left:50%;width:50%;height:100%;border-radius:0;border:none;border-left:2px solid var(--purple);z-index:1;background:#000;';
+            if (pip)   pip.style.cssText   = 'position:absolute;top:0;right:0;left:auto;bottom:auto;width:50%;height:100%;border-radius:0;border:none;border-left:2px solid var(--purple);z-index:20;background:#000;overflow:hidden;';
             if (!pip)  showToast('ℹ️ Co-host slot ready — approve a viewer from Stage Requests to fill it.');
         } else if (mode === 'pip-bottom') {
             container.classList.add('layout-pip-bottom');
@@ -32414,9 +32552,10 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (pip)   pip.style.cssText   = 'position:absolute;bottom:0;left:0;width:100%;height:50%;border-radius:0;border:none;border-top:2px solid var(--purple);z-index:20;background:#000;overflow:hidden;';
             if (!pip)  showToast('ℹ️ Co-host strip ready — approve a viewer from Stage Requests.');
         } else if (mode === 'grid4') {
+            // Host left column (full height), co-host top-right — both absolute.
             container.classList.add('layout-grid4');
             if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;top:0;left:50%;width:50%;height:100%;border-radius:0;border:none;background:#000;z-index:1;';
+            if (pip)   pip.style.cssText   = 'position:absolute;top:0;right:0;left:auto;bottom:auto;width:50%;height:50%;border-radius:0;border:none;z-index:20;background:#000;overflow:hidden;';
             if (!pip)  showToast('ℹ️ Grid ready — up to 3 co-hosts can join. Approve from Stage Requests.');
         }
 
@@ -32453,6 +32592,331 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     console.log('[SocialHub] Studio features initialised — Screen Share, Noise Suppression, Name Tag, Poll, Star Goal, Leaderboard, Raise Hand, Reactions, Health Monitor, Milestones, Virtual Background, Co-Host, Paid Admission, Recording, Whiteboard, Layout ✓');
 
+})();
+</script>
+
+    <!-- Global countdown overlay — fixed fullscreen, shown before going live -->
+    <div id="stream-countdown-overlay">
+        <div class="countdown-num" id="countdown-num">3</div>
+        <div class="countdown-label">Stream starting…</div>
+    </div>
+
+    <!-- Cinema shell — empty until enterCinema() moves content into it -->
+    <div id="cinema-shell" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;">
+        <div id="cinema-video-col">
+            <!-- video injected here by JS -->
+        </div>
+        <div id="cinema-chat-col">
+            <!-- chat card + cinema-controls injected by JS above this end-btn -->
+            <div id="cinema-end-btn-wrap" style="display:none;">
+                <button onclick="if(window.endLiveStream)window.endLiveStream()">&#9632; End Stream</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function(){
+    // Placeholders so we can restore original positions
+    var _videoPlaceholder = document.createComment('cinema-video-placeholder');
+    var _chatPlaceholder  = document.createComment('cinema-chat-placeholder');
+    var _inCinema = false;
+
+    function enterCinema(videoContainerId, chatFeedId) {
+        if (_inCinema) return;
+        _inCinema = true;
+
+        var videoEl = document.getElementById(videoContainerId);
+        var feedEl  = document.getElementById(chatFeedId);
+        var chatEl  = feedEl ? feedEl.closest('.live-chat-card') : null;
+        var cinemaVideoCol = document.getElementById('cinema-video-col');
+        var cinemaChatCol  = document.getElementById('cinema-chat-col');
+        var endBtnWrap     = document.getElementById('cinema-end-btn-wrap');
+
+        if (!videoEl || !chatEl) { _inCinema = false; return; }
+
+        // Insert placeholders in original positions so we can restore later
+        videoEl.parentNode.insertBefore(_videoPlaceholder, videoEl);
+        chatEl.parentNode.insertBefore(_chatPlaceholder, chatEl);
+
+        // Remove hardcoded height so flex takes over
+        videoEl.style.height = '';
+        videoEl.style.flex = '1';
+        videoEl.style.minHeight = '0';
+
+        // Add fullscreen button inside video element
+        var fsBtn = document.createElement('button');
+        fsBtn.className = 'cinema-fs-btn';
+        fsBtn.id = 'cinema-fs-btn';
+        fsBtn.textContent = '⛶ Fullscreen';
+        fsBtn.onclick = window.toggleCinemaFullscreen;
+        videoEl.appendChild(fsBtn);
+
+        // Hide waiting room before the DOM move — prevents black flash
+        var _wr = videoEl.querySelector('#live-waiting-room');
+        if (_wr) { _wr.style.transition = 'none'; _wr.style.display = 'none'; }
+
+        // Move video into video col (only the video — no controls bar here)
+        cinemaVideoCol.innerHTML = '';
+        cinemaVideoCol.appendChild(videoEl);
+
+        // Agora loses render context after DOM move — force re-render
+        setTimeout(function() {
+            try { window.dispatchEvent(new Event('resize')); } catch(_) {}
+            if (window._liveHostVideoTrack) {
+                var remoteEl = document.getElementById('live-remote-video');
+                if (remoteEl) {
+                    var col = document.getElementById('cinema-video-col');
+                    var w = col ? col.offsetWidth  : 320;
+                    var h = col ? col.offsetHeight : 240;
+                    remoteEl.style.width  = w + 'px';
+                    remoteEl.style.height = h + 'px';
+                    try { window._liveHostVideoTrack.play(remoteEl); } catch(_) {}
+                }
+            }
+        }, 300);
+
+        // Build controls section for bottom of right column
+        // Structure: #cinema-controls > #cinema-controls-btns + #cinema-controls-panels
+        var controlsBar   = document.createElement('div');
+        controlsBar.id    = 'cinema-controls';
+
+        var ctrlBtns      = document.createElement('div');
+        ctrlBtns.id       = 'cinema-controls-btns';
+        controlsBar.appendChild(ctrlBtns);
+
+        var ctrlPanels    = document.createElement('div');
+        ctrlPanels.id     = 'cinema-controls-panels';
+        controlsBar.appendChild(ctrlPanels);
+
+        // Scan siblings between placeholders: buttons/toolbars → ctrlBtns, panels → ctrlPanels
+        // Skip the original End Stream button (handled by the static wrap)
+        // Hide the normal-mode End Stream wrap; cinema mode has its own
+        var panelEndWrap = document.getElementById('panel-end-stream-wrap');
+        if (panelEndWrap) panelEndWrap.style.display = 'none';
+
+        var panelIds = ['poll-creator','lower-third-editor','vbg-picker','cohost-panel','layout-picker',
+                        'goal-setter','hand-queue-card','host-poll-card','star-goal-display',
+                        'recording-status','gift-leaderboard','bc-live-stats-row',
+                        // Viewer-side panels
+                        'viewer-poll-card','viewer-star-goal','viewer-leaderboard','viewer-gift-panel'];
+        var node = _videoPlaceholder.nextSibling;
+        while (node && node !== _chatPlaceholder) {
+            var next = node.nextSibling;
+            if (node.nodeType === 1) {
+                var btnText    = (node.textContent || '').trim();
+                var btnOnclick = node.getAttribute('onclick') || '';
+                var nodeId     = node.id || '';
+                // Skip panel End Stream wrap — cinema mode has its own
+                if (nodeId === 'panel-end-stream-wrap') {
+                    // already hidden above, leave in place
+                } else if (nodeId === 'viewer-reactions-bar') {
+                    node.style.display = 'none';
+                } else if (node.tagName === 'BUTTON' && (
+                    btnText.indexOf('End Stream') !== -1 ||
+                    btnOnclick.indexOf('endLiveStream') !== -1
+                )) {
+                    // hide the original, keep in DOM so exitCinema can restore
+                    node.style.display = 'none';
+                } else if (panelIds.indexOf(nodeId) !== -1) {
+                    // Panel elements go into panels area
+                    ctrlPanels.appendChild(node);
+                } else {
+                    // Buttons, toolbars go into buttons row
+                    ctrlBtns.appendChild(node);
+                }
+            }
+            node = next;
+        }
+
+        // DOM order in cinema-chat-col: controls → chat → end button
+        cinemaChatCol.insertBefore(controlsBar, endBtnWrap);
+        cinemaChatCol.insertBefore(chatEl, endBtnWrap);
+
+        // Show the end stream button wrap — only for the actual broadcaster
+        if (endBtnWrap && document.body.classList.contains('is-hosting') && !document.body.classList.contains('is-cohost')) endBtnWrap.style.display = 'flex';
+
+        document.body.classList.add('cinema-mode');
+    }
+
+    function exitCinema() {
+        if (!_inCinema) return;
+        _inCinema = false;
+
+        var videoEl        = document.getElementById('live-broadcaster-video-container') ||
+                             document.getElementById('live-remote-video-container');
+        var cinemaVideoCol = document.getElementById('cinema-video-col');
+        var cinemaChatCol  = document.getElementById('cinema-chat-col');
+        var controlsBar    = document.getElementById('cinema-controls');
+        var endBtnWrap     = document.getElementById('cinema-end-btn-wrap');
+
+        // Remove fullscreen btn
+        var fsBtn = document.getElementById('cinema-fs-btn');
+        if (fsBtn) fsBtn.parentNode.removeChild(fsBtn);
+
+        // Restore all controls children back before the chat placeholder
+        // (btns and panels divs contain the original elements)
+        if (controlsBar) {
+            var btnsDiv   = controlsBar.querySelector('#cinema-controls-btns');
+            var panelsDiv = controlsBar.querySelector('#cinema-controls-panels');
+            // Restore from btns div
+            if (btnsDiv) {
+                while (btnsDiv.firstChild) {
+                    var el = btnsDiv.firstChild;
+                    el.style.display = ''; // un-hide any we hid
+                    _chatPlaceholder.parentNode.insertBefore(el, _chatPlaceholder);
+                }
+            }
+            // Restore from panels div
+            if (panelsDiv) {
+                while (panelsDiv.firstChild) {
+                    _chatPlaceholder.parentNode.insertBefore(panelsDiv.firstChild, _chatPlaceholder);
+                }
+            }
+            controlsBar.parentNode.removeChild(controlsBar);
+        }
+
+        // Restore video to original position
+        if (videoEl && _videoPlaceholder.parentNode) {
+            _videoPlaceholder.parentNode.insertBefore(videoEl, _videoPlaceholder);
+        }
+
+        // Restore chat to original position
+        var chatEl = cinemaChatCol && cinemaChatCol.querySelector('.live-chat-card');
+        if (chatEl && _chatPlaceholder.parentNode) {
+            _chatPlaceholder.parentNode.insertBefore(chatEl, _chatPlaceholder);
+        }
+
+        // Hide end btn wrap
+        if (endBtnWrap) endBtnWrap.style.display = 'none';
+
+        // Restore normal-mode End Stream wrap
+        var panelEndWrap = document.getElementById('panel-end-stream-wrap');
+        if (panelEndWrap) panelEndWrap.style.display = '';
+
+        // Clean up placeholders
+        if (_videoPlaceholder.parentNode) _videoPlaceholder.parentNode.removeChild(_videoPlaceholder);
+        if (_chatPlaceholder.parentNode)  _chatPlaceholder.parentNode.removeChild(_chatPlaceholder);
+
+        document.body.classList.remove('cinema-mode');
+        document.body.classList.remove('cinema-fullscreen');
+
+        // Reset placeholders for next use
+        _videoPlaceholder = document.createComment('cinema-video-placeholder');
+        _chatPlaceholder  = document.createComment('cinema-chat-placeholder');
+    }
+
+    window.toggleCinemaFullscreen = function() {
+        var isFS = document.body.classList.toggle('cinema-fullscreen');
+        var btn = document.getElementById('cinema-fs-btn');
+        if (btn) btn.textContent = isFS ? '✕ Exit Fullscreen' : '⛶ Fullscreen';
+        if (isFS) {
+            document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function(){});
+        } else {
+            document.fullscreenElement && document.exitFullscreen && document.exitFullscreen().catch(function(){});
+        }
+    };
+
+    document.addEventListener('fullscreenchange', function() {
+        if (!document.fullscreenElement) {
+            document.body.classList.remove('cinema-fullscreen');
+            var btn = document.getElementById('cinema-fs-btn');
+            if (btn) btn.textContent = '⛶ Fullscreen';
+        }
+    });
+
+    // Patch startLiveStream
+    var _origStart = null;
+    function patchStart() {
+        if (window.startLiveStream && window.startLiveStream !== _patchedStart) {
+            _origStart = window.startLiveStream;
+            window.startLiveStream = _patchedStart;
+        }
+    }
+    var _patchedStart = async function() {
+        await _origStart.apply(this, arguments);
+        // Mobile (≤768px): use direct #live-active-panel full-screen layout via CSS — skip cinema shell
+        if (window.innerWidth <= 768) return;
+        // Apply cinema-mode class immediately so raw panel is hidden via CSS
+        document.body.classList.add('cinema-mode');
+        setTimeout(function(){
+            var vc = document.getElementById('live-broadcaster-video-container');
+            if (vc) vc.style.height = '';
+            enterCinema('live-broadcaster-video-container', 'live-broadcast-chat-feed');
+        }, 400);
+    };
+
+    // Patch joinLiveStream
+    var _origJoin = null;
+    function patchJoin() {
+        if (window.joinLiveStream && window.joinLiveStream !== _patchedJoin) {
+            _origJoin = window.joinLiveStream;
+            window.joinLiveStream = _patchedJoin;
+        }
+    }
+    var _patchedJoin = async function() {
+        await _origJoin.apply(this, arguments);
+        // Wait for the remote video container to have actual video content before
+        // entering cinema mode — avoids showing local camera preview by mistake.
+        var attempts = 0;
+        var maxAttempts = 40; // 4 seconds max
+        function waitForRemoteVideo() {
+            var vc = document.getElementById('live-remote-video-container');
+            var hasVideo = vc && vc.querySelector('video');
+            attempts++;
+            if (hasVideo || attempts >= maxAttempts) {
+                var wr = document.getElementById('live-waiting-room');
+                if (wr) wr.style.display = 'none';
+                if (vc) vc.style.height = '';
+                enterCinema('live-remote-video-container', 'live-chat-feed');
+            } else {
+                setTimeout(waitForRemoteVideo, 100);
+            }
+        }
+        setTimeout(waitForRemoteVideo, 300);
+    };
+
+    // Patch leaveLiveStream
+    var _origLeave = null;
+    function patchLeave() {
+        if (window.leaveLiveStream && window.leaveLiveStream !== _patchedLeave) {
+            _origLeave = window.leaveLiveStream;
+            window.leaveLiveStream = _patchedLeave;
+        }
+    }
+    var _patchedLeave = async function() {
+        exitCinema();
+        window._liveHostVideoTrack = null;
+        await _origLeave.apply(this, arguments);
+    };
+
+    // Patch endLiveStream
+    var _origEnd = null;
+    function patchEnd() {
+        if (window.endLiveStream && window.endLiveStream !== _patchedEnd) {
+            _origEnd = window.endLiveStream;
+            window.endLiveStream = _patchedEnd;
+        }
+    }
+    var _patchedEnd = async function() {
+        await _origEnd.apply(this, arguments);
+        exitCinema();
+    };
+
+    // Wait for all functions to be defined then patch — runs ONCE.
+    // _tryPatchDone prevents re-polling after the countdown IIFE has already
+    // changed window.startLiveStream, which would cause _origStart to capture
+    // a wrapped function and create a circular or double-call chain.
+    var _tryPatchDone = false;
+    function tryPatch() {
+        if (_tryPatchDone) return;
+        patchStart(); patchJoin(); patchLeave(); patchEnd();
+        if (!_origStart || !_origJoin || !_origLeave || !_origEnd) {
+            setTimeout(tryPatch, 200);
+        } else {
+            _tryPatchDone = true; // all four patched — stop polling
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(tryPatch, 500); });
 })();
 </script>
 
@@ -35363,7 +35827,7 @@ async function _joinBattleOpponent(oppSid){
             if(pip) pip.innerHTML='<div class="bop-label">⚔️ Opponent</div><div class="bop-wait">📡<br>Reconnecting…</div>';
         });
 
-        await _bViewerClient.join('e26e79a0f99446f991beb0d6c68271a3',oppChannel,tokenData.token,tokenData.uid||null);
+        await _bViewerClient.join('e32b02aab43a4762b385498535b0f51d',oppChannel,tokenData.token,tokenData.uid||null);
         _showBattleSplit();
     }catch(e){
         console.error('[Battle] _joinBattleOpponent failed:',e.message,e);
