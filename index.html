@@ -1987,6 +1987,9 @@
                 min-height: 240px !important;
                 max-height: 360px !important;
                 flex-shrink: 0 !important;
+                margin: 0 !important;
+                border-radius: 16px !important;
+                overflow: hidden !important;
             }
 
             body.is-hosting #live-active-panel #bc-live-stats-row { display: none !important; }
@@ -13235,8 +13238,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const WC_PROJECT_ID = '422b74ec70be253bbdc47a7479725899';
                 if (!window._WCEthProviderClass) {
                     showToast('Loading WalletConnect…');
-                    const mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
+                    const mod = await Promise.race([
+                        import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3'),
+                        new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('WalletConnect library failed to load. Check your internet connection and try again.')); }, 20000); })
+                    ]);
                     window._WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
+                    if (!window._WCEthProviderClass || typeof window._WCEthProviderClass.init !== 'function') {
+                        throw new Error('WalletConnect library did not load correctly. Try refreshing the page.');
+                    }
                 }
                 if (window._activeWCProvider) {
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
@@ -13258,7 +13267,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         icons:       ['https://socialhubglobal.com/favicon.ico']
                     }
                 });
-                await wcProv.enable(); // opens QR modal — resolves when user approves
+                showToast('Scan the QR code with your wallet app to connect');
+                // Race enable() against a 90-second timeout — on mobile the QR modal
+                // may open but the promise hangs if no wallet responds.
+                await Promise.race([
+                    wcProv.enable(),
+                    new Promise(function(_, reject){
+                        setTimeout(function(){ reject(new Error('WalletConnect timed out. Scan the QR code with your wallet app, or try on desktop.')); }, 90000);
+                    })
+                ]);
                 await _ensureApertumChain(wcProv); // switch/add Apertum after session established
                 window._activeWCProvider = wcProv;
                 eth = wcProv;
