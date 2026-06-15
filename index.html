@@ -28176,24 +28176,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     }
                 }
 
-                if (window.innerWidth <= 900) {
-                    var _lpEl = document.getElementById('live-player-wrap');
-                    if (_lpEl && _lpEl.requestFullscreen) {
-                        _lpEl.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
-                    }
-                }
+                // TikTok-style fullscreen layout is handled by CSS (body.is-watching position:fixed)
+                // Do NOT call requestFullscreen — native fullscreen breaks Agora video on mobile
 
                 var _liveChatInputVfs = document.getElementById('live-chat-input');
                 if (_liveChatInputVfs && window.innerWidth <= 900) {
-                    _liveChatInputVfs.addEventListener('focus', function() {
-                        if (document.fullscreenElement) document.exitFullscreen();
-                    });
-                    _liveChatInputVfs.addEventListener('blur', function() {
-                        setTimeout(function() {
-                            var _lp3 = document.getElementById('live-player-wrap');
-                            if (_lp3 && _lp3.requestFullscreen) _lp3.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
-                        }, 200);
-                    });
                     if (window.visualViewport) {
                         window.visualViewport.addEventListener('resize', function() {
                             var kbH = window.innerHeight - window.visualViewport.height;
@@ -28323,7 +28310,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         var _ccLeave = document.getElementById('viewer-panel-chat-card');
         if (_vcLeave) _vcLeave.removeAttribute('style');
         if (_ccLeave) _ccLeave.removeAttribute('style');
-        if (document.fullscreenElement) document.exitFullscreen().catch(function(){});
+        // TikTok layout uses CSS only — no native fullscreen to exit
 
         // Clean up co-host state first
         if (isCoHost) { await leaveCoHost().catch(() => {}); }
@@ -28474,14 +28461,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         } catch(e) {
             console.warn('[Live chat]', e);
         }
-        // Re-enter fullscreen after send on mobile
         if (input) input.blur();
-        setTimeout(function() {
-            var _lp4 = document.getElementById('live-player-wrap');
-            if (_lp4 && _lp4.requestFullscreen && window.innerWidth <= 900) {
-                _lp4.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
-            }
-        }, 100);
     };
 
     // ── Broadcaster sends chat to their own stream ────────────────
@@ -28500,14 +28480,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             isSystem: false,
             isHost:   true
         }).catch(e => console.warn('[Broadcast chat]', e));
-        // Re-enter fullscreen after send on mobile
         if (input) input.blur();
-        setTimeout(function() {
-            var _lp4 = document.getElementById('live-player-wrap');
-            if (_lp4 && _lp4.requestFullscreen && window.innerWidth <= 900) {
-                _lp4.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
-            }
-        }, 100);
     };
 
     // ── Comments on/off (streamer controls) ──────────────────────
