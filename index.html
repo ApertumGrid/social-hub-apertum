@@ -1983,15 +1983,15 @@
             }
 
             body.is-hosting #live-active-panel #live-broadcaster-video-container {
-                height: 48vw !important;
-                min-height: 210px !important;
-                max-height: 310px !important;
+                height: 360px !important;
+                min-height: 240px !important;
+                max-height: 360px !important;
                 flex-shrink: 0 !important;
             }
 
             body.is-hosting #live-active-panel #bc-live-stats-row { display: none !important; }
             body.is-hosting #live-active-panel .studio-toolbar {
-                flex-shrink: 0 !important;
+                display: none !important;
             }
 
             body.is-hosting #live-active-panel #bc-panel-chat-card {
@@ -2018,6 +2018,51 @@
         }
 
         /* â”€â”€ Gift System CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        /* ── TikTok viewer layout — applied when body has class is-watching ── */
+        body.is-watching #mobile-dashboard { display: none !important; }
+        @media(max-width:900px) {
+            body.is-watching #live-player-wrap {
+                position: fixed !important;
+                top: 0; right: 0; bottom: 0; left: 0;
+                display: flex !important;
+                flex-direction: column !important;
+                z-index: 500;
+                background: #090715;
+                overflow: hidden;
+            }
+            body.is-watching #live-remote-video-container {
+                flex: 0 0 auto !important;
+                height: 360px !important;
+                min-height: 240px !important;
+                max-height: 360px !important;
+                border-radius: 16px;
+                position: relative;
+            }
+            body.is-watching #viewer-panel-chat-card {
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                background: rgba(9,7,21,0.98);
+                overflow: hidden;
+            }
+            body.is-watching .live-chat-feed {
+                flex: 1 !important;
+                max-height: none !important;
+                justify-content: flex-end;
+            }
+            body.is-watching .live-chat-input-row {
+                flex-shrink: 0 !important;
+                background: rgba(15,11,28,0.97);
+                border-top: 1px solid rgba(124,92,191,0.2);
+            }
+            body.is-watching #topnav { display: none !important; }
+            body.is-watching #bottom-nav { display: none !important; }
+            body.is-watching #hype-ticker { display: none !important; }
+            body.is-watching #live-stream-meta { display: none !important; }
+            body.is-watching #viewer-floating-chat { display: none !important; }
+            body.is-watching #cmd-orb, body.is-watching #cmd-wheel, body.is-watching #cmd-scrim { display: none !important; }
+        }
+
         .live-gift-card {
             background:var(--bg-card);
             border:1px solid var(--border);
@@ -4103,6 +4148,7 @@
         .ledger-badge.spend   { background: rgba(248,113,113,0.12); color: var(--red); }
         .ledger-badge.deposit { background: var(--teal-dim); color: var(--teal); }
         .ledger-badge.settle  { background: var(--purple-dim); color: var(--purple-lt); }
+        .ledger-badge.refund  { background: rgba(62,207,142,0.12); color: var(--green); }
         .ledger-amount { font-family: var(--font-mono); font-size: 0.76rem; font-weight: 700; width: 58px; text-align: right; flex-shrink: 0; }
         .ledger-amount.earn    { color: var(--green); }
         .ledger-amount.spend   { color: var(--red); }
@@ -14146,7 +14192,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             // Without this guard, the txTo===myAddr branch wins for spend docs and
             // misclassifies them as "+1 Earned" — the Ghost Debit bug.
             let displayType;
-            if (tx.type === 'deposit' || tx.type === 'settle') {
+            if (tx.type === 'deposit' || tx.type === 'settle' || tx.type === 'refund') {
                 displayType = tx.type;  // self-directed — always show as-is
             } else if (txFrom === myAddr && txTo === myAddr) {
                 // Self-addressed: trust the stored type field — do NOT infer from address
@@ -14161,7 +14207,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 return;  // should never reach here after _mergeFire filter, but guard anyway
             }
 
-            const isEarn = displayType === 'earn' || displayType === 'deposit';
+            const isEarn = displayType === 'earn' || displayType === 'deposit' || displayType === 'refund';
             const isSettle = displayType === 'settle';
             const prefix = isEarn ? '+' : '−';
             // Settle amounts are in APTM; all other types are in Stars
@@ -14169,7 +14215,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 ? '−' + parseFloat(tx.amount).toFixed(4) + ' APTM'
                 : prefix + parseFloat(tx.amount).toFixed(1) + ' ★';
             const amtCls = isEarn ? 'earn' : (isSettle ? 'neutral' : 'spend');
-            const badge  = { earn:'Earned', spend:'Spent', deposit:'Deposit', settle:'Settle' }[displayType] || displayType;
+            const badge  = { earn:'Earned', spend:'Spent', deposit:'Deposit', settle:'Settle', refund:'Refund' }[displayType] || displayType;
             const date   = new Date(tx.timestamp).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
             // Counterpart chip: earn rows show who sent, spend rows show who received
             let counterpart = '';
@@ -26707,7 +26753,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         const _rdVR  = roomSnap.data();
         if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
         const price = parseFloat(_rdVR.handRaisePrice || 1);
-        if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
+        const _vrMyBal = parseFloat(purchasedStars || 0) + parseFloat(creatorEarnings || 0);
+        if (_vrMyBal < price) { showToast('Not enough Stars — need ' + price + ' ★'); return; }
         try {
             const res  = await fetch(VR_CF_BASE + 'raiseHandVR', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -26715,9 +26762,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             });
             const data = await res.json();
             if (data.error) { showToast(data.error); return; }
-            showToast('Hand raised! Waiting for host…');
+            showToast('Stage request sent! Waiting for host to let you in…');
             const btn = document.getElementById('vr-ctrl-hand');
-            if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
+            if (btn) {
+                var lbl = btn.querySelector('#vr-hand-lbl');
+                if (lbl) lbl.textContent = 'Requested';
+                btn.style.opacity = '0.5';
+                btn.disabled = true;
+            }
         } catch(e) { showToast('Could not raise hand'); }
     };
 
@@ -26856,9 +26908,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 const snap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
                 if (snap && snap.exists()) {
                     const r = snap.data();
-                    _vrGiftTarget = { addr: r.hostAddr, name: r.hostName || 'Host' };
-                    const lbl = document.getElementById('vr-gift-to-lbl');
-                    if (lbl) lbl.textContent = '→ ' + _vrGiftTarget.name;
+                    const hostAddr = (r.hostAddr || '').toLowerCase();
+                    // Only default to host if the current user is NOT the host
+                    if (hostAddr && hostAddr !== (userAddress || '').toLowerCase()) {
+                        _vrGiftTarget = { addr: r.hostAddr, name: r.hostName || 'Host' };
+                        const lbl = document.getElementById('vr-gift-to-lbl');
+                        if (lbl) lbl.textContent = '→ ' + _vrGiftTarget.name;
+                    }
                 }
             }
         }
@@ -26868,6 +26924,11 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     };
 
     window.vrSendGift = async function(tierKey) {
+        if ((_vrGiftTarget && (_vrGiftTarget.addr || '').toLowerCase() === (userAddress || '').toLowerCase())) {
+            showToast("You can't gift yourself — tap another speaker's orb first");
+            _vrGiftTarget = null;
+            return;
+        }
         _vrGiftOpen = false;
         const picker = document.getElementById('vr-gift-picker');
         if (picker) picker.classList.remove('open');
@@ -26884,10 +26945,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             const data = await res.json();
             if (data.error) { showToast(data.error); return; }
             const _VR_TIERS = {
-                spark:   { icon:'⚡', name:'Spark',   cost:1  },
-                fire:    { icon:'🔥', name:'Fire',    cost:5  },
-                diamond: { icon:'💎', name:'Diamond', cost:20 },
-                rocket:  { icon:'🚀', name:'Rocket',  cost:50 }
+                bloom:   { icon:'🌹', name:'Bloom',   cost:1     },
+                blaze:   { icon:'🔥', name:'Blaze',   cost:5     },
+                rush:    { icon:'⚡', name:'Rush',    cost:10    },
+                crown:   { icon:'👑', name:'Crown',   cost:25    },
+                burst:   { icon:'🎊', name:'Burst',   cost:50    },
+                storm:   { icon:'🌩️', name:'Storm',   cost:100   },
+                dragon:  { icon:'🐉', name:'Dragon',  cost:250   },
+                comet:   { icon:'☄️', name:'Comet',   cost:500   },
+                fortune: { icon:'💰', name:'Fortune', cost:1000  },
+                phoenix: { icon:'🦅', name:'Phoenix', cost:5000  },
+                eclipse: { icon:'🌑', name:'Eclipse', cost:10000 },
+                aurora:  { icon:'🌌', name:'Aurora',  cost:25000 },
+                cosmos:  { icon:'🌠', name:'Cosmos',  cost:35000 },
+                reign:   { icon:'💎', name:'Reign',   cost:45000 },
+                genesis: { icon:'✨', name:'Genesis', cost:50000 }
             };
             const _t = _VR_TIERS[tierKey];
             if (_t && window.logTransaction && _vrGiftTarget) {
@@ -27363,7 +27435,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
                         const cohostPip = document.createElement('div');
                         cohostPip.id = 'cohost-pip-host';
-                        cohostPip.style.cssText = 'position:absolute;bottom:90px;right:10px;width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+                        var _isMobPip = (window.innerWidth <= 700);
+                        var _pipPos = _isMobPip ? 'top:8px;left:8px;bottom:auto;right:auto;width:120px;height:80px;' : 'bottom:90px;right:10px;left:auto;width:140px;height:90px;';
+                        cohostPip.style.cssText = 'position:absolute;' + _pipPos + 'border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
 
                         const label = document.createElement('div');
                         label.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;color:#fff;background:rgba(124,92,191,0.8);padding:1px 5px;border-radius:4px;z-index:1;';
@@ -27413,7 +27487,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 showToast('⛶ Co-host spotlighted for all viewers');
                             } else {
                                 spotBtn.textContent = '⛶ Spotlight';
-                                cohostPip.style.cssText = 'position:absolute;bottom:90px;right:10px;width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+                                var _isMobPipR = (window.innerWidth <= 700);
+                                var _pipPosR = _isMobPipR ? 'top:8px;left:8px;bottom:auto;right:auto;width:120px;height:80px;' : 'bottom:90px;right:10px;left:auto;width:140px;height:90px;';
+                                cohostPip.style.cssText = 'position:absolute;' + _pipPosR + 'border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
                                 spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
                                 showToast('⊠ Co-host restored to PiP');
                             }
@@ -28024,6 +28100,91 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             hide('live-stream-browser');
             hide('live-tabs');
             show('live-player-wrap');
+            document.body.classList.add('is-watching');
+
+            // TikTok-style fullscreen layout on mobile
+            (function() {
+                var _oldVfs = document.getElementById('vfs-style');
+                if (_oldVfs) _oldVfs.remove();
+                var _vfsStyle = document.createElement('style');
+                _vfsStyle.id = 'vfs-style';
+                _vfsStyle.textContent = [
+                    '#live-remote-video-container{height:360px!important;min-height:240px!important;max-height:360px!important;}',
+                    '#viewer-panel-chat-card{flex:1!important;display:flex!important;flex-direction:column!important;}',
+                    '.live-chat-feed{flex:1!important;max-height:none!important;min-height:0!important;}'
+                ].join('');
+                document.head.appendChild(_vfsStyle);
+
+                if (window.innerWidth <= 900) {
+                    var _lp = document.getElementById('live-player-wrap');
+                    var _vc = document.getElementById('live-remote-video-container');
+                    var _cc = document.getElementById('viewer-panel-chat-card');
+                    var _cf = _cc ? _cc.querySelector('.live-chat-feed') : null;
+                    if (_lp) { _lp.style.setProperty('position','fixed','important'); _lp.style.setProperty('display','flex','important'); _lp.style.setProperty('flex-direction','column','important'); _lp.style.setProperty('background','#090715','important'); _lp.style.setProperty('overflow','hidden','important'); }
+                    if (_vc) { _vc.style.setProperty('height','360px','important'); _vc.style.setProperty('min-height','240px','important'); _vc.style.setProperty('max-height','360px','important'); }
+                    if (_cc) { _cc.style.setProperty('flex','1','important'); _cc.style.setProperty('display','flex','important'); _cc.style.setProperty('flex-direction','column','important'); }
+                    if (_cf) { _cf.style.setProperty('flex','1','important'); _cf.style.setProperty('max-height','none','important'); _cf.style.setProperty('min-height','0','important'); }
+                }
+
+                var _infoBar = document.getElementById('live-stream-info-bar');
+                if (_infoBar) {
+                    if (window.innerWidth <= 900) {
+                        _infoBar.style.display = 'flex';
+                        _infoBar.style.alignItems = 'center';
+                        _infoBar.style.background = '#090715';
+                        _infoBar.style.flexShrink = '0';
+                        _infoBar.style.position = 'relative';
+                        _infoBar.style.top = '';
+                        _infoBar.style.left = '';
+                        var _lp2 = document.getElementById('live-player-wrap');
+                        if (_lp2 && _infoBar.parentNode !== _lp2) _lp2.insertBefore(_infoBar, _lp2.firstChild);
+                    } else {
+                        _infoBar.style.position = 'absolute';
+                        _infoBar.style.top = '0';
+                        _infoBar.style.left = '0';
+                        _infoBar.style.right = '0';
+                        _infoBar.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)';
+                        var _vc2 = document.getElementById('live-remote-video-container');
+                        if (_vc2 && _infoBar.parentNode !== _vc2) _vc2.insertBefore(_infoBar, _vc2.firstChild);
+                    }
+                }
+
+                if (window.innerWidth <= 900) {
+                    var _lpEl = document.getElementById('live-player-wrap');
+                    if (_lpEl && _lpEl.requestFullscreen) {
+                        _lpEl.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
+                    }
+                }
+
+                var _liveChatInputVfs = document.getElementById('live-chat-input');
+                if (_liveChatInputVfs && window.innerWidth <= 900) {
+                    _liveChatInputVfs.addEventListener('focus', function() {
+                        if (document.fullscreenElement) document.exitFullscreen();
+                    });
+                    _liveChatInputVfs.addEventListener('blur', function() {
+                        setTimeout(function() {
+                            var _lp3 = document.getElementById('live-player-wrap');
+                            if (_lp3 && _lp3.requestFullscreen) _lp3.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
+                        }, 200);
+                    });
+                    if (window.visualViewport) {
+                        window.visualViewport.addEventListener('resize', function() {
+                            var kbH = window.innerHeight - window.visualViewport.height;
+                            var _vc3 = document.getElementById('live-remote-video-container');
+                            if (!_vc3) return;
+                            if (kbH > 150) {
+                                _vc3.style.setProperty('height','130px','important');
+                                _vc3.style.setProperty('min-height','130px','important');
+                                _vc3.style.setProperty('max-height','130px','important');
+                            } else {
+                                _vc3.style.setProperty('height','360px','important');
+                                _vc3.style.setProperty('min-height','240px','important');
+                                _vc3.style.setProperty('max-height','360px','important');
+                            }
+                        });
+                    }
+                }
+            })();
             // Reset waiting room so it shows while video connects (fixes subsequent joins
             // where the waiting room was left hidden from a previous session)
             var _wrEl = document.getElementById('live-waiting-room');
@@ -28107,6 +28268,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // ── Leave stream ──────────────────────────────────────────────
     window.leaveLiveStream = async function() {
+        // Fast teardown — run FIRST before any async calls
+        _watchingStreamId = null;
+        window._watchingStreamId = null;  // stops any setInterval from re-adding is-watching
+        document.body.classList.remove('is-watching');
+        var _vfsOld = document.getElementById('vfs-style');
+        if (_vfsOld) _vfsOld.remove();
+        var _vcLeave = document.getElementById('live-remote-video-container');
+        var _ccLeave = document.getElementById('viewer-panel-chat-card');
+        if (_vcLeave) _vcLeave.removeAttribute('style');
+        if (_ccLeave) _ccLeave.removeAttribute('style');
+        if (document.fullscreenElement) document.exitFullscreen().catch(function(){});
+
         // Clean up co-host state first
         if (isCoHost) { await leaveCoHost().catch(() => {}); }
 
@@ -28179,116 +28352,40 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     };
 
     // ── Hype button ───────────────────────────────────────────────
+    var _lastHypeTs = 0;
     window.sendLiveHype = async function() {
         if (!_watchingStreamId) return;
+        // Throttle: once per 2 seconds
+        var _now = Date.now();
+        if (_now - _lastHypeTs < 2000) return;
+        _lastHypeTs = _now;
 
-        // Read shared state from main IIFE bridge
-        const userAddress = window._liveUserAddress || '';
-        const userHandle  = window._liveUserHandle  || 'Someone';
-        const available   = typeof window._liveTotalSpendable === 'number' ? window._liveTotalSpendable : 0;
-
-        if (available < HYPE_STAR_COST) { showToast('Not enough Stars to Hype! Deposit APTM first.'); return; }
+        const userHandle = window._liveUserHandle || 'Someone';
 
         try {
-            const { doc, updateDoc, increment, getDoc } = window.fs;
+            const { doc, updateDoc, increment, collection: col, addDoc, serverTimestamp: sts } = window.fs;
 
-            // Deduct star from viewer — find host address to credit
-            const streamSnap = await getDoc(doc(window.db, LIVE_COL, _watchingStreamId));
-            if (!streamSnap.exists()) return;
-            const hostAddr = streamSnap.data().hostAddr;
-
-            // 1. Deduct from viewer via canonical spend waterfall (purchased first, then earned).
-            if (userAddress) {
-                await deductSpendableStars(userAddress.toLowerCase(), HYPE_STAR_COST);
-                // Update bridge balance
-                if (typeof window._liveTotalSpendable === 'number') {
-                    window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - HYPE_STAR_COST);
-                    window._liveAvailableStars = window._liveTotalSpendable;
-                }
-            }
-
-            // 2. 80/20 split — credit creator 80%, platform 20%
-            const creatorCut  = parseFloat((HYPE_STAR_COST * 0.8).toFixed(4));
-            const platformCut = parseFloat((HYPE_STAR_COST * 0.2).toFixed(4));
-
-            // Credit creator's earned balance instantly
-            if (hostAddr) {
-                const { collection: col, addDoc: adc, serverTimestamp: sts } = window.fs;
-                await updateDoc(doc(window.db, 'user_balances', hostAddr.toLowerCase()), {
-                    creatorStars: increment(creatorCut)
-                }).catch(() => {});
-                // Log earn entry to host's ledger
-                adc(col(window.db, 'user_transactions'), {
-                    type:           'earn',
-                    amount:         creatorCut,
-                    fromAddress:    (userAddress || '').toLowerCase(),
-                    toAddress:      hostAddr.toLowerCase(),
-                    address:        hostAddr.toLowerCase(),
-                    description:    `Live Stream Hype from ${userHandle} (+${creatorCut.toFixed(1)}★)`,
-                    timestamp:      Date.now(),
-                    schema_version: 2
-                }).catch(() => {});
-            }
-
-            // Credit platform revenue 20% — logAdminRevenue writes to platform_revenue
-            // collection (admin dashboard ledger) AND admin_revenue/global (withdrawable balance)
-            if (typeof window.logAdminRevenue === 'function') {
-                window.logAdminRevenue((userAddress || '').toLowerCase(), 'live_hype', platformCut);
-            } else {
-                // fallback: direct write to both collections
-                window.fs.addDoc(window.fs.collection(window.db, 'platform_revenue'), {
-                    sourceAddress: (userAddress || '').toLowerCase(),
-                    actionType: 'live_hype', amount: platformCut, timestamp: Date.now()
-                }).catch(() => {});
-                const { doc: d2, updateDoc: ud2, increment: inc2 } = window.fs;
-                ud2(d2(window.db, 'admin_revenue', 'global'), { total: inc2(platformCut) }).catch(() => {});
-            }
-
-            // Log spend entry to viewer's ledger
-            if (userAddress) {
-                const { collection: col2, addDoc: adc2 } = window.fs;
-                adc2(col2(window.db, 'user_transactions'), {
-                    type:           'spend',
-                    amount:         HYPE_STAR_COST,
-                    fromAddress:    userAddress.toLowerCase(),
-                    toAddress:      hostAddr || '',
-                    address:        userAddress.toLowerCase(),
-                    description:    `⚡ Live Hype sent (${HYPE_STAR_COST}★ · creator gets ${creatorCut.toFixed(1)}★)`,
-                    timestamp:      Date.now(),
-                    schema_version: 2
-                }).catch(() => {});
-            }
-
-            // 3. Update stream display counter
+            // Increment hype counter on stream doc
             await updateDoc(doc(window.db, LIVE_COL, _watchingStreamId), {
-                starsEarned: increment(HYPE_STAR_COST),
-                hypeCount:   increment(1)
+                hypeCount: increment(1)
             });
 
-            // 4. Add hype message to chat (as user, not system)
-            addDoc(collection(window.db, LIVE_CHAT_COL, _watchingStreamId, 'messages'), {
+            // Add hype message to chat
+            addDoc(col(window.db, LIVE_CHAT_COL, _watchingStreamId, 'messages'), {
                 author:   userHandle,
                 avatar:   userAvatar || '',
                 text:     `⚡ ${userHandle} hyped the stream!`,
-                ts:       serverTimestamp(),
+                ts:       sts(),
                 isSystem: false,
                 isHype:   true
             }).catch(() => {});
 
-            // 5. Feed into Live Activity ticker (right panel)
-            if (typeof window.tickerLog === 'function') {
-                window.tickerLog('spend', 'Live Hype', HYPE_STAR_COST, '⚡');
-            }
-
-            // Local UI update
+            // Button animation
             const hypeBtn = $('live-hype-btn');
             if (hypeBtn) {
                 hypeBtn.style.transform = 'scale(0.93)';
                 setTimeout(() => { hypeBtn.style.transform = ''; }, 140);
             }
-
-            showToast(`⚡ Hype sent! Creator gets ${creatorCut.toFixed(1)} ★ instantly.`);
-            if (typeof updateUI === 'function') updateUI();
 
         } catch(e) {
             console.warn('[Live] Hype error:', e);
@@ -28318,6 +28415,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         } catch(e) {
             console.warn('[Live chat]', e);
         }
+        // Re-enter fullscreen after send on mobile
+        if (input) input.blur();
+        setTimeout(function() {
+            var _lp4 = document.getElementById('live-player-wrap');
+            if (_lp4 && _lp4.requestFullscreen && window.innerWidth <= 900) {
+                _lp4.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
+            }
+        }, 100);
     };
 
     // ── Broadcaster sends chat to their own stream ────────────────
@@ -28336,6 +28441,14 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             isSystem: false,
             isHost:   true
         }).catch(e => console.warn('[Broadcast chat]', e));
+        // Re-enter fullscreen after send on mobile
+        if (input) input.blur();
+        setTimeout(function() {
+            var _lp4 = document.getElementById('live-player-wrap');
+            if (_lp4 && _lp4.requestFullscreen && window.innerWidth <= 900) {
+                _lp4.requestFullscreen({ navigationUI: 'hide' }).catch(function(){});
+            }
+        }, 100);
     };
 
     // ── Comments on/off (streamer controls) ──────────────────────
@@ -29225,18 +29338,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
             if (selfPip) {
                 // Restore selfPip to floating corner pip — undo any flex/grid parenting
+                var _isMobSelfR = (window.innerWidth <= 700);
                 selfPip.style.cssText = [
                     'position:absolute',
-                    'bottom:60px',
-                    'left:10px',
-                    'width:160px',
-                    'height:100px',
+                    _isMobSelfR ? 'top:8px' : 'bottom:60px',
+                    _isMobSelfR ? 'left:8px' : 'left:10px',
+                    _isMobSelfR ? 'bottom:auto' : '',
+                    _isMobSelfR ? 'right:auto' : '',
+                    _isMobSelfR ? 'width:120px' : 'width:160px',
+                    _isMobSelfR ? 'height:80px' : 'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid #e03e3e',
                     'z-index:22',
                     'background:#000'
-                ].join(';');
+                ].filter(Boolean).join(';');
                 // Re-parent back into container if it was moved during split/grid
                 if (selfPip.parentElement !== container) container.appendChild(selfPip);
                 var svd = document.getElementById('cohost-self-video');
@@ -29244,18 +29360,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             }
             if (cohostPip) {
                 // Restore cohostPip to floating corner pip
+                var _isMobCH = (window.innerWidth <= 700);
                 cohostPip.style.cssText = [
                     'position:absolute',
-                    'bottom:60px',
-                    'right:10px',
-                    'width:160px',
-                    'height:100px',
+                    _isMobCH ? 'top:8px' : 'bottom:60px',
+                    _isMobCH ? 'left:8px' : 'right:10px',
+                    _isMobCH ? 'bottom:auto' : '',
+                    _isMobCH ? 'right:auto' : '',
+                    _isMobCH ? 'width:120px' : 'width:160px',
+                    _isMobCH ? 'height:80px' : 'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid var(--purple)',
                     'z-index:22',
                     'background:#000'
-                ].join(';');
+                ].filter(Boolean).join(';');
                 if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
             }
         } else if (mode === 'split2') {
@@ -30051,18 +30170,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (!selfPip) {
                 selfPip = document.createElement('div');
                 selfPip.id = 'cohost-self-pip';
+                var _isMobSelf = (window.innerWidth <= 700);
                 selfPip.style.cssText = [
                     'position:absolute',
-                    'bottom:60px',
-                    'left:10px',
-                    'width:160px',
-                    'height:100px',
+                    _isMobSelf ? 'top:8px' : 'bottom:60px',
+                    _isMobSelf ? 'left:8px' : 'left:10px',
+                    _isMobSelf ? 'bottom:auto' : '',
+                    _isMobSelf ? 'right:auto' : '',
+                    _isMobSelf ? 'width:120px' : 'width:160px',
+                    _isMobSelf ? 'height:80px' : 'height:100px',
                     'border-radius:8px',
                     'overflow:hidden',
                     'border:2px solid #e03e3e',
                     'z-index:22',
                     'background:#000'
-                ].join(';');
+                ].filter(Boolean).join(';');
 
                 var selfLabel = document.createElement('div');
                 selfLabel.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;font-weight:700;color:#fff;background:rgba(224,62,62,0.85);padding:1px 6px;border-radius:4px;z-index:3;pointer-events:none;letter-spacing:0.5px;';
@@ -34369,10 +34491,14 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
             <button class="vr-gift-close-btn" onclick="vrCloseGiftPicker()">×</button>
         </div>
         <div class="vr-gift-tiles">
-            <div class="vr-gift-tile" onclick="vrSendGift('spark')"><span class="gi">⚡</span><span>Spark</span><span style="color:var(--gold);">1★</span></div>
-            <div class="vr-gift-tile" onclick="vrSendGift('fire')"><span class="gi">🔥</span><span>Fire</span><span style="color:var(--gold);">5★</span></div>
-            <div class="vr-gift-tile" onclick="vrSendGift('diamond')"><span class="gi">💎</span><span>Diamond</span><span style="color:var(--gold);">20★</span></div>
-            <div class="vr-gift-tile" onclick="vrSendGift('rocket')"><span class="gi">🚀</span><span>Rocket</span><span style="color:var(--gold);">50★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('bloom')"><span class="gi">🌹</span><span>Bloom</span><span style="color:var(--gold);">1★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('blaze')"><span class="gi">🔥</span><span>Blaze</span><span style="color:var(--gold);">5★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('rush')"><span class="gi">⚡</span><span>Rush</span><span style="color:var(--gold);">10★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('crown')"><span class="gi">👑</span><span>Crown</span><span style="color:var(--gold);">25★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('burst')"><span class="gi">🎊</span><span>Burst</span><span style="color:var(--gold);">50★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('storm')"><span class="gi">🌩️</span><span>Storm</span><span style="color:var(--gold);">100★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('dragon')"><span class="gi">🐉</span><span>Dragon</span><span style="color:var(--gold);">250★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('comet')"><span class="gi">☄️</span><span>Comet</span><span style="color:var(--gold);">500★</span></div>
         </div>
     </div>
 
@@ -34398,8 +34524,8 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
             <span class="vr-ctrl-lbl" id="vr-mute-lbl">Mute</span>
         </button>
         <button class="vr-ctrl hand" id="vr-ctrl-hand" onclick="vrRaiseHand()">
-            <span class="vr-ctrl-icon"><span class="vci">✋</span></span>
-            <span class="vr-ctrl-lbl" id="vr-hand-lbl">Raise Hand</span>
+            <span class="vr-ctrl-icon"><span class="vci">🎤</span></span>
+            <span class="vr-ctrl-lbl" id="vr-hand-lbl">Join Stage</span>
         </button>
         <button class="vr-ctrl" id="vr-ctrl-gift" onclick="vrToggleGiftPicker()">
             <span class="vr-ctrl-icon"><span class="vci">🎁</span></span>
