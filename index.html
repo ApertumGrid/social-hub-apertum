@@ -28243,6 +28243,13 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     _fsCon.style.setProperty('max-height',   'none',     'important');
                     _fsCon.style.setProperty('min-height',   '0',        'important');
                 }
+                var _rv = document.getElementById('live-remote-video');
+                function _applyRvHeight(){if(_rv){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
+                _applyRvHeight();
+                if(_fsCon&&!window._vcStyleObs){var _vcBusy=false;window._vcStyleObs=new MutationObserver(function(){if(_vcBusy||!document.body.classList.contains('is-watching'))return;_vcBusy=true;_fsCon.style.setProperty('position','absolute','important');_fsCon.style.setProperty('top','0','important');_fsCon.style.setProperty('left','0','important');_fsCon.style.setProperty('right','0','important');_fsCon.style.setProperty('bottom','0','important');_fsCon.style.setProperty('width','100%','important');_fsCon.style.setProperty('height','100%','important');setTimeout(function(){_vcBusy=false;},50);});window._vcStyleObs.observe(_fsCon,{attributes:true,attributeFilter:['style']});}
+                function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit','cover','important');}});}
+                setTimeout(_fixAgoraChildren,500);setTimeout(_fixAgoraChildren,1500);
+                if(_rv&&!window._rvChildObs){window._rvChildObs=new MutationObserver(function(){_fixAgoraChildren();});window._rvChildObs.observe(_rv,{childList:true,subtree:true});}
             }
             // Scroll to top so the info bar is visible (page may have been scrolled from a previous section)
             try { window.scrollTo({top:0,behavior:'instant'}); } catch(_) { window.scrollTo(0,0); }
@@ -32855,6 +32862,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     }
     var _patchedJoin = async function() {
         await _origJoin.apply(this, arguments);
+        // Mobile (≤768px): TikTok is-watching CSS handles the viewer fullscreen — skip cinema
+        if (window.innerWidth <= 768) return;
         // Wait for the remote video container to have actual video content before
         // entering cinema mode — avoids showing local camera preview by mistake.
         var attempts = 0;
@@ -34893,6 +34902,43 @@ body.has-battle #his-battle{display:none!important}
 }
 .his-badge{position:absolute;top:-2px;right:-2px;background:#e03e3e;color:#fff;font-size:.5rem;font-weight:900;min-width:16px;height:16px;border-radius:8px;padding:0 3px;display:none;align-items:center;justify-content:center;line-height:1;pointer-events:none;box-sizing:border-box}
 .his-badge.vis{display:flex}
+/* ── HOST MOBILE OVERLAY PILLS ── */
+#host-timer-pill{
+    display:flex;align-items:center;gap:5px;
+    background:rgba(0,0,0,0.55);
+    border:1.5px solid rgba(224,62,62,0.48);
+    border-radius:22px;padding:5px 12px 5px 8px;
+    font-size:0.72rem;font-weight:800;color:#fff;letter-spacing:0.6px;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:0 2px 12px rgba(0,0,0,0.5);
+}
+.htp-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:#e03e3e;flex-shrink:0;
+    animation:htp-blink 1.2s ease-in-out infinite;
+}
+@keyframes htp-blink{
+    0%,100%{opacity:1;box-shadow:0 0 6px rgba(224,62,62,0.85);}
+    50%{opacity:0.38;box-shadow:none;}
+}
+#host-stars-pill{
+    display:flex;align-items:center;gap:5px;
+    background:rgba(0,0,0,0.55);
+    border:1.5px solid rgba(255,215,0,0.38);
+    border-radius:22px;padding:5px 12px;
+    font-size:0.72rem;font-weight:800;color:#ffd700;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:0 2px 12px rgba(0,0,0,0.5);
+    transition:transform 0.15s,box-shadow 0.15s;
+}
+@keyframes stars-pop-kf{
+    0%{transform:scale(1);}
+    30%{transform:scale(1.4);box-shadow:0 0 22px rgba(255,215,0,0.75);}
+    60%{transform:scale(1.18);}
+    100%{transform:scale(1);}
+}
+#host-stars-pill.stars-pop{animation:stars-pop-kf 0.58s cubic-bezier(0.34,1.56,0.64,1);}
+@media(min-width:701px){#host-mobile-topleft{display:none!important;}}
 /* More drawer */
 #host-more-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45);display:none}
 #host-more-backdrop.open{display:block}
