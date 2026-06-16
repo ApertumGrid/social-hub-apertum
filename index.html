@@ -13426,8 +13426,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     window._WCEthProviderClass.init({
                         projectId:      WC_PROJECT_ID,
                         showQrModal:    true,
-                        chains:         [1],                    // required known chain (WC registry)
-                        optionalChains: [APTM_CHAIN_ID],        // Apertum — custom chain, handled via rpcMap
+                        chains:         [1],
                         rpcMap: {
                             [APTM_CHAIN_ID]: APTM_RPC,
                             1:               'https://cloudflare-eth.com'
