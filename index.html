@@ -13422,13 +13422,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
                     window._activeWCProvider = null;
                 }
-                try {
-                    Object.keys(localStorage).forEach(function(k) {
-                        if (k.startsWith('wc@') || k.startsWith('WCM_') || k.startsWith('walletconnect')) {
-                            localStorage.removeItem(k);
-                        }
-                    });
-                } catch(_) {}
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
                     showQrModal:    true,
