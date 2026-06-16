@@ -4637,6 +4637,9 @@
         }
         .cmt-persistent-box::placeholder { color: var(--text-muted); }
 
+        /* WalletConnect v2 modal web component — must appear above everything */
+        wcm-modal, w3m-modal { position: fixed !important; top: 0 !important; left: 0 !important; z-index: 2147483647 !important; }
+
         /* Toast */
         #toast {
             position: fixed; bottom: 22px; right: 22px; z-index: 9999;
@@ -9019,6 +9022,10 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
 }
 @media (max-width: 768px) {
     /* ── Mobile Broadcaster: full-screen fixed panel (no cinema shell) ── */
+    /* Hide the nav chrome that floats above the live panel (z-index:900+) */
+    body.is-hosting #topnav          { display: none !important; }
+    body.is-hosting #mobile-dashboard { display: none !important; }
+    body.is-hosting #bottom-nav       { display: none !important; }
     body.is-hosting #live-active-panel {
         position: fixed !important;
         top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
@@ -9033,9 +9040,9 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
     /* Video: taller on mobile for cinema feel */
     body.is-hosting #live-broadcaster-video-container {
         flex: 0 0 auto !important;
-        height: 48vw !important;
-        min-height: 210px !important;
-        max-height: 310px !important;
+        height: 55vw !important;
+        min-height: 240px !important;
+        max-height: 400px !important;
         width: 100% !important;
         display: block !important;
         visibility: visible !important;
@@ -13236,6 +13243,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
                 const WC_PROJECT_ID = '422b74ec70be253bbdc47a7479725899';
+                var _wcIsMobile = window.innerWidth <= 900 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (!window._WCEthProviderClass) {
                     showToast('Loading WalletConnect…');
                     const mod = await Promise.race([
@@ -13267,13 +13275,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         icons:       ['https://socialhubglobal.com/favicon.ico']
                     }
                 });
-                showToast('Scan the QR code with your wallet app to connect');
-                // Race enable() against a 90-second timeout — on mobile the QR modal
-                // may open but the promise hangs if no wallet responds.
+                if (_wcIsMobile) {
+                    showToast('Select your wallet app in the popup to connect');
+                } else {
+                    showToast('Scan the QR code with your wallet app to connect');
+                }
+                // Race enable() against a timeout — on mobile the promise can hang if
+                // the wallet app doesn't respond or the deep-link fails.
+                var _wcTimeout = _wcIsMobile ? 60000 : 90000;
+                var _wcTimeoutMsg = _wcIsMobile
+                    ? 'WalletConnect: no wallet responded. Try opening this site inside your wallet app\'s browser (MetaMask, Trust Wallet, etc.).'
+                    : 'WalletConnect timed out. Scan the QR code with your wallet app, or try on desktop.';
                 await Promise.race([
                     wcProv.enable(),
                     new Promise(function(_, reject){
-                        setTimeout(function(){ reject(new Error('WalletConnect timed out. Scan the QR code with your wallet app, or try on desktop.')); }, 90000);
+                        setTimeout(function(){ reject(new Error(_wcTimeoutMsg)); }, _wcTimeout);
                     })
                 ]);
                 await _ensureApertumChain(wcProv); // switch/add Apertum after session established
