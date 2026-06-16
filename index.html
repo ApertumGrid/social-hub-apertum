@@ -13422,39 +13422,57 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
                     window._activeWCProvider = null;
                 }
-                const wcProv = await window._WCEthProviderClass.init({
-                    projectId:      WC_PROJECT_ID,
-                    showQrModal:    true,
-                    chains:         [1],                    // required known chain (WC registry)
-                    optionalChains: [APTM_CHAIN_ID],        // Apertum — custom chain, handled via rpcMap
-                    rpcMap: {
-                        [APTM_CHAIN_ID]: APTM_RPC,
-                        1:               'https://cloudflare-eth.com'
-                    },
-                    metadata: {
-                        name:        'SocialHub',
-                        description: 'Web3 Social Platform on Apertum',
-                        url:         'https://socialhubglobal.com',
-                        icons:       ['https://socialhubglobal.com/favicon.ico']
-                    }
-                });
+                const wcProv = await Promise.race([
+                    window._WCEthProviderClass.init({
+                        projectId:      WC_PROJECT_ID,
+                        showQrModal:    true,
+                        chains:         [1],                    // required known chain (WC registry)
+                        optionalChains: [APTM_CHAIN_ID],        // Apertum — custom chain, handled via rpcMap
+                        rpcMap: {
+                            [APTM_CHAIN_ID]: APTM_RPC,
+                            1:               'https://cloudflare-eth.com'
+                        },
+                        metadata: {
+                            name:        'SocialHub',
+                            description: 'Web3 Social Platform on Apertum',
+                            url:         'https://socialhubglobal.com',
+                            icons:       ['https://socialhubglobal.com/favicon.ico']
+                        }
+                    }),
+                    new Promise(function(_, reject){
+                        setTimeout(function(){ reject(new Error('WalletConnect failed to initialize. Check your internet connection and try again.')); }, 15000);
+                    })
+                ]);
                 if (_wcIsMobile) {
                     showToast('Select your wallet app in the popup to connect');
                 } else {
                     showToast('Scan the QR code with your wallet app to connect');
                 }
-                // Race enable() against a timeout — on mobile the promise can hang if
-                // the wallet app doesn't respond or the deep-link fails.
-                var _wcTimeout = _wcIsMobile ? 60000 : 90000;
-                var _wcTimeoutMsg = _wcIsMobile
-                    ? 'WalletConnect: no wallet responded. Try opening this site inside your wallet app\'s browser (MetaMask, Trust Wallet, etc.).'
-                    : 'WalletConnect timed out. Scan the QR code with your wallet app, or try on desktop.';
-                await Promise.race([
-                    wcProv.enable(),
-                    new Promise(function(_, reject){
-                        setTimeout(function(){ reject(new Error(_wcTimeoutMsg)); }, _wcTimeout);
-                    })
-                ]);
+                await new Promise(function(resolve, reject) {
+                    var _wcDone = false;
+                    function _ok() { if (!_wcDone) { _wcDone = true; resolve(); } }
+                    function _fail(e) { if (!_wcDone) { _wcDone = true; reject(e); } }
+                    wcProv.once('connect', _ok);
+                    wcProv.once('accountsChanged', function(accs) { if (accs && accs.length > 0) _ok(); });
+                    function _onVisible() {
+                        if (document.visibilityState === 'visible' && wcProv.accounts && wcProv.accounts.length > 0) {
+                            document.removeEventListener('visibilitychange', _onVisible);
+                            _ok();
+                        }
+                    }
+                    document.addEventListener('visibilitychange', _onVisible);
+                    wcProv.enable().then(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _ok();
+                    }).catch(function(e) {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(e);
+                    });
+                    setTimeout(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(new Error('WalletConnect timed out. Select MetaMask in the popup, approve the request, then return to SocialHub.'));
+                    }, 90000);
+                });
                 await _ensureApertumChain(wcProv); // switch/add Apertum after session established
                 window._activeWCProvider = wcProv;
                 eth = wcProv;
