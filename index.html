@@ -13424,7 +13424,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 }
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
-                    showQrModal:    true,
+                    showQrModal:    false,
                     chains:         [1],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
@@ -13435,6 +13435,12 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         description: 'Web3 Social Platform on Apertum',
                         url:         'https://socialhubglobal.com',
                         icons:       ['https://socialhubglobal.com/favicon.ico']
+                    }
+                });
+                wcProv.once('display_uri', function(uri) {
+                    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
+                    if (isMobile) {
+                        window.open('https://metamask.app.link/wc?uri=' + encodeURIComponent(uri), '_blank');
                     }
                 });
                 if (_wcIsMobile) {
