@@ -28520,8 +28520,15 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     fb.style.display=(!isOwn&&!isF)?'':'none';
                 }
                 var vCon=document.getElementById('live-remote-video-container');
-                if(vCon && bar.parentNode!==vCon) vCon.insertBefore(bar,vCon.firstChild);
-                bar.style.cssText='position:absolute;top:0;left:0;right:0;z-index:18;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:10px;background:linear-gradient(180deg,rgba(0,0,0,.7) 0%,transparent 100%);border:none;border-radius:0;pointer-events:auto;box-sizing:border-box;';
+                if (window.innerWidth <= 768) {
+                    // Mobile: bar sits above the video as a flex item in the column
+                    var _pw2=document.getElementById('live-player-wrap');
+                    if(_pw2 && vCon && bar.parentNode!==_pw2) _pw2.insertBefore(bar,vCon);
+                    bar.style.cssText='position:relative;flex-shrink:0;width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:10px;background:rgba(10,8,24,0.98);box-sizing:border-box;pointer-events:auto;border:none;border-bottom:1px solid rgba(100,70,200,0.15);';
+                } else {
+                    if(vCon && bar.parentNode!==vCon) vCon.insertBefore(bar,vCon.firstChild);
+                    bar.style.cssText='position:absolute;top:0;left:0;right:0;z-index:18;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:10px;background:linear-gradient(180deg,rgba(0,0,0,.7) 0%,transparent 100%);border:none;border-radius:0;pointer-events:auto;box-sizing:border-box;';
+                }
             })();
 
             // ── Paid admission gate check ─────────────────────────────
