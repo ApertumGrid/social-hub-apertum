@@ -28568,6 +28568,26 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             _sfcReset('viewer-sfc-feed');
             subscribeLiveChat(streamId, 'live-chat-feed');
 
+            // Tap-to-hype: viewer taps video → free hype counter increment, local flash only
+            window.sendViewerHype = async function() {
+                if (!_watchingStreamId || !window.db || !window.fs) return;
+                await window.fs.updateDoc(
+                    window.fs.doc(window.db, LIVE_COL, _watchingStreamId),
+                    { hypeCount: window.fs.increment(1) }
+                ).catch(function(){});
+                var _tapEl = document.getElementById('live-remote-video-container');
+                if (_tapEl) {
+                    _tapEl.style.transition = 'opacity 0.1s';
+                    _tapEl.style.opacity = '0.85';
+                    setTimeout(function(){ _tapEl.style.opacity = ''; }, 150);
+                }
+            };
+            var _tapEl = document.getElementById('live-remote-video-container');
+            if (_tapEl && !_tapEl._hypeListenerAttached) {
+                _tapEl._hypeListenerAttached = true;
+                _tapEl.addEventListener('click', function(){ window.sendViewerHype(); });
+            }
+
             showToast('📺 Joined the stream!');
 
         } catch(e) {
