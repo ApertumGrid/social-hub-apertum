@@ -11447,25 +11447,80 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         <div class="live-gift-card" id="viewer-gift-panel">
                             <div class="live-gift-head">🎁 Send a Gift &nbsp;<span style="font-size:0.58rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">80% to creator · instant</span></div>
                             <div class="live-gift-grid">
-                                <button class="gift-btn spark" onclick="sendGift('spark')">
-                                    <span class="gift-icon">⚡</span>
-                                    <span class="gift-name">Spark</span>
+                                <button class="gift-btn" onclick="sendGift('bloom')">
+                                    <span class="gift-icon">🌹</span>
+                                    <span class="gift-name">Bloom</span>
                                     <span class="gift-cost">1 ★</span>
                                 </button>
-                                <button class="gift-btn fire" onclick="sendGift('fire')">
+                                <button class="gift-btn fire" onclick="sendGift('blaze')">
                                     <span class="gift-icon">🔥</span>
-                                    <span class="gift-name">Fire</span>
+                                    <span class="gift-name">Blaze</span>
                                     <span class="gift-cost">5 ★</span>
                                 </button>
-                                <button class="gift-btn diamond" onclick="sendGift('diamond')">
-                                    <span class="gift-icon">💎</span>
-                                    <span class="gift-name">Diamond</span>
-                                    <span class="gift-cost">20 ★</span>
+                                <button class="gift-btn fire" onclick="sendGift('rush')">
+                                    <span class="gift-icon">⚡</span>
+                                    <span class="gift-name">Rush</span>
+                                    <span class="gift-cost">10 ★</span>
                                 </button>
-                                <button class="gift-btn rocket" onclick="sendGift('rocket')">
-                                    <span class="gift-icon">🚀</span>
-                                    <span class="gift-name">Rocket</span>
+                                <button class="gift-btn fire" onclick="sendGift('crown')">
+                                    <span class="gift-icon">👑</span>
+                                    <span class="gift-name">Crown</span>
+                                    <span class="gift-cost">25 ★</span>
+                                </button>
+                                <button class="gift-btn diamond" onclick="sendGift('burst')">
+                                    <span class="gift-icon">🎊</span>
+                                    <span class="gift-name">Burst</span>
                                     <span class="gift-cost">50 ★</span>
+                                </button>
+                                <button class="gift-btn diamond" onclick="sendGift('storm')">
+                                    <span class="gift-icon">🌩️</span>
+                                    <span class="gift-name">Storm</span>
+                                    <span class="gift-cost">100 ★</span>
+                                </button>
+                                <button class="gift-btn diamond" onclick="sendGift('dragon')">
+                                    <span class="gift-icon">🐉</span>
+                                    <span class="gift-name">Dragon</span>
+                                    <span class="gift-cost">250 ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('comet')">
+                                    <span class="gift-icon">☄️</span>
+                                    <span class="gift-name">Comet</span>
+                                    <span class="gift-cost">500 ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('fortune')">
+                                    <span class="gift-icon">💰</span>
+                                    <span class="gift-name">Fortune</span>
+                                    <span class="gift-cost">1,000 ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('phoenix')">
+                                    <span class="gift-icon">🦅</span>
+                                    <span class="gift-name">Phoenix</span>
+                                    <span class="gift-cost">5,000 ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('eclipse')">
+                                    <span class="gift-icon">🌑</span>
+                                    <span class="gift-name">Eclipse</span>
+                                    <span class="gift-cost">10K ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('aurora')">
+                                    <span class="gift-icon">🌌</span>
+                                    <span class="gift-name">Aurora</span>
+                                    <span class="gift-cost">25K ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('cosmos')">
+                                    <span class="gift-icon">🌠</span>
+                                    <span class="gift-name">Cosmos</span>
+                                    <span class="gift-cost">35K ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('reign')">
+                                    <span class="gift-icon">💎</span>
+                                    <span class="gift-name">Reign</span>
+                                    <span class="gift-cost">45K ★</span>
+                                </button>
+                                <button class="gift-btn rocket" onclick="sendGift('genesis')">
+                                    <span class="gift-icon">✨</span>
+                                    <span class="gift-name">Genesis</span>
+                                    <span class="gift-cost">50K ★</span>
                                 </button>
                             </div>
                         </div>
@@ -27201,10 +27256,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
             if (data.error) { showToast(data.error); return; }
             // Write ledger entries client-side — same path as follow/comment/reply (reliable)
             const _VR_TIERS = {
-                spark:   { icon:'⚡', name:'Spark',   cost:1  },
-                fire:    { icon:'🔥', name:'Fire',    cost:5  },
-                diamond: { icon:'💎', name:'Diamond', cost:20 },
-                rocket:  { icon:'🚀', name:'Rocket',  cost:50 }
+                bloom:   { icon:'🌹', name:'Bloom',   cost:1     },
+                blaze:   { icon:'🔥', name:'Blaze',   cost:5     },
+                rush:    { icon:'⚡', name:'Rush',    cost:10    },
+                crown:   { icon:'👑', name:'Crown',   cost:25    },
+                burst:   { icon:'🎊', name:'Burst',   cost:50    },
+                storm:   { icon:'🌩️', name:'Storm',   cost:100   },
+                dragon:  { icon:'🐉', name:'Dragon',  cost:250   },
+                comet:   { icon:'☄️', name:'Comet',   cost:500   },
+                fortune: { icon:'💰', name:'Fortune', cost:1000  },
+                phoenix: { icon:'🦅', name:'Phoenix', cost:5000  },
+                eclipse: { icon:'🌑', name:'Eclipse', cost:10000 },
+                aurora:  { icon:'🌌', name:'Aurora',  cost:25000 },
+                cosmos:  { icon:'🌠', name:'Cosmos',  cost:35000 },
+                reign:   { icon:'💎', name:'Reign',   cost:45000 },
+                genesis: { icon:'✨', name:'Genesis', cost:50000 }
             };
             const _t = _VR_TIERS[tierKey];
             if (_t && window.logTransaction && _vrGiftTarget) {
@@ -28995,10 +29061,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
     // ── Gift System — 80/20 real-time split ───────────────────────
     const GIFT_TIERS = {
-        spark:   { icon:'⚡', name:'Spark',   cost:1,  chatStyle:'' },
-        fire:    { icon:'🔥', name:'Fire',    cost:5,  chatStyle:'fire' },
-        diamond: { icon:'💎', name:'Diamond', cost:20, chatStyle:'diamond' },
-        rocket:  { icon:'🚀', name:'Rocket',  cost:50, chatStyle:'rocket' }
+        bloom:   { icon:'🌹', name:'Bloom',   cost:1,     chatStyle:''        },
+        blaze:   { icon:'🔥', name:'Blaze',   cost:5,     chatStyle:'fire'    },
+        rush:    { icon:'⚡', name:'Rush',    cost:10,    chatStyle:'fire'    },
+        crown:   { icon:'👑', name:'Crown',   cost:25,    chatStyle:'fire'    },
+        burst:   { icon:'🎊', name:'Burst',   cost:50,    chatStyle:'diamond' },
+        storm:   { icon:'🌩️', name:'Storm',   cost:100,   chatStyle:'diamond' },
+        dragon:  { icon:'🐉', name:'Dragon',  cost:250,   chatStyle:'diamond' },
+        comet:   { icon:'☄️', name:'Comet',   cost:500,   chatStyle:'rocket'  },
+        fortune: { icon:'💰', name:'Fortune', cost:1000,  chatStyle:'rocket'  },
+        phoenix: { icon:'🦅', name:'Phoenix', cost:5000,  chatStyle:'rocket'  },
+        eclipse: { icon:'🌑', name:'Eclipse', cost:10000, chatStyle:'rocket'  },
+        aurora:  { icon:'🌌', name:'Aurora',  cost:25000, chatStyle:'rocket'  },
+        cosmos:  { icon:'🌠', name:'Cosmos',  cost:35000, chatStyle:'rocket'  },
+        reign:   { icon:'💎', name:'Reign',   cost:45000, chatStyle:'rocket'  },
+        genesis: { icon:'✨', name:'Genesis', cost:50000, chatStyle:'rocket'  }
     };
 
     // ── Gift picker — used for gifting co-hosts or host directly ──
@@ -32115,7 +32192,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
     const _origSendGift = window.sendGift;
     window.sendGift = async function(tierKey) {
         await _origSendGift(tierKey);
-        const tier = { spark:1, fire:5, diamond:20, rocket:50 }[tierKey] || 0;
+        const tier = { bloom:1, blaze:5, rush:10, crown:25, burst:50, storm:100, dragon:250, comet:500, fortune:1000, phoenix:5000, eclipse:10000, aurora:25000, cosmos:35000, reign:45000, genesis:50000 }[tierKey] || 0;
         if (tier > 0) {
             const handle = window._liveUserHandle || 'Viewer';
             _updateLeaderboard(handle, tier);
@@ -34865,6 +34942,13 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
             <div class="vr-gift-tile" onclick="vrSendGift('storm')"><span class="gi">🌩️</span><span>Storm</span><span style="color:var(--gold);">100★</span></div>
             <div class="vr-gift-tile" onclick="vrSendGift('dragon')"><span class="gi">🐉</span><span>Dragon</span><span style="color:var(--gold);">250★</span></div>
             <div class="vr-gift-tile" onclick="vrSendGift('comet')"><span class="gi">☄️</span><span>Comet</span><span style="color:var(--gold);">500★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('fortune')"><span class="gi">💰</span><span>Fortune</span><span style="color:var(--gold);">1,000★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('phoenix')"><span class="gi">🦅</span><span>Phoenix</span><span style="color:var(--gold);">5,000★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('eclipse')"><span class="gi">🌑</span><span>Eclipse</span><span style="color:var(--gold);">10K★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('aurora')"><span class="gi">🌌</span><span>Aurora</span><span style="color:var(--gold);">25K★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('cosmos')"><span class="gi">🌠</span><span>Cosmos</span><span style="color:var(--gold);">35K★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('reign')"><span class="gi">💎</span><span>Reign</span><span style="color:var(--gold);">45K★</span></div>
+            <div class="vr-gift-tile" onclick="vrSendGift('genesis')"><span class="gi">✨</span><span>Genesis</span><span style="color:var(--gold);">50K★</span></div>
         </div>
     </div>
 
@@ -35196,10 +35280,21 @@ body.has-battle .live-stream-overlay-top{display:none!important}
   <div class="hmd-drag"></div>
   <div class="vgd-head">🎁 Send a Gift <span style="font-size:.55rem;color:var(--text-muted);text-transform:none;font-weight:400;letter-spacing:0;">80% to creator</span></div>
   <div class="vgd-grid">
-    <button class="vgd-gift spark"   onclick="sendGift('spark');_closeViewerGiftDrawer()"><span class="vgd-icon">⚡</span><span class="vgd-name">Spark</span><span class="vgd-cost">1 ★</span></button>
-    <button class="vgd-gift fire"    onclick="sendGift('fire');_closeViewerGiftDrawer()"><span class="vgd-icon">🔥</span><span class="vgd-name">Fire</span><span class="vgd-cost">5 ★</span></button>
-    <button class="vgd-gift diamond" onclick="sendGift('diamond');_closeViewerGiftDrawer()"><span class="vgd-icon">💎</span><span class="vgd-name">Diamond</span><span class="vgd-cost">20 ★</span></button>
-    <button class="vgd-gift rocket"  onclick="sendGift('rocket');_closeViewerGiftDrawer()"><span class="vgd-icon">🚀</span><span class="vgd-name">Rocket</span><span class="vgd-cost">50 ★</span></button>
+    <button class="vgd-gift"         onclick="sendGift('bloom');_closeViewerGiftDrawer()"><span class="vgd-icon">🌹</span><span class="vgd-name">Bloom</span><span class="vgd-cost">1 ★</span></button>
+    <button class="vgd-gift fire"    onclick="sendGift('blaze');_closeViewerGiftDrawer()"><span class="vgd-icon">🔥</span><span class="vgd-name">Blaze</span><span class="vgd-cost">5 ★</span></button>
+    <button class="vgd-gift fire"    onclick="sendGift('rush');_closeViewerGiftDrawer()"><span class="vgd-icon">⚡</span><span class="vgd-name">Rush</span><span class="vgd-cost">10 ★</span></button>
+    <button class="vgd-gift fire"    onclick="sendGift('crown');_closeViewerGiftDrawer()"><span class="vgd-icon">👑</span><span class="vgd-name">Crown</span><span class="vgd-cost">25 ★</span></button>
+    <button class="vgd-gift diamond" onclick="sendGift('burst');_closeViewerGiftDrawer()"><span class="vgd-icon">🎊</span><span class="vgd-name">Burst</span><span class="vgd-cost">50 ★</span></button>
+    <button class="vgd-gift diamond" onclick="sendGift('storm');_closeViewerGiftDrawer()"><span class="vgd-icon">🌩️</span><span class="vgd-name">Storm</span><span class="vgd-cost">100 ★</span></button>
+    <button class="vgd-gift diamond" onclick="sendGift('dragon');_closeViewerGiftDrawer()"><span class="vgd-icon">🐉</span><span class="vgd-name">Dragon</span><span class="vgd-cost">250 ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('comet');_closeViewerGiftDrawer()"><span class="vgd-icon">☄️</span><span class="vgd-name">Comet</span><span class="vgd-cost">500 ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('fortune');_closeViewerGiftDrawer()"><span class="vgd-icon">💰</span><span class="vgd-name">Fortune</span><span class="vgd-cost">1,000 ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('phoenix');_closeViewerGiftDrawer()"><span class="vgd-icon">🦅</span><span class="vgd-name">Phoenix</span><span class="vgd-cost">5,000 ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('eclipse');_closeViewerGiftDrawer()"><span class="vgd-icon">🌑</span><span class="vgd-name">Eclipse</span><span class="vgd-cost">10K ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('aurora');_closeViewerGiftDrawer()"><span class="vgd-icon">🌌</span><span class="vgd-name">Aurora</span><span class="vgd-cost">25K ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('cosmos');_closeViewerGiftDrawer()"><span class="vgd-icon">🌠</span><span class="vgd-name">Cosmos</span><span class="vgd-cost">35K ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('reign');_closeViewerGiftDrawer()"><span class="vgd-icon">💎</span><span class="vgd-name">Reign</span><span class="vgd-cost">45K ★</span></button>
+    <button class="vgd-gift rocket"  onclick="sendGift('genesis');_closeViewerGiftDrawer()"><span class="vgd-icon">✨</span><span class="vgd-name">Genesis</span><span class="vgd-cost">50K ★</span></button>
   </div>
   <div class="hmd-divider"></div>
   <div class="vgd-reactions">
@@ -35806,7 +35901,7 @@ var _origSendGiftBattle = window.sendGift;
 window.sendGift = async function(tierKey){
     await _origSendGiftBattle(tierKey);
     if(!_bid||!_bdata) return;
-    var costs={spark:1,fire:5,diamond:20,rocket:50};
+    var costs={bloom:1,blaze:5,rush:10,crown:25,burst:50,storm:100,dragon:250,comet:500,fortune:1000,phoenix:5000,eclipse:10000,aurora:25000,cosmos:35000,reign:45000,genesis:50000};
     var stars=costs[tierKey]||1;
     var field=null;
     if(_bRole==='viewer-a'||_bRole==='challenger') field='scoreChallenger';
