@@ -9242,15 +9242,15 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
     }
     /* Video: compact height with rounded corners — NOT absolute fullscreen */
     body.is-watching #live-player-wrap #live-remote-video-container {
+        flex: 0 0 auto !important;
         position: relative !important;
         top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
         width: 100% !important;
-        height: 62vh !important;
+        height: 360px !important;
         min-height: 240px !important;
-        max-height: none !important;
+        max-height: 360px !important;
         border-radius: 16px !important;
         overflow: hidden !important;
-        flex-shrink: 0 !important;
     }
     /* Remove the bottom gradient from the fullscreen layout */
     body.is-watching #live-player-wrap #live-remote-video-container::after { display: none !important; }
@@ -28442,17 +28442,16 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     _fsWrap.style.setProperty('flex-direction', 'column',                 'important');
                 }
                 if (_fsCon) {
-                    var _vh = Math.round(window.innerHeight * 0.62);
+                    _fsCon.style.setProperty('flex',        '0 0 auto', 'important');
                     _fsCon.style.setProperty('position',    'relative', 'important');
                     _fsCon.style.setProperty('top',         'auto',     'important');
                     _fsCon.style.setProperty('left',        'auto',     'important');
                     _fsCon.style.setProperty('right',       'auto',     'important');
                     _fsCon.style.setProperty('bottom',      'auto',     'important');
                     _fsCon.style.setProperty('width',       '100%',     'important');
-                    _fsCon.style.setProperty('height',      _vh+'px',   'important');
-                    _fsCon.style.setProperty('max-height',  'none',     'important');
+                    _fsCon.style.setProperty('height',      '360px',    'important');
+                    _fsCon.style.setProperty('max-height',  '360px',    'important');
                     _fsCon.style.setProperty('min-height',  '240px',    'important');
-                    _fsCon.style.setProperty('flex-shrink', '0',        'important');
                 }
                 var _chatCard = document.getElementById('viewer-panel-chat-card');
                 if (_chatCard) {
@@ -28674,13 +28673,17 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
 
         document.body.classList.remove('is-watching');
         window._prevLiveStarsEarned = 0;
-        // Clear mobile full-screen inline styles (no DOM move needed — just clear styles)
-        if (window.innerWidth <= 700) {
-            var _fsClLp  = document.getElementById('live-player-wrap');
-            var _fsClVcc = document.getElementById('viewer-panel-chat-card');
-            if (_fsClLp) _fsClLp.style.cssText = '';
-            if (_fsClVcc) _fsClVcc.style.cssText = '';
-            document.body.style.removeProperty('overflow');
+        // Clear card-stack inline styles and restore page scroll
+        document.body.style.removeProperty('overflow');
+        if (window.innerWidth <= 768) {
+            var _fsClLp   = document.getElementById('live-player-wrap');
+            var _fsClVcc  = document.getElementById('viewer-panel-chat-card');
+            var _fsClFeed = _fsClVcc && _fsClVcc.querySelector('.live-chat-feed');
+            if (_fsClLp)   _fsClLp.style.cssText   = '';
+            if (_fsClVcc)  _fsClVcc.style.cssText   = '';
+            if (_fsClFeed) _fsClFeed.style.cssText  = '';
+            var _fsClVid = document.getElementById('live-remote-video-container');
+            if (_fsClVid) _fsClVid.style.cssText = '';
         }
         hide('live-player-wrap');
         show('live-stream-browser');
