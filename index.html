@@ -13471,7 +13471,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     setTimeout(function() {
                         document.removeEventListener('visibilitychange', _onVisible);
                         _fail(new Error('WalletConnect timed out. Select MetaMask in the popup, approve the request, then return to SocialHub.'));
-                    }, 90000);
+                    }, 300000);
                 });
                 await _ensureApertumChain(wcProv); // switch/add Apertum after session established
                 window._activeWCProvider = wcProv;
