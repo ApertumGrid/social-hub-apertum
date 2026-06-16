@@ -13422,26 +13422,21 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
                     window._activeWCProvider = null;
                 }
-                const wcProv = await Promise.race([
-                    window._WCEthProviderClass.init({
-                        projectId:      WC_PROJECT_ID,
-                        showQrModal:    true,
-                        chains:         [1],
-                        rpcMap: {
-                            [APTM_CHAIN_ID]: APTM_RPC,
-                            1:               'https://cloudflare-eth.com'
-                        },
-                        metadata: {
-                            name:        'SocialHub',
-                            description: 'Web3 Social Platform on Apertum',
-                            url:         'https://socialhubglobal.com',
-                            icons:       ['https://socialhubglobal.com/favicon.ico']
-                        }
-                    }),
-                    new Promise(function(_, reject){
-                        setTimeout(function(){ reject(new Error('WalletConnect failed to initialize. Check your internet connection and try again.')); }, 15000);
-                    })
-                ]);
+                const wcProv = await window._WCEthProviderClass.init({
+                    projectId:      WC_PROJECT_ID,
+                    showQrModal:    true,
+                    chains:         [1],
+                    rpcMap: {
+                        [APTM_CHAIN_ID]: APTM_RPC,
+                        1:               'https://cloudflare-eth.com'
+                    },
+                    metadata: {
+                        name:        'SocialHub',
+                        description: 'Web3 Social Platform on Apertum',
+                        url:         'https://socialhubglobal.com',
+                        icons:       ['https://socialhubglobal.com/favicon.ico']
+                    }
+                });
                 if (_wcIsMobile) {
                     showToast('Select your wallet app in the popup to connect');
                 } else {
