@@ -8803,6 +8803,9 @@ html body #profile-hero .hero-action-btn.btn-follow {
 }
 
 /* â•â• VIEWER CHAT CARD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+/* Viewer bottom bar buttons — hidden on desktop, shown mobile via body.is-watching rules */
+.vwr-bar-btn { display: none; }
+
 #viewer-panel-chat-card {
     background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(110,65,235,0.08) 0%,transparent 70%),linear-gradient(180deg,#121026,#0e0b1e)!important;
     border:1px solid rgba(115,78,218,0.22)!important; border-radius:14px!important;
@@ -9220,6 +9223,108 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
     body.is-hosting .stream-floating-chat { display: none !important; }
     /* Panel End Stream wrap — hidden on mobile (toolbar button handles it) */
     #panel-end-stream-wrap { display: none !important; }
+
+    /* ══ MOBILE VIEWER: BSC card-stack layout ══════════════════════════
+       Overrides the 900px TikTok-fullscreen block for ≤768px only.
+       Selectors match body.is-watching + IDs to beat 900px specificity.
+       File order (later = wins) handles equal-specificity ties.
+    ════════════════════════════════════════════════════════════════════ */
+    /* Hide nav chrome */
+    body.is-watching #topnav          { display: none !important; }
+    body.is-watching #mobile-dashboard { display: none !important; }
+    body.is-watching #bottom-nav       { display: none !important; }
+    /* Player wrap: full-screen fixed flex column */
+    body.is-watching #live-player-wrap {
+        display: flex !important;
+        flex-direction: column !important;
+        background: #0a0818 !important;
+        overflow: hidden !important;
+    }
+    /* Video: compact height with rounded corners — NOT absolute fullscreen */
+    body.is-watching #live-player-wrap #live-remote-video-container {
+        position: relative !important;
+        top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+        width: 100% !important;
+        height: 55vw !important;
+        min-height: 200px !important;
+        max-height: 400px !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        flex-shrink: 0 !important;
+    }
+    /* Remove the bottom gradient from the fullscreen layout */
+    body.is-watching #live-player-wrap #live-remote-video-container::after { display: none !important; }
+    /* Hide TikTok icon strip column — actions are now in the bottom bar */
+    body.is-watching #viewer-icon-strip { display: none !important; }
+    /* Hide hype everywhere — hype is now tap-to-hype */
+    body.is-watching #live-player-wrap #live-hype-btn { display: none !important; }
+    body.is-watching #live-player-wrap button[onclick="sendLiveHype()"] { display: none !important; }
+    /* Hide action row tiles and floating chat */
+    body.is-watching #live-player-wrap .live-action-row { display: none !important; }
+    body.is-watching #live-player-wrap .stream-floating-chat { display: none !important; }
+    /* Chat card: flex column filling remaining height */
+    body.is-watching #live-player-wrap #viewer-panel-chat-card {
+        position: static !important;
+        bottom: auto !important; left: auto !important; right: auto !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background: rgba(12, 8, 24, 0.95) !important;
+        border: none !important;
+        border-top: 1px solid rgba(100, 70, 200, 0.2) !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        z-index: auto !important;
+    }
+    body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-head { display: none !important; }
+    /* Chat feed: VISIBLE between video and bottom bar */
+    body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-feed {
+        display: flex !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        padding: 4px 10px !important;
+        gap: 4px !important;
+        background: transparent !important;
+        font-size: 0.75rem !important;
+    }
+    /* Bottom bar: input + Send + 🎁 🎤 ✕ */
+    body.is-watching #live-player-wrap #viewer-panel-chat-card .live-chat-input-row {
+        display: flex !important;
+        flex-shrink: 0 !important;
+        padding: 8px 10px !important;
+        gap: 6px !important;
+        align-items: center !important;
+        background: rgba(8, 6, 18, 0.95) !important;
+        border-top: 1px solid rgba(100, 70, 200, 0.2) !important;
+        backdrop-filter: none !important;
+        border-radius: 0 !important;
+    }
+    /* Viewer bottom bar icon buttons */
+    body.is-watching #live-player-wrap .vwr-bar-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.18) !important;
+        background: rgba(14, 10, 30, 0.8) !important;
+        font-size: 1.15rem !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
+        color: #fff !important;
+    }
+    body.is-watching #live-player-wrap .vwr-bar-leave {
+        background: rgba(220, 38, 38, 0.35) !important;
+        border-color: rgba(220, 38, 38, 0.6) !important;
+    }
 }
 
 
@@ -11372,6 +11477,9 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                             <div class="live-chat-input-row">
                                 <input type="text" id="live-chat-input" class="field" placeholder="Say something…" style="margin-top:0;" onkeydown="if(event.key==='Enter')sendLiveChat()">
                                 <button class="btn btn-purple btn-sm" onclick="sendLiveChat()">Send</button>
+                                <button class="vwr-bar-btn" onclick="_openViewerGiftDrawer()" title="Gift">🎁</button>
+                                <button class="vwr-bar-btn" id="vwr-mic-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="vwr-bar-btn vwr-bar-leave" onclick="leaveLiveStream()" title="Leave">✕</button>
                             </div>
                         </div>
                     </div>
