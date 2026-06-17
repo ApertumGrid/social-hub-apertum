@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -10088,8 +10087,8 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                                 Connect your Apertum wallet, deposit some APTM and start earning. No middlemen. No algorithms hiding your content.
                             </div>
                             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                                <button onclick="connectWallet()" style="padding:10px 22px;border-radius:20px;border:none;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
-                                    Connect Wallet →
+                                <button onclick="showOnboardingGuide()" style="padding:10px 22px;border-radius:20px;border:none;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
+                                    How to Connect Wallet
                                 </button>
                                 <button onclick="_activateTab('info',document.getElementById('nav-info'))" style="padding:10px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:0.78rem;font-weight:600;cursor:pointer;">
                                     How it works
@@ -10108,6 +10107,60 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                             </div>
                         </div>
                         <button onclick="document.getElementById('visitor-banner').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.1rem;cursor:pointer;padding:0;flex-shrink:0;line-height:1;" title="Dismiss">✕</button>
+                    </div>
+                </div>
+
+                <!-- How to Connect Wallet — onboarding guide modal -->
+                <div id="onboarding-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeOnboardingModal()">
+                    <div style="background:var(--bg-card);border:1px solid rgba(124,92,191,0.4);border-radius:20px;max-width:420px;width:100%;padding:28px 24px;position:relative;max-height:88vh;overflow-y:auto;">
+                        <button onclick="closeOnboardingModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:1.15rem;cursor:pointer;line-height:1;padding:4px;">✕</button>
+                        <div style="font-size:1.05rem;font-weight:800;color:var(--text-primary);margin-bottom:4px;padding-right:32px;">How to Connect Your Wallet</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:22px;line-height:1.5;">Complete these steps before connecting — takes about 5 minutes if you're new.</div>
+
+                        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px;">
+                            <div style="min-width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;color:#fff;flex-shrink:0;">1</div>
+                            <div>
+                                <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:3px;">Get MetaMask</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">Download <strong style="color:var(--purple-lt);">MetaMask</strong> on your phone or as a browser extension. Any WalletConnect-compatible wallet also works.</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px;">
+                            <div style="min-width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;color:#fff;flex-shrink:0;">2</div>
+                            <div>
+                                <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:3px;">Add the Apertum Network</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">SocialHub will prompt you to add the <strong style="color:var(--purple-lt);">Apertum network</strong> to your wallet automatically when you connect. Just approve the request.</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px;">
+                            <div style="min-width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;color:#fff;flex-shrink:0;">3</div>
+                            <div>
+                                <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:3px;">Get APTM</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">You need <strong style="color:var(--gold);">APTM</strong> in your wallet to deposit Stars. APTM is also your gas token on the Apertum network — one balance covers both.</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:18px;">
+                            <div style="min-width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;color:#fff;flex-shrink:0;">4</div>
+                            <div>
+                                <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:3px;">Click Connect in the Top Bar</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">Tap <strong style="color:var(--purple-lt);">Connect</strong> in the navigation bar at the top. Select WalletConnect, scan the QR code or pick your wallet app, then approve.</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:24px;">
+                            <div style="min-width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;color:#fff;flex-shrink:0;">5</div>
+                            <div>
+                                <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:3px;">Buy Stars &amp; Start Earning</div>
+                                <div style="font-size:0.75rem;color:var(--text-secondary);line-height:1.6;">Once connected, tap the wallet icon and hit <strong style="color:var(--gold);">Buy Stars</strong>. Stars are priced at live APTM market rate — every like, comment and follow earns you real APTM.</div>
+                            </div>
+                        </div>
+
+                        <button onclick="closeOnboardingModal();connectWallet();" style="width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#7c5cbf,#2dd4bf);color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
+                            Connect Wallet →
+                        </button>
+                        <div style="margin-top:10px;text-align:center;font-size:0.7rem;color:var(--text-muted);">Or tap Connect in the top navigation bar.</div>
                     </div>
                 </div>
 
@@ -13420,7 +13473,7 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                 }
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
-                    showQrModal:    false,
+                    showQrModal:    true,
                     chains:         [1],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
@@ -13431,12 +13484,6 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
                         description: 'Web3 Social Platform on Apertum',
                         url:         'https://www.socialhubapertum.com',
                         icons:       ['https://socialhubglobal.com/favicon.ico']
-                    }
-                });
-                wcProv.once('display_uri', function(uri) {
-                    var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
-                    if (isMobile) {
-                        window.open('https://metamask.app.link/wc?uri=' + encodeURIComponent(uri), '_blank');
                     }
                 });
                 if (_wcIsMobile) {
@@ -13615,6 +13662,18 @@ html.dark #daily-signal-card p { font-family: var(--font-serif-gem) !important; 
         }
     }
     window._connectWithProvider = _connectWithProvider;
+
+    function showOnboardingGuide() {
+        var m = document.getElementById('onboarding-modal');
+        m.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeOnboardingModal() {
+        document.getElementById('onboarding-modal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    window.showOnboardingGuide = showOnboardingGuide;
+    window.closeOnboardingModal = closeOnboardingModal;
 
     async function connectWallet() {
         toggleWalletDropdown();
