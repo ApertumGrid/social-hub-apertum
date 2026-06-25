@@ -16601,6 +16601,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     function switchPage(p, el) {
         _activateTab(p, el);
+        if (p === 'earnings' && window.userAddress && window.db && window.fs) {
+            setTimeout(function() {
+                if (typeof window._loadCreatorChallenge  === 'function') window._loadCreatorChallenge();
+                if (typeof window._loadCreatorAnalytics  === 'function') window._loadCreatorAnalytics();
+            }, 200);
+        }
     }
 
 
