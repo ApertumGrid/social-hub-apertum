@@ -14200,13 +14200,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         setStatus('Checking provider…', 'var(--teal)');
 
         try {
-            // Step 1 — wait for ethereum to be injected (handles slow mobile browsers)
-            const eth = await _waitForEthereum(4000);
-            setStatus('Provider found — re-initialising contract…', 'var(--teal)');
+            // Step 1 — get the right provider (WalletConnect or injected)
+            // If WC session is dead, redirect to full reconnect instead of reusing the dead provider
+            if (window._shLastWalletType === 'walletconnect' && (!window._activeWCProvider || window._wcSessionAlive === false)) {
+                setStatus('WalletConnect session expired — opening fresh connection…', 'var(--gold)');
+                if (btn) { btn.disabled = false; btn.textContent = '⟳ Re-verify Wallet Connection'; }
+                window._wcReconnect();
+                return;
+            }
+            var _syncEth = null;
+            if (window._activeWCProvider) {
+                _syncEth = window._activeWCProvider;
+                setStatus('WalletConnect session found — re-initialising…', 'var(--teal)');
+            } else {
+                _syncEth = await _waitForEthereum(4000);
+                if (!_syncEth) throw new Error('No wallet detected. Connect a wallet first.');
+                setStatus('Provider found — re-initialising contract…', 'var(--teal)');
+            }
 
             // Step 2 — rebuild provider/signer/contract if they were lost
             if (!provider || !signer || !hubContract) {
-                provider    = new ethers.providers.Web3Provider(eth);
+                provider    = new ethers.providers.Web3Provider(_syncEth);
                 const accts = await provider.send("eth_requestAccounts", []);
                 if (!userAddress) {
                     userAddress        = accts[0];
@@ -14223,7 +14237,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
 
             // Step 3 — safe balance read via direct RPC (wallet may be on wrong chain)
-            const addr   = await signer.getAddress();
+            var addr = userAddress || (signer ? await signer.getAddress() : null);
+            if (!addr) throw new Error('No wallet address — connect a wallet first.');
             const _msRo  = getRpcProvider();
             const _msC   = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, _msRo);
             const balResult = await _safeCall(() => _msC.getBalance(addr));
@@ -14231,15 +14246,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (balResult === null) {
                 setStatus('⚠ Contract read failed — RPC may be congested. Try again.', 'var(--gold)');
             } else {
-                const depUsdt = parseFloat(ethers.utils.formatUnits(balResult.deposited, 18)) || 0;
-                setStatus(`✓ On-chain: $${depUsdt.toFixed(2)} APTM deposited — running full sync…`, '#22c55e');
+                const depAptm = parseFloat(ethers.utils.formatUnits(balResult.deposited, 18)) || 0;
+                setStatus(`✓ Wallet verified — ${depAptm.toFixed(4)} APTM held in escrow · syncing balance…`, '#22c55e');
                 await syncData();
                 showToast('Wallet re-verified & synced ✓');
                 setTimeout(() => { if (status) status.style.display = 'none'; }, 4000);
             }
         } catch (e) {
             console.error('[ManualSync]', e);
-            setStatus('⚠ ' + (e.message || 'Sync failed — check MetaMask.'), 'var(--red)');
+            setStatus('⚠ ' + (e.message || 'Sync failed — check your wallet.'), 'var(--red)');
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = '⟳ Re-verify Wallet Connection'; }
         }
