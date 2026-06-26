@@ -10752,7 +10752,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c1">1</div><div class="ch-task-body"><div class="ch-task-day">Day 1</div><div class="ch-task-label" id="ch-l1">Complete your profile — add avatar, bio &amp; display name</div></div></div>
                         <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c2">2</div><div class="ch-task-body"><div class="ch-task-day">Day 2</div><div class="ch-task-label" id="ch-l2">Make your first post</div></div></div>
                         <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c3">3</div><div class="ch-task-body"><div class="ch-task-day">Day 3</div><div class="ch-task-label" id="ch-l3">Follow 5 other creators</div></div></div>
-                        <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c4">4</div><div class="ch-task-body"><div class="ch-task-day">Day 4</div><div class="ch-task-label" id="ch-l4">Send a gift to another creator</div></div></div>
+                        <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c4">4</div><div class="ch-task-body"><div class="ch-task-day">Day 4</div><div class="ch-task-label" id="ch-l4">Tip or gift another creator (use ★ Tip on any profile)</div></div></div>
                         <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c5">5</div><div class="ch-task-body"><div class="ch-task-day">Day 5</div><div class="ch-task-label" id="ch-l5">Go live for the first time</div></div></div>
                         <div class="ch-task"><div class="ch-check ch-check-todo" id="ch-c6">6</div><div class="ch-task-body"><div class="ch-task-day">Day 6</div><div class="ch-task-label" id="ch-l6">Create your Hub</div></div></div>
                     </div>
@@ -24190,6 +24190,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             showToast('★ Sent ' + amount + '★! Creator receives ' + creatorCut.toFixed(2) + '★.');
             writeNotif(_heroTargetAddr, 'tip', { amount: amount });
+            if (typeof window._challengeMarkDone === 'function') window._challengeMarkDone(4);
         } catch (e) {
             console.error('[sendHeroTip]', e);
             showToast('Tip failed. Please try again.');
@@ -35293,6 +35294,10 @@ function _makePipDraggable(el) {
 // ─────────────────────────────────────────────────────────────────────
 
 function setStudioTab(name, el) {
+    if (name === 'economy') {
+        _activateTab('info', document.getElementById('nav-info') || null);
+        return;
+    }
     document.querySelectorAll('.studio-tab').forEach(function(t) { t.classList.remove('active'); });
     if (el) el.classList.add('active');
     var panels = ['main','recordings','listings','purchases','economy'];
@@ -38503,7 +38508,7 @@ window._loadCreatorChallenge = async function() {
             'Complete your profile — add avatar, bio & display name',
             'Make your first post',
             'Follow 5 other creators',
-            'Send a gift to another creator',
+            'Tip or gift another creator (use ★ Tip on any profile)',
             'Go live for the first time',
             'Create your Hub'
         ];
