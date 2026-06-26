@@ -13258,8 +13258,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (typeof updateSettleButtons === 'function') updateSettleButtons();
     }
 
-    function updateDepositEstimate(usdtAmt) {
-        const stars = Math.floor(parseFloat(usdtAmt) / CONFIG.STAR_USD);
+    function updateDepositEstimate(aptmAmt) {
+        const _price = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+        const stars = Math.floor(parseFloat(aptmAmt) * _price / CONFIG.STAR_USD);
         const el = document.getElementById('drawer-deposit-est');
         if (el) el.textContent = isNaN(stars) ? '—' : stars + ' ★';
     }
