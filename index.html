@@ -16696,10 +16696,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const pageId  = pageMap[tabName];
             const pg      = pageId ? document.getElementById('page-' + pageId) : null;
             if (pg) { pg.style.display = 'block'; pg.classList.add('active'); }
-            // On mobile, Creator Studio also shows Star Economy stacked below
-            if ((tabName === 'earnings' || tabName === 'studio') && window.innerWidth <= 900) {
-                if (pageInfo) { pageInfo.style.display = 'block'; pageInfo.classList.add('active'); }
-            }
             if (tabName === 'communities' && typeof loadCommunities === 'function') loadCommunities();
             if (tabName === 'live' && typeof window.loadStreamBrowser === 'function') window.loadStreamBrowser();
             if (tabName === 'marketplace') {
@@ -16712,6 +16708,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (tabName === 'earnings' || tabName === 'studio' || tabName === 'ledger') {
                 if (typeof _notifDotClear === 'function') _notifDotClear();
                 if (typeof loadMyRecordings === 'function') loadMyRecordings();
+            }
+            // Load challenge + analytics whenever Studio tab is opened (covers mobile showMobileTab path)
+            if ((tabName === 'earnings' || tabName === 'studio') && window.userAddress && window.db && window.fs) {
+                setTimeout(function() {
+                    if (typeof window._loadCreatorChallenge === 'function') window._loadCreatorChallenge();
+                    if (typeof window._loadCreatorAnalytics === 'function') window._loadCreatorAnalytics();
+                }, 200);
             }
 
             // Inbox tab — show splash or active UI based on mailbox status
