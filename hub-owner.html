@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Own a Community Hub — SocialHub</title>
+<meta property="og:type"        content="website">
+<meta property="og:site_name"   content="SocialHub">
+<meta property="og:title"       content="Own a Community Hub on SocialHub">
+<meta property="og:description" content="Launch your own Hub, grow your audience and earn APTM from every subscription, post and gift — powered by Apertum.">
+<meta property="og:image"       content="https://socialhubglobal.com/socialhub-horizontal.png">
+<meta property="og:url"         content="https://socialhubglobal.com/hub-owner.html">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="Own a Community Hub on SocialHub">
+<meta name="twitter:description" content="Launch your own Hub, grow your audience and earn APTM from every subscription, post and gift — powered by Apertum.">
+<meta name="twitter:image"      content="https://socialhubglobal.com/socialhub-horizontal.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080c14;--bg2:#0e1320;--bg3:#141928;
+    --card:#111827;--card2:#161e2e;
+    --teal:#22d3ee;--teal-d:#0891b2;
+    --purple:#7c5cbf;--purple-lt:#a78bfa;
+    --gold:#f0b429;--gold-lt:#fcd34d;
+    --green:#22c55e;--red:#ef4444;
+    --text:#f0f4ff;--muted:#8b9ab5;--dim:#4a5568;
+    --border:rgba(255,255,255,0.07);
+    --glow-teal:rgba(34,211,238,0.15);
+    --glow-gold:rgba(240,180,41,0.15);
+    --glow-purple:rgba(124,92,191,0.15);
+    --radius:14px;--radius-sm:8px;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;overflow-x:hidden}
+
+  /* ── TYPOGRAPHY ── */
+  h1,h2,h3{line-height:1.2;font-weight:800;letter-spacing:-0.02em}
+  .grad-text{background:linear-gradient(135deg,var(--teal) 0%,var(--purple-lt) 60%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .gold-text{background:linear-gradient(135deg,var(--gold) 0%,var(--gold-lt) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .teal-text{color:var(--teal)}
+  .purple-text{color:var(--purple-lt)}
+  .green-text{color:var(--green)}
+  .muted{color:var(--muted)}
+
+  /* ── LAYOUT ── */
+  .container{max-width:960px;margin:0 auto;padding:0 20px}
+  section{padding:80px 0}
+  section:first-of-type{padding-top:0}
+
+  /* ── NAV ── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(8,12,20,0.85);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{font-size:1rem;font-weight:800;letter-spacing:-0.01em;color:var(--text)}
+  .nav-logo span{color:var(--teal)}
+  .nav-cta{background:linear-gradient(135deg,var(--teal-d),var(--purple));color:#fff;border:none;padding:9px 20px;border-radius:40px;font-size:0.8rem;font-weight:700;cursor:pointer;text-decoration:none;transition:opacity 0.2s,transform 0.2s}
+  .nav-cta:hover{opacity:0.85;transform:translateY(-1px)}
+
+  /* ── HERO ── */
+  .hero{padding:140px 0 80px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(34,211,238,0.08) 0%,transparent 70%);pointer-events:none}
+  .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);border-radius:40px;padding:5px 14px;font-size:0.72rem;font-weight:700;color:var(--teal);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:24px}
+  .hero h1{font-size:clamp(2.4rem,6vw,4rem);margin-bottom:20px}
+  .hero-sub{font-size:clamp(1rem,2.5vw,1.2rem);color:var(--muted);max-width:600px;margin:0 auto 40px;line-height:1.7}
+  .hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:linear-gradient(135deg,var(--teal-d),var(--purple));color:#fff;border:none;padding:14px 32px;border-radius:40px;font-size:0.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s;box-shadow:0 4px 24px rgba(34,211,238,0.2)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(34,211,238,0.3)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border);padding:14px 32px;border-radius:40px;font-size:0.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s}
+  .btn-ghost:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)}
+
+  /* ── FLOATING STATS ── */
+  .hero-stats{display:flex;justify-content:center;gap:0;margin-top:60px;flex-wrap:wrap}
+  .hero-stat{text-align:center;padding:16px 32px;border-right:1px solid var(--border)}
+  .hero-stat:last-child{border-right:none}
+  .hero-stat-val{font-size:1.8rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:2px}
+  .hero-stat-lbl{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:600}
+
+  /* ── SECTION HEADER ── */
+  .sec-hd{text-align:center;margin-bottom:48px}
+  .sec-hd h2{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:12px}
+  .sec-hd p{color:var(--muted);max-width:560px;margin:0 auto;font-size:0.95rem}
+  .sec-tag{display:inline-block;font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:4px 12px;border-radius:40px;margin-bottom:12px}
+  .sec-tag.teal{background:rgba(34,211,238,0.1);border:1px solid rgba(34,211,238,0.25);color:var(--teal)}
+  .sec-tag.gold{background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.25);color:var(--gold)}
+  .sec-tag.purple{background:rgba(124,92,191,0.1);border:1px solid rgba(124,92,191,0.25);color:var(--purple-lt)}
+  .sec-tag.green{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--green)}
+
+  /* ── HOW IT WORKS ── */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  @media(max-width:640px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 24px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s}
+  .step:hover{border-color:rgba(34,211,238,0.2);transform:translateY(-3px)}
+  .step-num{font-size:4rem;font-weight:900;color:rgba(255,255,255,0.04);position:absolute;top:-8px;right:16px;line-height:1;font-family:monospace}
+  .step-icon{font-size:2rem;margin-bottom:14px}
+  .step h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+  .step p{font-size:0.8rem;color:var(--muted);line-height:1.6}
+
+  /* ── REVENUE STREAMS ── */
+  .streams{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  @media(max-width:640px){.streams{grid-template-columns:1fr}}
+  .stream-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:all 0.2s;position:relative;overflow:hidden}
+  .stream-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.3s}
+  .stream-card:hover{transform:translateY(-3px)}
+  .stream-card.gold-stream::before{background:radial-gradient(ellipse at 0% 0%,var(--glow-gold),transparent 70%)}
+  .stream-card.teal-stream::before{background:radial-gradient(ellipse at 0% 0%,var(--glow-teal),transparent 70%)}
+  .stream-card.purple-stream::before{background:radial-gradient(ellipse at 0% 0%,var(--glow-purple),transparent 70%)}
+  .stream-card.green-stream::before{background:radial-gradient(ellipse at 0% 0%,rgba(34,197,94,0.1),transparent 70%)}
+  .stream-card:hover::before{opacity:1}
+  .stream-num{font-size:0.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;opacity:0.6}
+  .stream-icon{font-size:1.8rem;margin-bottom:12px}
+  .stream-card h3{font-size:1.05rem;font-weight:700;margin-bottom:8px}
+  .stream-card p{font-size:0.78rem;color:var(--muted);margin-bottom:16px;line-height:1.6}
+  .stream-rows{}
+  .stream-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem}
+  .stream-row:last-child{border-bottom:none}
+  .stream-row-lbl{color:var(--muted)}
+  .stream-row-val{font-weight:700;font-family:monospace;font-size:0.82rem}
+
+  /* ── CALCULATOR ── */
+  .calc-wrap{background:var(--card);border:1px solid rgba(240,180,41,0.2);border-radius:var(--radius);padding:36px;box-shadow:0 0 60px var(--glow-gold)}
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+  @media(max-width:640px){.calc-grid{grid-template-columns:1fr}}
+  .calc-sliders{}
+  .slider-group{margin-bottom:24px}
+  .slider-label{display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;font-weight:600;margin-bottom:10px}
+  .slider-val{font-family:monospace;font-size:0.9rem;font-weight:800;color:var(--gold)}
+  input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:rgba(240,180,41,0.15);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px rgba(240,180,41,0.5);transition:transform 0.15s}
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:none;box-shadow:0 0 8px rgba(240,180,41,0.5)}
+  .calc-result{background:var(--bg3);border-radius:var(--radius-sm);padding:24px;border:1px solid rgba(240,180,41,0.15)}
+  .calc-result-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:20px}
+  .calc-breakdown{}
+  .calc-line{display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;padding:8px 0;border-bottom:1px solid var(--border)}
+  .calc-line:last-child{border-bottom:none}
+  .calc-line-lbl{color:var(--muted)}
+  .calc-line-val{font-weight:700;font-family:monospace}
+  .calc-total{margin-top:20px;padding:16px;background:linear-gradient(135deg,rgba(240,180,41,0.08),rgba(34,211,238,0.05));border:1px solid rgba(240,180,41,0.25);border-radius:var(--radius-sm);text-align:center}
+  .calc-total-lbl{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+  .calc-total-val{font-size:2rem;font-weight:900;letter-spacing:-0.02em}
+  .calc-note{font-size:0.65rem;color:var(--dim);text-align:center;margin-top:10px}
+
+  /* ── FEATURES GRID ── */
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:640px){.features{grid-template-columns:1fr}}
+  .feat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:all 0.2s}
+  .feat:hover{border-color:rgba(124,92,191,0.25);transform:translateY(-2px)}
+  .feat-icon{font-size:1.5rem;margin-bottom:10px}
+  .feat h3{font-size:0.88rem;font-weight:700;margin-bottom:6px}
+  .feat p{font-size:0.75rem;color:var(--muted);line-height:1.55}
+
+  /* ── ANALYTICS MOCKUP ── */
+  .analytics-mockup{background:var(--card);border:1px solid rgba(34,211,238,0.15);border-radius:var(--radius);padding:28px;box-shadow:0 0 60px rgba(34,211,238,0.05)}
+  .mock-header{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  .mock-title{font-size:0.85rem;font-weight:700}
+  .mock-badge{font-size:0.6rem;background:rgba(34,211,238,0.1);border:1px solid rgba(34,211,238,0.2);color:var(--teal);padding:2px 8px;border-radius:20px;font-weight:700}
+  .mock-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  @media(max-width:500px){.mock-stats{grid-template-columns:repeat(2,1fr)}}
+  .mock-stat{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;text-align:center}
+  .mock-stat-val{font-size:1.3rem;font-weight:800;font-family:monospace;margin-bottom:2px}
+  .mock-stat-lbl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+  .mock-chart{background:var(--bg3);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px}
+  .mock-chart-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;font-weight:600}
+  .mock-bars{display:flex;align-items:flex-end;gap:3px;height:52px}
+  .mock-bar{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--teal-d),rgba(34,211,238,0.3));min-height:3px;transition:height 0.3s}
+  .mock-subs{background:var(--bg3);border-radius:var(--radius-sm);padding:14px}
+  .mock-subs-title{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;font-weight:600}
+  .mock-sub-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.72rem}
+  .mock-sub-row:last-child{border-bottom:none}
+  .mock-sub-addr{font-family:monospace;color:var(--muted)}
+  .mock-sub-status{font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:20px}
+  .mock-sub-status.active{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2)}
+  .mock-sub-status.exp{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+
+  /* ── COMPARISON ── */
+  .compare-table{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .compare-head{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--card);padding:14px 20px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+  .compare-head .col-hub{color:var(--teal)}
+  .compare-row{display:grid;grid-template-columns:1fr 1fr 1fr;padding:13px 20px;border-bottom:1px solid var(--border);font-size:0.8rem;align-items:center}
+  .compare-row:last-child{border-bottom:none}
+  .compare-row:nth-child(even){background:rgba(255,255,255,0.015)}
+  .col-feat{color:var(--muted);font-size:0.75rem}
+  .col-other{color:var(--dim);font-size:0.8rem}
+  .col-hub{font-weight:700}
+  .check{color:var(--green)}
+  .cross{color:var(--dim)}
+
+  /* ── TESTIMONIAL STYLE CALLOUTS ── */
+  .callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:640px){.callouts{grid-template-columns:1fr}}
+  .callout{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
+  .callout::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .callout.c1::before{background:linear-gradient(90deg,var(--teal),transparent)}
+  .callout.c2::before{background:linear-gradient(90deg,var(--gold),transparent)}
+  .callout.c3::before{background:linear-gradient(90deg,var(--purple-lt),transparent)}
+  .callout-icon{font-size:1.5rem;margin-bottom:10px}
+  .callout-val{font-size:1.5rem;font-weight:900;letter-spacing:-0.02em;margin-bottom:4px}
+  .callout p{font-size:0.75rem;color:var(--muted);line-height:1.5}
+
+  /* ── CTA SECTION ── */
+  .cta-section{text-align:center;padding:100px 0 80px;position:relative;overflow:hidden}
+  .cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(124,92,191,0.08) 0%,transparent 70%);pointer-events:none}
+  .cta-section h2{font-size:clamp(1.8rem,5vw,3rem);margin-bottom:16px}
+  .cta-section p{color:var(--muted);font-size:1rem;max-width:500px;margin:0 auto 36px}
+  .cost-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:40px;padding:8px 20px;font-size:0.8rem;color:var(--gold);font-weight:700;margin-bottom:28px}
+
+  /* ── FOOTER ── */
+  footer{border-top:1px solid var(--border);padding:28px 20px;text-align:center;color:var(--dim);font-size:0.72rem}
+  footer span{color:var(--teal)}
+
+  /* ── DECORATIVE ── */
+  .divider{width:60px;height:2px;background:linear-gradient(90deg,var(--teal),var(--purple));margin:0 auto 20px;border-radius:2px}
+  .glow-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;opacity:0.3}
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  .fade-up{animation:fadeUp 0.6s ease both}
+  .fade-up.d1{animation-delay:0.1s}
+  .fade-up.d2{animation-delay:0.2s}
+  .fade-up.d3{animation-delay:0.3s}
+  .fade-up.d4{animation-delay:0.4s}
+
+  /* ── BADGE PREVIEW ── */
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .badge{display:inline-block;font-size:0.58rem;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:0.4px;text-transform:uppercase}
+  .badge.owner{background:rgba(45,212,191,0.15);border:1px solid rgba(45,212,191,0.4);color:var(--teal)}
+  .badge.sub{background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);color:var(--purple-lt)}
+  .badge.pinned{background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.4);color:var(--gold)}
+
+  /* ── APTM CHAIN BADGE ── */
+  .chain-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,92,191,0.1);border:1px solid rgba(124,92,191,0.3);border-radius:40px;padding:4px 12px;font-size:0.68rem;font-weight:700;color:var(--purple-lt);margin-left:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Social<span>Hub</span> ◈ <span class="chain-badge">Apertum</span></div>
+  <a href="#cta" class="nav-cta">Launch Your Hub →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="fade-up">
+      <div class="hero-eyebrow">◈ Community Hubs · Apertum Chain</div>
+    </div>
+    <div class="fade-up d1">
+      <h1>Own the Venue.<br><span class="grad-text">Earn While You Sleep.</span></h1>
+    </div>
+    <div class="fade-up d2">
+      <p class="hero-sub">Launch your own Community Hub on SocialHub and collect passive income from every post, like, comment, and subscription inside your space — 24/7, automatically. Paid out in APTM on the Apertum blockchain.</p>
+    </div>
+    <div class="hero-actions fade-up d3">
+      <a href="#calculator" class="btn-primary">See What You Could Earn</a>
+      <a href="#features" class="btn-ghost">Explore Features</a>
+    </div>
+    <div class="hero-stats fade-up d4">
+      <div class="hero-stat">
+        <div class="hero-stat-val gold-text">4</div>
+        <div class="hero-stat-lbl">Revenue Streams</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val teal-text">90%</div>
+        <div class="hero-stat-lbl">Sub Revenue to You</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val purple-text">50%</div>
+        <div class="hero-stat-lbl">of Every Guest Post Fee</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val green-text">$10</div>
+        <div class="hero-stat-lbl">One-Time Launch Cost</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="background:var(--bg2); padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag teal">How It Works</div>
+      <h2>Three steps to <span class="teal-text">passive income</span></h2>
+      <p>You set it up once. The platform collects your earnings automatically — every single day.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">1</div>
+        <div class="step-icon">🏗️</div>
+        <h3>Launch Your Hub</h3>
+        <p>Pay a one-time fee of <strong style="color:var(--gold)">1,000 ★ (~$10)</strong> in APTM at the live rate. Give your Hub a name, description, header image, and custom handle. Goes live instantly in the directory.</p>
+      </div>
+      <div class="step fade-up d1">
+        <div class="step-num">2</div>
+        <div class="step-icon">📣</div>
+        <h3>Attract Your Audience</h3>
+        <p>Share your Hub link. Every follower, subscriber, and guest who visits is a revenue source. You don't need to post constantly — just build the community.</p>
+      </div>
+      <div class="step fade-up d2">
+        <div class="step-num">3</div>
+        <div class="step-icon">💰</div>
+        <h3>Earn Automatically</h3>
+        <p>Every like, comment, post, follow, and subscription in your Hub credits your Star balance in real time. Withdraw as APTM to your wallet anytime — no claiming, no waiting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVENUE STREAMS -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag gold">Revenue Streams</div>
+      <h2>Four ways your Hub <span class="gold-text">makes money</span></h2>
+      <p>Unlike other platforms where only the platform profits from activity, SocialHub cuts you in on everything that happens inside your Hub.</p>
+    </div>
+    <div class="streams">
+
+      <!-- STREAM 1: BROADCASTS -->
+      <div class="stream-card gold-stream">
+        <div class="stream-num">Stream 01</div>
+        <div class="stream-icon">📡</div>
+        <h3 class="gold-text">Guest Broadcast Fees</h3>
+        <p>Every time a <strong>guest</strong> posts inside your Hub, you automatically receive <strong>50% of their broadcast fee</strong>. No action required — it hits your balance the moment they publish. Your own posts pay the standard fee to the platform, which covers storage and infrastructure.</p>
+        <div class="stream-rows">
+          <div class="stream-row">
+            <span class="stream-row-lbl">Guest Text Post (1.2 ★)</span>
+            <span class="stream-row-val gold-text">+0.6 ★ to you</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Guest Image Post (3.0 ★)</span>
+            <span class="stream-row-val gold-text">+1.5 ★ to you</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Guest Video Post (10 ★)</span>
+            <span class="stream-row-val gold-text">+5.0 ★ to you</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Your own posts in your Hub</span>
+            <span class="stream-row-val" style="color:var(--muted);">Normal fee → 100% Platform</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STREAM 2: INTERACTIONS -->
+      <div class="stream-card teal-stream">
+        <div class="stream-num">Stream 02</div>
+        <div class="stream-icon">❤️</div>
+        <h3 class="teal-text">Landlord Interaction Split</h3>
+        <p>When anyone likes or comments on a guest's post in your Hub, you earn <strong>40% as Landlord Earnings</strong>. Every interaction in your space pays you rent.</p>
+        <div class="stream-rows">
+          <div class="stream-row">
+            <span class="stream-row-lbl">Like or comment on guest post</span>
+            <span class="stream-row-val teal-text">+0.4 ★ to you</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Guest creator also earns</span>
+            <span class="stream-row-val" style="color:var(--muted);">0.4 ★ (40%)</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Platform keeps</span>
+            <span class="stream-row-val" style="color:var(--dim);">0.2 ★ (20%)</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Like on YOUR own post</span>
+            <span class="stream-row-val teal-text">+0.8 ★ to you</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STREAM 3: SUBSCRIPTIONS -->
+      <div class="stream-card purple-stream">
+        <div class="stream-num">Stream 03</div>
+        <div class="stream-icon">🔒</div>
+        <h3 class="purple-text">Monthly Subscriptions</h3>
+        <p>Set your own monthly price anywhere from <strong>10★ to 500★ (~$0.10–$5)</strong>. Lock exclusive posts behind the paywall. You keep <strong>90%</strong> of every payment — paid in APTM when you withdraw.</p>
+        <div class="stream-rows">
+          <div class="stream-row">
+            <span class="stream-row-lbl">Your cut per subscriber</span>
+            <span class="stream-row-val purple-text">90% of price</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">You set the price</span>
+            <span class="stream-row-val purple-text">10★ – 500★ / mo</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Subscribers-only posts</span>
+            <span class="stream-row-val purple-text">Blurred for non-subs</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Platform keeps</span>
+            <span class="stream-row-val" style="color:var(--dim);">10% only</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STREAM 4: FOLLOWS -->
+      <div class="stream-card green-stream">
+        <div class="stream-num">Stream 04</div>
+        <div class="stream-icon">👥</div>
+        <h3 class="green-text">Hub Follows</h3>
+        <p>Following your Hub costs <strong>1 ★</strong>. You receive <strong>90% (0.9 ★)</strong> the instant someone taps Follow — and they stay in your orbit forever via their Following feed.</p>
+        <div class="stream-rows">
+          <div class="stream-row">
+            <span class="stream-row-lbl">Per follow received</span>
+            <span class="stream-row-val green-text">+0.9 ★ to you</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Followers get notified</span>
+            <span class="stream-row-val green-text">Every new post</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Appears in Following feed</span>
+            <span class="stream-row-val green-text">Yes — automatic</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Platform keeps</span>
+            <span class="stream-row-val" style="color:var(--dim);">0.1 ★ (10%) only</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- EARNINGS CALCULATOR -->
+<section id="calculator" style="background:var(--bg2); padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag gold">Earnings Calculator</div>
+      <h2>What could your Hub <span class="gold-text">earn per month?</span></h2>
+      <p>Move the sliders to see your realistic monthly earnings across all four revenue streams.</p>
+    </div>
+    <div class="calc-wrap">
+      <div class="calc-grid">
+        <div class="calc-sliders">
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Guest text posts / day</span>
+              <span class="slider-val" id="v-text">5</span>
+            </div>
+            <input type="range" id="s-text" min="0" max="50" value="5" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Guest image posts / day</span>
+              <span class="slider-val" id="v-img">2</span>
+            </div>
+            <input type="range" id="s-img" min="0" max="30" value="2" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Guest video posts / day</span>
+              <span class="slider-val" id="v-vid">1</span>
+            </div>
+            <input type="range" id="s-vid" min="0" max="20" value="1" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Interactions on guest posts / day</span>
+              <span class="slider-val" id="v-int">20</span>
+            </div>
+            <input type="range" id="s-int" min="0" max="500" value="20" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>New followers / month</span>
+              <span class="slider-val" id="v-fol">30</span>
+            </div>
+            <input type="range" id="s-fol" min="0" max="1000" value="30" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Active subscribers</span>
+              <span class="slider-val" id="v-sub">10</span>
+            </div>
+            <input type="range" id="s-sub" min="0" max="500" value="10" oninput="calcEarn()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Subscription price (★/mo)</span>
+              <span class="slider-val" id="v-price">50</span>
+            </div>
+            <input type="range" id="s-price" min="10" max="500" value="50" oninput="calcEarn()">
+          </div>
+
+        </div>
+        <div>
+          <div class="calc-result">
+            <div class="calc-result-title">Monthly Earnings Breakdown</div>
+            <div class="calc-breakdown">
+              <div class="calc-line">
+                <span class="calc-line-lbl">📡 Broadcast fees (50%)</span>
+                <span class="calc-line-val gold-text" id="r-broadcast">—</span>
+              </div>
+              <div class="calc-line">
+                <span class="calc-line-lbl">❤️ Landlord interactions (40%)</span>
+                <span class="calc-line-val teal-text" id="r-interact">—</span>
+              </div>
+              <div class="calc-line">
+                <span class="calc-line-lbl">👥 New follower fees (90%)</span>
+                <span class="calc-line-val green-text" id="r-follow">—</span>
+              </div>
+              <div class="calc-line">
+                <span class="calc-line-lbl">🔒 Subscriptions (90%)</span>
+                <span class="calc-line-val purple-text" id="r-sub">—</span>
+              </div>
+            </div>
+            <div class="calc-total">
+              <div class="calc-total-lbl">Estimated Monthly Total</div>
+              <div class="calc-total-val gold-text" id="r-total">0 ★</div>
+              <div style="font-size:0.8rem;color:var(--muted);margin-top:4px" id="r-usd"></div>
+            </div>
+            <div class="calc-note">1 ★ = $0.01 USD · paid in APTM at live rate · estimates based on 30-day month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HUB FEATURES -->
+<section id="features" style="padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag purple">Hub Owner Tools</div>
+      <h2>Everything you need to <span class="purple-text">run your community</span></h2>
+      <p>Hub owners get a full suite of tools to moderate, customise, and grow their space.</p>
+    </div>
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">📊</div>
+        <h3>Live Analytics Panel</h3>
+        <p>Stars earned, follower count, total posts, active subscribers, top posts by engagement, and a 30-day follower growth chart — all in one place.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📌</div>
+        <h3>Pin a Post</h3>
+        <p>Lock your most important post to the top of the feed permanently. Pinned posts show a gold 📌 Pinned badge and always appear first.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">✕</div>
+        <h3>Content Moderation</h3>
+        <p>Remove any guest post that doesn't fit your community with one tap. You control your space — no approval needed from the platform.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🛡</div>
+        <h3>Co-Moderators</h3>
+        <p>Assign trusted members as co-mods by wallet address. They get moderation rights in your Hub so you don't have to be online 24/7.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📋</div>
+        <h3>Hub Rules</h3>
+        <p>Write your community rules and they appear at the top of your Hub for every visitor. Set the tone, reduce friction, keep quality high.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔔</div>
+        <h3>Follower Notifications</h3>
+        <p>Every time you broadcast a new post, all your Hub followers receive an automatic notification — bringing them straight back to your content.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">⏰</div>
+        <h3>Subscription Renewal Alerts</h3>
+        <p>Subscribers get a bell notification 3 days before their subscription expires — so they renew instead of lapsing. More recurring revenue for you.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">★</div>
+        <h3>Subscriber Badges</h3>
+        <p>Active subscribers get a purple <span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.4);color:var(--purple-lt);font-size:0.65rem;font-weight:800;padding:1px 5px;border-radius:3px;">★ Sub</span> badge next to their name in your feed — social proof that drives more sign-ups.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔒</div>
+        <h3>Subscriber-Only Posts</h3>
+        <p>Mark any post as Subscribers Only. Non-subscribers see a blurred preview with a lock overlay — a powerful conversion tool that sells itself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS MOCKUP -->
+<section style="background:var(--bg2); padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag teal">Analytics Preview</div>
+      <h2>Your Hub <span class="teal-text">dashboard</span></h2>
+      <p>A live analytics panel built right into your Hub — only visible to you as the owner.</p>
+    </div>
+    <div class="analytics-mockup">
+      <div class="mock-header">
+        <span style="font-size:1.1rem">📊</span>
+        <span class="mock-title">Hub Analytics</span>
+        <span class="mock-badge">Owner Only</span>
+      </div>
+      <div class="mock-stats">
+        <div class="mock-stat">
+          <div class="mock-stat-val gold-text">1,284</div>
+          <div class="mock-stat-lbl">⭐ Stars Earned</div>
+        </div>
+        <div class="mock-stat">
+          <div class="mock-stat-val teal-text">847</div>
+          <div class="mock-stat-lbl">👥 Followers</div>
+        </div>
+        <div class="mock-stat">
+          <div class="mock-stat-val" style="color:var(--text)">213</div>
+          <div class="mock-stat-lbl">📝 Posts</div>
+        </div>
+        <div class="mock-stat">
+          <div class="mock-stat-val purple-text">38</div>
+          <div class="mock-stat-lbl">🔒 Subscribers</div>
+        </div>
+      </div>
+      <div class="mock-chart">
+        <div class="mock-chart-label">📈 Follower Growth — Last 30 Days</div>
+        <div class="mock-bars" id="mock-bars"></div>
+      </div>
+      <div class="mock-subs">
+        <div class="mock-subs-title">🔒 Active Subscribers</div>
+        <div class="mock-sub-row">
+          <span class="mock-sub-addr">0x1f3a…7b2c</span>
+          <span style="color:var(--muted);font-size:0.7rem">exp Jul 22</span>
+          <span class="mock-sub-status active">Active</span>
+        </div>
+        <div class="mock-sub-row">
+          <span class="mock-sub-addr">0x9e4d…1a88</span>
+          <span style="color:var(--muted);font-size:0.7rem">exp Jul 18</span>
+          <span class="mock-sub-status active">Active</span>
+        </div>
+        <div class="mock-sub-row">
+          <span class="mock-sub-addr">0x3c7f…902e</span>
+          <span style="color:var(--muted);font-size:0.7rem">exp Jun 30</span>
+          <span class="mock-sub-status exp">Expired</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW YOU COMPARE -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag green">vs The Rest</div>
+      <h2>Why <span class="green-text">SocialHub Hubs</span> win</h2>
+      <p>Most platforms keep all the money. We share it with the people who build the communities.</p>
+    </div>
+    <div class="compare-table">
+      <div class="compare-head">
+        <div>Feature</div>
+        <div>Other Platforms</div>
+        <div class="col-hub">SocialHub Hub ◈</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Earn from guest posts in your space</div>
+        <div class="col-other cross">✗ Platform keeps it all</div>
+        <div class="col-hub teal-text check">✓ 50% to you automatically</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Earn from likes &amp; comments on guest posts</div>
+        <div class="col-other cross">✗ Zero</div>
+        <div class="col-hub teal-text check">✓ 40% Landlord Earnings</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Subscription revenue cut</div>
+        <div class="col-other">50%–70% to creator</div>
+        <div class="col-hub gold-text check">✓ 90% to you</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Set your own subscription price</div>
+        <div class="col-other cross">✗ Fixed tiers only</div>
+        <div class="col-hub teal-text check">✓ 10★–500★ any price</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Content moderation control</div>
+        <div class="col-other">Limited reports only</div>
+        <div class="col-hub teal-text check">✓ Full hide + co-mods</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Built-in analytics dashboard</div>
+        <div class="col-other">Basic or paid add-on</div>
+        <div class="col-hub teal-text check">✓ Free, built in</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Subscriber expiry reminders</div>
+        <div class="col-other cross">✗ Manual</div>
+        <div class="col-hub teal-text check">✓ Automatic notifications</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Follower notifications on new posts</div>
+        <div class="col-other">Algorithm-dependent</div>
+        <div class="col-hub teal-text check">✓ Direct, every time</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Blockchain / settlement layer</div>
+        <div class="col-other cross">✗ Centralised only</div>
+        <div class="col-hub purple-text check">✓ Apertum · non-custodial</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Launch cost</div>
+        <div class="col-other">Monthly SaaS fees</div>
+        <div class="col-hub gold-text check">✓ One-time ~$10 forever</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALLOUTS -->
+<section style="background:var(--bg2); padding:80px 0;">
+  <div class="container">
+    <div class="sec-hd">
+      <div class="sec-tag gold">The Numbers</div>
+      <h2>A Hub with <span class="gold-text">100 active members</span></h2>
+      <p>Here's what a mid-size active community looks like in real earnings over 30 days.</p>
+    </div>
+    <div class="callouts">
+      <div class="callout c1">
+        <div class="callout-icon">📡</div>
+        <div class="callout-val teal-text">225 ★</div>
+        <p>From broadcast fees alone — if 100 members each post 1.5 times/month (mixed text + image). Passive. Zero effort.</p>
+      </div>
+      <div class="callout c2">
+        <div class="callout-icon">❤️</div>
+        <div class="callout-val gold-text">480 ★</div>
+        <p>From landlord interaction splits — 100 members × avg 12 interactions/month on guest posts. Stacks up fast.</p>
+      </div>
+      <div class="callout c3">
+        <div class="callout-icon">🔒</div>
+        <div class="callout-val purple-text">1,350 ★</div>
+        <p>From 30 subscribers at 50 ★/mo. That's your most reliable stream — recurring, growing, compounding monthly.</p>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:32px; padding:24px; background:rgba(240,180,41,0.05); border:1px solid rgba(240,180,41,0.15); border-radius:var(--radius);">
+      <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Combined Estimate — 100 members, 30 subscribers at 50★</div>
+      <div style="font-size:2.5rem; font-weight:900; letter-spacing:-0.02em;" class="gold-text">2,055 ★ / month</div>
+      <div style="color:var(--muted); font-size:0.9rem; margin-top:6px;">≈ $20.55 USD in APTM · paid out from a single ~$10 launch investment</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="cta-section">
+  <div class="container">
+    <div style="display:inline-block; font-size:2.5rem; margin-bottom:16px;">◈</div>
+    <h2>Ready to own your<br><span class="grad-text">piece of SocialHub?</span></h2>
+    <p>Launch your Hub today for a one-time cost and start building your passive income empire — on Apertum.</p>
+    <div class="cost-pill">
+      ✦ One-time cost: 1,000 ★ (~$10 in APTM) — no monthly fees, ever
+    </div>
+    <br>
+    <a href="https://socialhubglobal.com" class="btn-primary" style="font-size:1rem; padding:16px 40px;">
+      Launch My Hub on SocialHub →
+    </a>
+    <div style="margin-top:20px; font-size:0.75rem; color:var(--dim);">Hub Economics How-It-Works guide available inside the app</div>
+  </div>
+</section>
+
+<footer>
+  <div>Built on <span>SocialHub</span> · Powered by Apertum · 1 ★ = $0.01 USD in APTM at live rate</div>
+  <div style="margin-top:6px; color:var(--dim)">All earnings estimates are illustrative and depend on community activity.</div>
+</footer>
+
+<script>
+  // ── CALCULATOR ──────────────────────────────────────────────────────────────
+  function calcEarn() {
+    var text  = +document.getElementById('s-text').value;
+    var img   = +document.getElementById('s-img').value;
+    var vid   = +document.getElementById('s-vid').value;
+    var inter = +document.getElementById('s-int').value;
+    var fol   = +document.getElementById('s-fol').value;
+    var subs  = +document.getElementById('s-sub').value;
+    var price = +document.getElementById('s-price').value;
+
+    document.getElementById('v-text').textContent  = text;
+    document.getElementById('v-img').textContent   = img;
+    document.getElementById('v-vid').textContent   = vid;
+    document.getElementById('v-int').textContent   = inter;
+    document.getElementById('v-fol').textContent   = fol;
+    document.getElementById('v-sub').textContent   = subs;
+    document.getElementById('v-price').textContent = price;
+
+    var DAYS = 30;
+    var broadcast    = ((text * 0.6) + (img * 1.5) + (vid * 5.0)) * DAYS;
+    var interact     = inter * 0.4 * DAYS;
+    var follow       = fol * 0.9;
+    var subscription = subs * price * 0.9;
+    var total = broadcast + interact + follow + subscription;
+    var usd   = (total * 0.01).toFixed(2);
+
+    document.getElementById('r-broadcast').textContent = broadcast.toFixed(1) + ' ★';
+    document.getElementById('r-interact').textContent  = interact.toFixed(1) + ' ★';
+    document.getElementById('r-follow').textContent    = follow.toFixed(1) + ' ★';
+    document.getElementById('r-sub').textContent       = subscription.toFixed(1) + ' ★';
+    document.getElementById('r-total').textContent     = Math.round(total).toLocaleString() + ' ★';
+    document.getElementById('r-usd').textContent       = '≈ $' + usd + ' USD in APTM';
+  }
+  calcEarn();
+
+  // ── MOCK CHART ──────────────────────────────────────────────────────────────
+  (function() {
+    var bars = document.getElementById('mock-bars');
+    if (!bars) return;
+    var data = [1,0,2,1,3,2,4,3,5,3,4,6,5,7,6,8,5,9,7,10,8,11,9,12,10,14,11,15,13,16];
+    var max  = Math.max.apply(null, data);
+    bars.innerHTML = data.map(function(v) {
+      var h = Math.max(Math.round((v / max) * 50), v > 0 ? 3 : 2);
+      return '<div class="mock-bar" style="height:' + h + 'px"></div>';
+    }).join('');
+  })();
+
+  // ── SCROLL FADE ─────────────────────────────────────────────────────────────
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.step, .stream-card, .feat, .callout').forEach(function(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
