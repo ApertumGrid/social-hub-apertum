@@ -6874,6 +6874,22 @@
         .ch-badge-name{font-size:.78rem;font-weight:800;color:rgba(255,210,60,1);}
         .ch-badge-desc{font-size:.65rem;color:rgba(255,255,255,.45);}
         /* ── First Earnings Modal ── */
+        /* ── Styled alert/confirm dialog ── */
+        #sh-dialog-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.72);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+        #sh-dialog-card{background:linear-gradient(160deg,#0f0b20,#0a0d18);border:1px solid rgba(124,92,191,0.35);border-radius:18px;padding:24px 24px 20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+        #sh-dialog-msg{color:#e8e0ff;font-size:0.88rem;line-height:1.65;white-space:pre-wrap;margin-bottom:20px;word-break:break-word;}
+        #sh-dialog-btns{display:flex;gap:10px;justify-content:flex-end;}
+        .sh-dialog-btn{padding:9px 22px;border-radius:10px;border:none;font-size:0.84rem;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:var(--font-body);}
+        .sh-dialog-ok{background:rgba(124,92,191,0.85);color:#fff;}
+        .sh-dialog-ok:hover{background:rgba(124,92,191,1);}
+        .sh-dialog-cancel{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.12);}
+        .sh-dialog-cancel:hover{background:rgba(255,255,255,0.12);}
+        .sh-dialog-confirm{background:rgba(124,92,191,0.85);color:#fff;}
+        .sh-dialog-confirm:hover{background:rgba(124,92,191,1);}
+        /* ── Following feed empty banner ── */
+        #following-empty-banner{display:none;background:rgba(124,92,191,0.08);border:1px solid rgba(124,92,191,0.2);border-radius:14px;padding:18px 20px;margin-bottom:14px;text-align:center;}
+        #following-empty-banner p{color:rgba(255,255,255,0.55);font-size:0.83rem;margin:0 0 12px;}
+        #following-empty-banner button{padding:8px 20px;border-radius:20px;border:1px solid rgba(124,92,191,0.5);background:rgba(124,92,191,0.15);color:#c4b5fd;font-size:0.8rem;font-weight:700;cursor:pointer;}
         #first-earnings-modal{position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;padding:24px;}
         #first-earnings-modal.open{display:flex;}
         #first-earnings-modal .fem-scrim{position:absolute;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);}
@@ -10629,6 +10645,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <span style="font-size:0.72rem; color:var(--text-muted); flex:1;">— showing all posts with this tag</span>
                     <button onclick="clearHashtagFilter()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;padding:2px 6px;" title="Clear filter">✕</button>
                 </div>
+                <div id="following-empty-banner">
+                    <p>You're not following anyone yet.<br>Discover creators and follow them to see their posts here.</p>
+                    <button onclick="document.getElementById('search-input').focus();document.getElementById('search-input').dispatchEvent(new Event('focus'))">Browse Members →</button>
+                </div>
                 <div id="feed-items"></div>
 
                 <!-- Persistent post button — always visible in Flicks mode, opens modal -->
@@ -12347,38 +12367,82 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <!-- Layout Picker -->
                         <div id="layout-picker" style="display:none; padding:10px 14px; background:var(--bg-card2); border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:10px;">
                             <div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">⊞ Stream Layout</div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
                                 <button class="layout-opt-btn" id="layout-btn-solo" onclick="setStreamLayout('solo')" title="Solo — just you">
-                                    <div class="layout-preview layout-preview-solo">
-                                        <div style="background:rgba(124,92,191,0.7);border-radius:3px;width:100%;height:100%;"></div>
+                                    <div class="layout-preview" style="display:flex;gap:1px;">
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:2px;flex:1;height:100%;"></div>
                                     </div>
                                     <span>Solo</span>
                                 </button>
-                                <button class="layout-opt-btn" id="layout-btn-split2" onclick="setStreamLayout('split2')" title="Side by side — you + 1 co-host">
-                                    <div class="layout-preview layout-preview-split2">
-                                        <div style="background:rgba(124,92,191,0.7);border-radius:3px;flex:1;height:100%;"></div>
-                                        <div style="background:rgba(45,212,191,0.6);border-radius:3px;flex:1;height:100%;"></div>
+                                <button class="layout-opt-btn" id="layout-btn-plus1" onclick="setStreamLayout('plus1')" title="2 people — you + 1 slot">
+                                    <div class="layout-preview" style="display:flex;gap:1px;">
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:2px;flex:1;height:100%;"></div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:rgba(255,255,255,0.3);">+</div>
                                     </div>
-                                    <span>Side by Side</span>
+                                    <span>2 People</span>
                                 </button>
-                                <button class="layout-opt-btn" id="layout-btn-pip-bottom" onclick="setStreamLayout('pip-bottom')" title="Equal top/bottom split — you + 1 co-host stacked">
-                                    <div class="layout-preview layout-preview-pip-bottom">
-                                        <div style="background:rgba(124,92,191,0.7);border-radius:3px;flex:1;width:100%;"></div>
-                                        <div style="background:rgba(45,212,191,0.6);border-radius:3px;flex:1;width:100%;"></div>
+                                <button class="layout-opt-btn" id="layout-btn-plus2" onclick="setStreamLayout('plus2')" title="3 people — you + 2 slots">
+                                    <div class="layout-preview" style="display:flex;gap:1px;">
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:2px;flex:1;height:100%;"></div>
+                                        <div style="display:flex;flex-direction:column;flex:1;gap:1px;">
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:rgba(255,255,255,0.3);">+</div>
+                                        </div>
                                     </div>
-                                    <span>Top / Bottom</span>
+                                    <span>3 People</span>
                                 </button>
-                                <button class="layout-opt-btn" id="layout-btn-grid4" onclick="setStreamLayout('grid4')" title="2×2 grid — up to 4 people">
-                                    <div class="layout-preview layout-preview-grid4">
+                                <button class="layout-opt-btn" id="layout-btn-plus4" onclick="setStreamLayout('plus4')" title="5 people — you + 4 slots">
+                                    <div class="layout-preview" style="display:flex;gap:1px;">
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:2px;flex:1;height:100%;"></div>
+                                        <div style="display:flex;flex-direction:column;flex:1;gap:1px;">
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                        </div>
+                                    </div>
+                                    <span>5 People</span>
+                                </button>
+                                <button class="layout-opt-btn" id="layout-btn-plus5" onclick="setStreamLayout('plus5')" title="6 people — you + 5 slots">
+                                    <div class="layout-preview" style="display:flex;gap:1px;">
+                                        <div style="display:flex;flex-direction:column;flex:1;gap:1px;">
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                        </div>
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:2px;flex:1;height:100%;"></div>
+                                        <div style="display:flex;flex-direction:column;flex:1;gap:1px;">
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                            <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;flex:1;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                        </div>
+                                    </div>
+                                    <span>6 People</span>
+                                </button>
+                                <button class="layout-opt-btn" id="layout-btn-grid2x2" onclick="setStreamLayout('grid2x2')" title="2×2 grid — all equal, you included">
+                                    <div class="layout-preview" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;">
                                         <div style="background:rgba(124,92,191,0.7);border-radius:2px;"></div>
-                                        <div style="background:rgba(45,212,191,0.6);border-radius:2px;"></div>
-                                        <div style="background:rgba(240,180,41,0.6);border-radius:2px;"></div>
-                                        <div style="background:rgba(224,62,62,0.5);border-radius:2px;"></div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.4rem;color:rgba(255,255,255,0.3);">+</div>
                                     </div>
                                     <span>2×2 Grid</span>
                                 </button>
+                                <button class="layout-opt-btn" id="layout-btn-grid3x3" onclick="setStreamLayout('grid3x3')" title="3×3 grid — all equal, you included">
+                                    <div class="layout-preview" style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:1px;">
+                                        <div style="background:rgba(124,92,191,0.7);border-radius:1px;"></div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                        <div style="background:rgba(30,25,60,0.8);border:1px solid rgba(124,92,191,0.3);border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:rgba(255,255,255,0.3);">+</div>
+                                    </div>
+                                    <span>3×3 Grid</span>
+                                </button>
                             </div>
-                            <div style="font-size:0.6rem;color:var(--text-muted);margin-top:8px;">Co-host slots fill automatically when viewers join the stage.</div>
+                            <div style="font-size:0.6rem;color:var(--text-muted);margin-top:8px;">Empty slots show as "+ Request" for viewers to tap and join your stage.</div>
                         </div>
 
                         <div id="cohost-panel">
@@ -15811,7 +15875,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
 
         const revenueStars = Math.floor(poolUsdt / CONFIG.STAR_USD);
-        const confirmed = confirm(
+        const confirmed = await _shConfirm(
             `Treasury Withdrawal\n` +
             `${'─'.repeat(30)}\n` +
             `Platform Pool:  $${poolUsdt.toFixed(4)} APTM (${revenueStars} ★)\n` +
@@ -16117,7 +16181,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 ' safeWithdrawAptm=' + safeWithdrawAptm.toFixed(8) +
                 ' @ $' + livePrice.toFixed(4));
 
-            var confirmed = confirm(
+            var confirmed = await _shConfirm(
                 'Settle Stars to Wallet\n\n' +
                 'Total Stars:      ' + totalStarsDisplay.toFixed(2) + ' ★\n' +
                 '  Deposit Stars:  ' + depositStarsDisplay.toFixed(2) + ' ★ (repriced at live APTM)\n' +
@@ -16308,6 +16372,39 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const t = document.getElementById('toast');
         if (t) { t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800); }
     }
+
+    // ── Styled alert / confirm ────────────────────────────────────────────────
+    function _shDialog(msg, btns) {
+        return new Promise(function(resolve) {
+            var o = document.getElementById('sh-dialog-overlay');
+            var m = document.getElementById('sh-dialog-msg');
+            var b = document.getElementById('sh-dialog-btns');
+            if (!o || !m || !b) { resolve(false); return; }
+            m.textContent = String(msg || '');
+            b.innerHTML = '';
+            btns.forEach(function(cfg) {
+                var el = document.createElement('button');
+                el.className = 'sh-dialog-btn ' + cfg.cls;
+                el.textContent = cfg.label;
+                el.onclick = function() { o.style.display = 'none'; resolve(cfg.val); };
+                b.appendChild(el);
+            });
+            o.onclick = function(e) { if (e.target === o) { o.style.display = 'none'; resolve(false); } };
+            o.style.display = 'flex';
+        });
+    }
+    function _shAlert(msg) {
+        return _shDialog(msg, [{ label: 'OK', cls: 'sh-dialog-ok', val: true }]);
+    }
+    function _shConfirm(msg) {
+        return _shDialog(msg, [
+            { label: 'Cancel',  cls: 'sh-dialog-cancel',  val: false },
+            { label: 'Confirm', cls: 'sh-dialog-confirm', val: true  }
+        ]);
+    }
+    window._shAlert   = _shAlert;
+    window._shConfirm = _shConfirm;
+    window.alert = function(msg) { _shAlert(msg); };
 
     // ─── INDEX 28: Global Activity Pulse ─────────────────────────────────────────
     // Shows bottom-left teal notification to ALL visitors simultaneously
@@ -17740,7 +17837,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return alert('No APTM balance to withdraw.');
             }
 
-            const confirmed = confirm(
+            const confirmed = await _shConfirm(
                 'Withdraw APTM\n\n' +
                 'Deposited balance:  ' + depAptm  + ' APTM\n' +
                 'Earned balance:     ' + earnAptm + ' APTM\n' +
@@ -17937,7 +18034,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             ? ("⚠ " + fbCreatorStars.toFixed(2) + " earned ★ KEPT — platform reserve is currently empty.\n" +
                "  Your stars are safe and payable once the platform is funded.\n\n")
             : "";
-        const confirmed = confirm(
+        const confirmed = await _shConfirm(
             "Settle Balance to Wallet\n\n" +
             "Purchased Balance:  " + fbAptmBalance.toFixed(6) + " APTM\n" +
             (fbCreatorStars > 0
@@ -19984,7 +20081,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (event) event.stopPropagation();
         if (!userAddress || !window.db) return showToast('Connect your wallet first!');
 
-        const confirmed = confirm('Hide this post? It will be removed from the feed. (You can restore it from the Firebase console if needed.)');
+        const confirmed = await _shConfirm('Hide this post? It will be removed from the feed.');
         if (!confirmed) return;
 
         try {
@@ -20041,7 +20138,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (userAddress.toLowerCase() !== CONFIG.OWNER_ADDRESS.toLowerCase()) {
             return showToast('Only the admin can hide comments.');
         }
-        const confirmed = confirm('Hide this comment? It will be removed from view. (Reversible from the Firebase console.)');
+        const confirmed = await _shConfirm('Hide this comment? It will be removed from view.');
         if (!confirmed) return;
         try {
             await window.fs.updateDoc(
@@ -20120,7 +20217,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return showToast('Could not read post data. Try again.');
         }
 
-        const confirmed = confirm(
+        const confirmed = await _shConfirm(
             'Promote this post to the Daily Signals at the top? (Cost: 1 Star) \uD83D\uDCE1'
         );
         if (!confirmed) {
@@ -21842,7 +21939,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var costLabel = effectiveCost > 0
             ? effectiveCost.toLocaleString() + ' \u2605 (one-time, 100% platform)'
             : 'FREE (admin bypass)';
-        var confirmed = confirm(
+        var confirmed = await _shConfirm(
             'Launch "' + name + '" Community Hub?\n' +
             'Cost: ' + costLabel + '\n\n' +
             'You will earn 40% of all guest post interactions in your Hub.'
@@ -22362,6 +22459,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ═══════════════════════════════════════════════════════════════════
     async function setFeedMode(mode) {
         _followMode = mode;
+        var _feb = document.getElementById('following-empty-banner');
+        if (_feb && mode !== 'following') _feb.style.display = 'none';
 
         const globalBtn    = document.getElementById('feed-toggle-global');
         const followingBtn = document.getElementById('feed-toggle-following');
@@ -22435,8 +22534,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return;
             }
             loadFollowingSet().then(() => {
+                var _feb = document.getElementById('following-empty-banner');
                 if (_followingSet.size === 0) {
-                    showToast('Follow creators or hubs to populate your Following Feed.');
+                    if (_feb) _feb.style.display = 'block';
+                } else {
+                    if (_feb) _feb.style.display = 'none';
                 }
                 visibleCount = 10;
                 if (typeof loadGlobalFeed === 'function') loadGlobalFeed();
@@ -22652,7 +22754,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             );
         }
 
-        const confirmed = confirm(
+        const confirmed = await _shConfirm(
             'Post Flick\n' +
             '──────────────────────────\n' +
             'Fee: ' + CONFIG.FEES.FLICK + '★  ($' + (CONFIG.FEES.FLICK * CONFIG.STAR_USD).toFixed(2) + ' APTM)\n' +
@@ -22754,6 +22856,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             closeFlickComposer();
             showToast('Flick posted! ▶');
+            if (typeof window.tickerLog === 'function') window.tickerLog('info', 'New Flick posted', CONFIG.FEES.FLICK, '▶');
             loadFlicksFeed();
         } catch (e) {
             alert('Failed to post Flick: ' + e.message);
@@ -23296,7 +23399,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         const isInstant = listing.deliveryType === 'instant';
         const priceUsd  = (Math.round(listing.priceStars * CONFIG.STAR_USD * 100) / 100).toFixed(2);
-        const ok = confirm(
+        const ok = await _shConfirm(
             'Confirm Purchase\n' +
             '─────────────────────────────\n' +
             listing.title + '\n' +
@@ -23397,7 +23500,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const total = getTotalSpendableStars();
         if (total < 100) return alert('You need 100★ to pay the listing fee.\nAvailable: ' + total.toFixed(1) + '★');
 
-        const ok = confirm(
+        const ok = await _shConfirm(
             'Create Listing\n─────────────────────────────\n' +
             title + '\n' +
             'Price:  ' + priceStars + '★  ($' + (Math.round(priceStars * CONFIG.STAR_USD * 100) / 100).toFixed(2) + ' APTM)\n' +
@@ -23594,7 +23697,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.loadMyPurchases = loadMyPurchases;
 
     async function confirmDelivery(purchaseId) {
-        if (!confirm('Confirm you received this product?\n\nThis will release payment to the seller on-chain.')) return;
+        if (!await _shConfirm('Confirm you received this product?\n\nThis will release payment to the seller on-chain.')) return;
         showToast('Confirming delivery on-chain…');
         try {
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/confirmDelivery', {
@@ -23617,7 +23720,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         if (!window._shLastEth) return showToast('Connect wallet first.');
 
-        if (!confirm(
+        if (!await _shConfirm(
             'Claim Refund — Expired Escrow\n' +
             '─────────────────────────────────\n' +
             'This escrow has expired without delivery.\n' +
@@ -23723,7 +23826,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     async function raiseDisputeUI(purchaseId) {
         const reason = prompt('Describe the issue with your purchase:\n(This will be sent to SocialHub for review)\n\nMax 500 characters:');
         if (!reason) return;
-        if (!confirm('Submit this dispute?\n\nSocialHub will review within 24 hours. If your dispute is valid, a full refund will be issued.')) return;
+        if (!await _shConfirm('Submit this dispute?\n\nSocialHub will review within 24 hours. If your dispute is valid, a full refund will be issued.')) return;
         try {
             await window.fs.addDoc(window.fs.collection(window.db, 'marketplace_disputes'), {
                 purchaseId, buyerAddr: userAddress.toLowerCase(),
@@ -23744,7 +23847,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     async function renewListing(listingId) {
         const total = getTotalSpendableStars();
         if (total < 100) return alert('You need 100★ to renew.\nAvailable: ' + total.toFixed(1) + '★');
-        if (!confirm('Renew this listing for another 6 months?\nFee: 100★ ($1.00) — non-refundable.')) return;
+        if (!await _shConfirm('Renew this listing for another 6 months?\nFee: 100★ ($1.00) — non-refundable.')) return;
         showToast('Renewing listing…');
         try {
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/renewListing', {
@@ -23761,13 +23864,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.renewListing = renewListing;
 
     // ── Flick caption click — interstitial for external links ─────────
-    function flickCaptionClick(e) {
+    async function flickCaptionClick(e) {
         const a = e.target.closest('a');
         if (!a || !a.href) return;
         const href = a.href;
         if (href.startsWith('javascript:') || href.includes('socialhubglobal.com')) return;
         e.preventDefault();
-        if (confirm(
+        if (await _shConfirm(
             'You are leaving SocialHub\n' +
             '─────────────────────────────────\n' +
             decodeURIComponent(href) + '\n\n' +
@@ -25213,7 +25316,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
 
         // ── Final confirmation ──────────────────────────────────────────
-        const confirmed = window.confirm(
+        const confirmed = await _shConfirm(
             `CONFIRM PROTOCOL SEED\n\n` +
             `Amount:   ${aptmAmount.toFixed(6)} APTM\n` +
             `To:       ${CONFIG.CONTRACT_ADDRESS}\n` +
@@ -25573,7 +25676,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!addr) { console.error('[adminZeroMyBalance] No wallet connected.'); return; }
         if (!window.db || !window.fs) { console.error('[adminZeroMyBalance] Firebase not ready.'); return; }
 
-        const confirmed = window.confirm(
+        const confirmed = await _shConfirm(
             'FORCE-ZERO FIREBASE BALANCE\n\n' +
             'Address: ' + addr + '\n\n' +
             'This will set stars, creatorStars, spentStarsTotal, initial_deposit,\n' +
@@ -25751,7 +25854,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 '  →  new=' + p.newStars.toFixed(2) + '+' + p.newCreator.toFixed(2) + '★'
             ).join('\n');
 
-            const confirmed = confirm(
+            const confirmed = await _shConfirm(
                 'BALANCE RECONCILIATION\n\n' +
                 'Live APTM price: $' + livePrice.toFixed(4) + '\n' +
                 'Users to update: ' + plan.length + '\n' +
@@ -26301,7 +26404,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         _srTab_ = 'people';
         var prefix = isMob ? 'mob-tab-' : 'sr-tab-';
         ['people','posts','hubs'].forEach(function(t){
-            var el=document.getElementById(prefix+t); if(el) el.classList.toggle('active', t==='people');
+            var el=document.getElementById(prefix+t);
+            if(el) { el.classList.toggle('active', t==='people'); if(t!=='people') el.textContent=t.charAt(0).toUpperCase()+t.slice(1); }
         });
         _srSetBody('<div class="sr-spin">Loading members…</div>', isMob);
         try {
@@ -27172,9 +27276,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var ov = document.getElementById('legal-overlay');
         if (ov && !ov.classList.contains('open')) { ov.classList.add('open'); document.body.style.overflow='hidden'; }
     }
-    function reportPost(postId, event) {
+    async function reportPost(postId, event) {
         if (event) event.stopPropagation();
-        if (!confirm('Report this post?\n\nIt will be hidden from your view and flagged for review.')) return;
+        if (!await _shConfirm('Report this post?\n\nIt will be hidden from your view and flagged for review.')) return;
         var card = document.getElementById('post-' + postId) || (event && event.target ? event.target.closest('.post-card') : null);
         if (card) card.style.display = 'none';
         showToast('Post reported and hidden. ✓');
@@ -33902,7 +34006,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.addEventListener('resize', () => { if (_wbActive) _resizeWBCanvas(); });
 
     // ══════════════════════════════════════════════════════════════
-    // STREAM LAYOUT SYSTEM — Solo / Side-by-Side / Co-host Bottom / 2×2 Grid
+    // STREAM LAYOUT SYSTEM — TikTok-style slot grid
     // ══════════════════════════════════════════════════════════════
     let _currentLayout = 'solo';
 
@@ -33916,82 +34020,100 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     window.setStreamLayout = function(mode) {
         _currentLayout = mode;
-        const container = document.getElementById('live-broadcaster-video-container');
+        var container = document.getElementById('live-broadcaster-video-container');
         if (!container) return;
 
-        // Strip ALL layout classes and ALL inline display/grid/flex overrides on the container
-        container.classList.remove('layout-split2', 'layout-pip-bottom', 'layout-grid4');
-        container.style.display = '';
-        container.style.flexDirection = '';
-        container.style.gridTemplateColumns = '';
-        container.style.gridTemplateRows = '';
-        container.style.gap = '';
-        container.style.overflow = '';
-
         // Mark active button
-        ['solo','split2','pip-bottom','grid4'].forEach(function(m) {
+        ['solo','plus1','plus2','plus4','plus5','grid2x2','grid3x3'].forEach(function(m) {
             var btn = document.getElementById('layout-btn-' + m);
             if (btn) btn.classList.toggle('active', m === mode);
         });
 
-        var bcVid = document.getElementById('live-broadcaster-video');
-        var pip   = document.getElementById('cohost-pip-host');
+        // Build coSlots array — preserve active co-hosts, fill rest with empty
+        var def = window.SLOT_LAYOUTS && window.SLOT_LAYOUTS[mode];
+        var slotCount = def ? def.slots.length : 0;
+        var prevSlots = window._currentCoSlots || [];
+        var newSlots = [];
+        var activeIdx = 0;
+        var activeCohosts = prevSlots.filter(function(s){ return s && (s.status === 'active' || s.status === 'pending'); });
+        for (var i = 0; i < slotCount; i++) {
+            if (activeIdx < activeCohosts.length) {
+                newSlots.push(activeCohosts[activeIdx++]);
+            } else {
+                newSlots.push({status:'empty',address:null,name:null,uid:null});
+            }
+        }
+        window._currentCoSlots = newSlots;
 
-        if (mode === 'solo') {
-            // Full-width host video, hide pip completely if no co-host
-            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;bottom:50px;right:10px;width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
-        } else if (mode === 'split2') {
-            // Use absolute positioning (same pattern as pip-bottom which works reliably).
-            // Flex/grid on the container fights the mobile display:block !important override
-            // and causes Agora to lose video when pip switches from absolute→relative position.
-            container.classList.add('layout-split2');
-            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;top:0;right:0;left:auto;bottom:auto;width:50%;height:100%;border-radius:0;border:none;border-left:2px solid var(--purple);z-index:20;background:#000;overflow:hidden;';
-            if (!pip)  showToast('ℹ️ Co-host slot ready — approve a viewer from Stage Requests to fill it.');
-        } else if (mode === 'pip-bottom') {
-            container.classList.add('layout-pip-bottom');
-            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:50%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;bottom:0;left:0;width:100%;height:50%;border-radius:0;border:none;border-top:2px solid var(--purple);z-index:20;background:#000;overflow:hidden;';
-            if (!pip)  showToast('ℹ️ Co-host strip ready — approve a viewer from Stage Requests.');
-        } else if (mode === 'grid4') {
-            // Host left column (full height), co-host top-right — both absolute.
-            container.classList.add('layout-grid4');
-            if (bcVid) bcVid.style.cssText = 'position:absolute;top:0;left:0;width:50%;height:100%;';
-            if (pip)   pip.style.cssText   = 'position:absolute;top:0;right:0;left:auto;bottom:auto;width:50%;height:50%;border-radius:0;border:none;z-index:20;background:#000;overflow:hidden;';
-            if (!pip)  showToast('ℹ️ Grid ready — up to 3 co-hosts can join. Approve from Stage Requests.');
+        // Render slot grid on host container
+        if (window._renderSlotGrid) {
+            window._renderSlotGrid(container, 'live-broadcaster-video', mode, newSlots, true);
+            setTimeout(function(){ window._syncAgoraToSlots && window._syncAgoraToSlots(newSlots, true); }, 150);
         }
 
-        // Broadcast layout choice to Firestore so viewers see matching layout
-        // Skip Firestore write when reverting silently (mode=solo, no co-host) unless we have a stream
-        if (typeof currentStreamId !== 'undefined' && currentStreamId && window.db && window.fs) {
-            window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', currentStreamId), {
-                streamLayout: mode
+        // Write layout + coSlots to Firestore
+        var _cinStreamId = window._currentStreamId || (typeof currentStreamId !== 'undefined' ? currentStreamId : null);
+        if (_cinStreamId && window.db && window.fs) {
+            window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _cinStreamId), {
+                streamLayout: mode,
+                coSlots: newSlots
             }).catch(function(){});
         }
 
-        // Close the picker after selection
+        // Close picker
         var picker = document.getElementById('layout-picker');
         if (picker) picker.style.display = 'none';
         if (typeof _setCinemaControlsHeight === 'function') _setCinemaControlsHeight(false);
 
-        // Only show toast for manual selection, not silent revert
-        if (mode !== 'solo' || pip) {
-            showToast('⊞ Layout: ' + { solo: 'Solo', split2: 'Side by Side', 'pip-bottom': 'Top / Bottom', grid4: '2×2 Grid' }[mode]);
+        var labels = {solo:'Solo',plus1:'2 People',plus2:'3 People',plus4:'5 People',plus5:'6 People',grid2x2:'2×2 Grid',grid3x3:'3×3 Grid'};
+        showToast('⊞ Layout: ' + (labels[mode] || mode));
+    };
+
+    // Sync Agora remote tracks into rendered slot divs
+    window._syncAgoraToSlots = function(coSlots, isHost) {
+        if (!agoraClient) return;
+        var remotes = agoraClient.remoteUsers || [];
+        var slots = coSlots || [];
+        for (var i = 0; i < slots.length; i++) {
+            var sd = slots[i];
+            if (!sd || sd.status !== 'active' || !sd.uid) continue;
+            var slotEl = document.getElementById('live-slot-' + i);
+            if (!slotEl) continue;
+            for (var ri = 0; ri < remotes.length; ri++) {
+                var ru = remotes[ri];
+                if (String(ru.uid) === String(sd.uid) && ru.videoTrack) {
+                    try { ru.videoTrack.play(slotEl, { fit: 'cover' }); } catch(e) {}
+                    break;
+                }
+            }
+        }
+        // If we ARE the co-host, play local cam in our own slot
+        if (!isHost && isCoHost && cohostVideoTrack) {
+            var myAddr = (window._liveUserAddress || '').toLowerCase();
+            for (var j = 0; j < slots.length; j++) {
+                if ((slots[j].address||'').toLowerCase() === myAddr && slots[j].status === 'active') {
+                    var mySlotEl = document.getElementById('live-slot-' + j);
+                    if (mySlotEl) { try { cohostVideoTrack.play(mySlotEl, { fit: 'cover' }); } catch(e) {} }
+                    break;
+                }
+            }
         }
     };
 
-    // Apply layout when a new co-host pip is created dynamically
-    // Patch: after approveCoHost fires and pip appears, re-apply current layout
-    var _origApproveCoHost = window.approveCoHost;
-    if (_origApproveCoHost) {
-        window.approveCoHost = async function(docId, uid) {
-            await _origApproveCoHost.apply(this, arguments);
-            setTimeout(function() {
-                if (_currentLayout !== 'solo') window.setStreamLayout(_currentLayout);
-            }, 800);
-        };
-    }
+    // Kick a co-host out of their slot
+    window._kickFromStage = function(addr) {
+        var _sid = window._currentStreamId || (typeof currentStreamId !== 'undefined' ? currentStreamId : null);
+        if (!_sid || !window.db || !window.fs || !addr) return;
+        var slots = (window._currentCoSlots || []).slice();
+        var idx = slots.findIndex(function(s){ return s && (s.address||'').toLowerCase() === addr.toLowerCase(); });
+        if (idx !== -1) {
+            slots[idx] = {status:'empty',address:null,name:null,uid:null};
+            window._currentCoSlots = slots;
+            window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _sid), { coSlots: slots }).catch(function(){});
+        }
+        window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _sid, 'cohost_requests', addr), { status:'rejected' }).catch(function(){});
+        showToast('Removed co-host from stage.');
+    };
 
     console.log('[SocialHub] Studio features initialised — Screen Share, Noise Suppression, Name Tag, Poll, Star Goal, Leaderboard, Raise Hand, Reactions, Health Monitor, Milestones, Virtual Background, Co-Host, Paid Admission, Recording, Whiteboard, Layout ✓');
 
@@ -37761,6 +37883,21 @@ window._applyHostCamOffOverlay = function(camOff, avatar) {
 // SLOT GRID · SLOT ACTIONS · HOST STRIP TOGGLE
 // ═══════════════════════════════════════════════════════════════════════
 
+// ── TikTok-style slot layout definitions ────────────────────────────────────
+window.SLOT_LAYOUTS = {
+    solo:    { host:{l:0,     t:0,     w:100,  h:100}, slots:[] },
+    plus1:   { host:{l:0,     t:0,     w:50,   h:100}, slots:[{l:50,t:0,  w:50,  h:100}] },
+    plus2:   { host:{l:0,     t:0,     w:50,   h:100}, slots:[{l:50,t:0,  w:50,  h:50},{l:50,t:50,w:50,h:50}] },
+    plus4:   { host:{l:0,     t:0,     w:50,   h:100}, slots:[{l:50,t:0,  w:50,  h:25},{l:50,t:25,w:50,h:25},{l:50,t:50,w:50,h:25},{l:50,t:75,w:50,h:25}] },
+    plus5:   { host:{l:33,    t:0,     w:34,   h:100}, slots:[{l:0,t:0,w:33,h:50},{l:0,t:50,w:33,h:50},{l:67,t:0,w:33,h:33.33},{l:67,t:33.33,w:33,h:33.33},{l:67,t:66.67,w:33,h:33.34}] },
+    grid2x2: { host:{l:0,     t:0,     w:50,   h:50},  slots:[{l:50,t:0,w:50,h:50},{l:0,t:50,w:50,h:50},{l:50,t:50,w:50,h:50}] },
+    grid3x3: { host:{l:0,     t:0,     w:33.33,h:33.33}, slots:[
+        {l:33.33,t:0,     w:33.33,h:33.33},{l:66.67,t:0,     w:33.33,h:33.33},
+        {l:0,    t:33.33, w:33.33,h:33.33},{l:33.33,t:33.33, w:33.33,h:33.33},{l:66.67,t:33.33,w:33.33,h:33.33},
+        {l:0,    t:66.67, w:33.33,h:33.33},{l:33.33,t:66.67, w:33.33,h:33.33},{l:66.67,t:66.67,w:33.33,h:33.33}
+    ]}
+};
+
 // ITEM 53 + 96 — _renderSlotGrid (with host-slot-stars badge) and _updateSlotStarBadges
 window._renderSlotGrid = function(container, hostVidId, mode, coSlots, isHost) {
     var def = window.SLOT_LAYOUTS[mode] || window.SLOT_LAYOUTS.solo;
@@ -38478,6 +38615,14 @@ window.toggleCreatorAnalytics = function() {
     <div style="position:relative;pointer-events:auto;">
         <button onclick="document.getElementById('wd-global-overlay').style.display='none';if(typeof syncData==='function')syncData();" style="position:absolute;top:-2px;right:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:50%;width:28px;height:28px;color:#8b9ab5;font-size:0.85rem;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2;">✕</button>
         <div id="wd-global-status" style="background:var(--bg-card,#1a1d2e);border:1px solid rgba(45,212,191,0.3);border-radius:14px;padding:16px 18px 16px 18px;font-size:0.75rem;font-family:var(--font-mono,monospace);line-height:1.7;word-break:break-all;box-shadow:0 -4px 32px rgba(0,0,0,0.6);"></div>
+    </div>
+</div>
+
+<!-- Styled alert/confirm dialog -->
+<div id="sh-dialog-overlay">
+    <div id="sh-dialog-card">
+        <div id="sh-dialog-msg"></div>
+        <div id="sh-dialog-btns"></div>
     </div>
 </div>
 
