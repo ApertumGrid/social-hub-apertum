@@ -14858,8 +14858,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return;
             }
             if (snap.exists()) {
-                // USDT model: available = deposited minus spent (both tracked in Firestore)
-                const _depUsdt  = Math.max(0, parseFloat(snap.data().depositedUsdt || snap.data().depositedAptm || 0));
+                // depositedUsdt = USD equivalent written by syncData (APTM × price).
+                // depositedAptm = raw APTM — must multiply by live price, NOT treat as USD.
+                const _storedUsd  = parseFloat(snap.data().depositedUsdt || 0);
+                const _storedAptm = parseFloat(snap.data().depositedAptm || 0);
+                const _livePrice  = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+                const _depUsdt    = Math.max(0, _storedUsd > 0 ? _storedUsd : (_storedAptm * _livePrice));
                 const _spent    = Math.max(0, parseFloat(snap.data().spentStarsTotal || 0));
                 // Floor at 2 decimal places — never overstate stars (2.58 stays 2.58, not rounded to 2.6)
                 const _grossStars = Math.floor(_depUsdt / CONFIG.STAR_USD * 100) / 100;
