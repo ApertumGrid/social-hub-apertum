@@ -14123,6 +14123,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     if (depositedUsdValue > 0) {
                         _syncPayload.depositedUsdt = depositedUsdValue;
                         window._firestoreDepositedUsdt = depositedUsdValue;
+                    } else if (depositedHuman === 0) {
+                        // On-chain balance is zero (post-withdrawal) — zero the Firestore cache
+                        // so the onSnapshot listener clears the star display immediately.
+                        _syncPayload.depositedUsdt = 0;
+                        _syncPayload.depositedAptm = 0;
+                        window._firestoreDepositedUsdt = 0;
                     }
                     await window.fs.updateDoc(userRef, _syncPayload).catch(() => {});
                 }
@@ -17785,15 +17791,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (window.db) {
                 try {
                     await window.fs.setDoc(window.fs.doc(window.db, 'user_balances', addr), {
-                        stars: 0, creatorStars: 0, depositedAptm: 0, lastWithdraw: Date.now(), lastUpdated: Date.now()
+                        stars: 0, creatorStars: 0, depositedAptm: 0, depositedUsdt: 0, spentStarsTotal: 0, lastWithdraw: Date.now(), lastUpdated: Date.now()
                     }, { merge: true });
                 } catch(e) { console.warn('[Withdraw] Firebase zero failed:', e); }
             }
 
-            logTransaction('settle', totalUsdt, { from: addr, to: 'wallet', description: 'Withdrew $' + fmtUsdt(totalUsdt) + ' APTM to wallet' });
+            logTransaction('settle', totalAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + totalAptm + ' APTM to wallet' });
             updateUI(); updateDrawerUI();
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
-            alert('Withdrawal Successful! $' + fmtUsdt(totalUsdt) + ' sent to your wallet in APTM.');
+            alert('Withdrawal Successful! ' + totalAptm + ' APTM sent to your wallet.');
             syncData();
 
         } catch (err) {
