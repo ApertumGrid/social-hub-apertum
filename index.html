@@ -28579,6 +28579,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             _activeLiveChannel = LIVE_CHANNEL_PREFIX + currentStreamId;
             isHosting       = true;
             document.body.classList.add('is-hosting');
+            // Mark Day 5 of the 7-day challenge (Go live for the first time)
+            if (userAddress && window.db && window.fs) {
+                window.fs.updateDoc(window.fs.doc(window.db, 'users', userAddress.toLowerCase()), {
+                    'challenge.day5': true
+                }).catch(function(){});
+            }
             // Show camera flip unconditionally on mobile — camera permission is granted by this point
             if (window.innerWidth <= 768) {
                 setTimeout(function() {
