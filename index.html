@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -12705,7 +12704,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 <div id="mob-search-overlay">
     <div id="mob-search-bar">
         <input id="mob-search-input" type="text" placeholder="Search people, posts, hubs…"
-               oninput="_srInput(this.value,true)" autocomplete="off" spellcheck="false">
+               oninput="_srInput(this.value,true)" onfocus="_srInput(this.value,true)" autocomplete="off" spellcheck="false">
         <button id="mob-srch-close" onclick="closeMobSearch()">Cancel</button>
     </div>
     <div class="mob-sr-tabs">
@@ -26289,13 +26288,33 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (clr) clr.style.display = val ? 'block' : 'none';
         clearTimeout(_srDebounce);
         if (!val.trim()) {
-            if (!isMob) { var p=document.getElementById('sr-panel'); if(p) p.classList.remove('open'); }
-            else { var r=document.getElementById('mob-search-results'); if(r) r.innerHTML='<div class="sr-empty">Type to search</div>'; }
+            _srBrowseAll(isMob);
             return;
         }
         if (!isMob) { var p=document.getElementById('sr-panel'); if(p) p.classList.add('open'); }
         _srSetBody('<div class="sr-spin">Searching…</div>', isMob);
         _srDebounce = setTimeout(function(){ _srRun(val.trim(), isMob); }, 320);
+    }
+    async function _srBrowseAll(isMob) {
+        if (!window.db || !window.fs) return;
+        if (!isMob) { var p=document.getElementById('sr-panel'); if(p) p.classList.add('open'); }
+        _srTab_ = 'people';
+        var prefix = isMob ? 'mob-tab-' : 'sr-tab-';
+        ['people','posts','hubs'].forEach(function(t){
+            var el=document.getElementById(prefix+t); if(el) el.classList.toggle('active', t==='people');
+        });
+        _srSetBody('<div class="sr-spin">Loading members…</div>', isMob);
+        try {
+            var q = window.fs.query(window.fs.collection(window.db,'users'), window.fs.limit(50));
+            var snap = await window.fs.getDocs(q);
+            _srPeople = []; _srPosts = []; _srHubs = [];
+            snap.forEach(function(d){ _srPeople.push(Object.assign({id:d.id},d.data())); });
+            var el=document.getElementById(prefix+'people');
+            if(el) el.textContent='People ('+_srPeople.length+')';
+            _srSetBody(_srBuildBody('people'), isMob);
+        } catch(e) {
+            _srSetBody('<div class="sr-empty">Couldn\'t load members</div>', isMob);
+        }
     }
     function _srTab(tab, isMob) {
         _srTab_ = tab;
