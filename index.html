@@ -11422,12 +11422,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     </div>
                     <!-- Subscription expiry notice — non-owner viewers with expired subscription -->
                     <div id="comm-sub-expired-notice" class="hub-sub-expired-notice" style="display:none;"></div>
+                    <!-- Hub Rules — shown to all visitors when set by owner -->
+                    <div id="comm-rules-section" style="display:none; background:rgba(240,180,41,0.05); border:1px solid rgba(240,180,41,0.2); border-radius:10px; padding:10px 14px; margin-bottom:12px;">
+                        <div style="font-size:0.68rem; font-weight:700; color:rgba(240,180,41,0.85); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; cursor:pointer; display:flex; align-items:center; gap:6px;" onclick="this.parentElement.querySelector('.comm-rules-body').style.display=this.parentElement.querySelector('.comm-rules-body').style.display==='none'?'block':'none';">
+                            📋 Hub Rules <span style="font-size:0.6rem; color:var(--text-muted); font-weight:400; text-transform:none;">(tap to toggle)</span>
+                        </div>
+                        <div class="comm-rules-body" style="font-size:0.73rem; color:var(--text-secondary); white-space:pre-wrap; line-height:1.6;" id="comm-rules-text"></div>
+                    </div>
                     <!-- Hub owner edit panel — shown only to the Hub creator -->
                     <div id="comm-edit-panel" style="display:none; background:var(--bg-card2); border:1px solid rgba(124,92,191,0.25); border-radius:12px; padding:16px; margin-bottom:16px;">
                         <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); margin-bottom:12px;">✎ Edit Hub Details</div>
                         <input type="text" id="comm-edit-name" class="field" placeholder="Hub Name" style="margin-bottom:8px;">
                         <textarea id="comm-edit-desc" class="field" rows="3" placeholder="Description" style="margin-bottom:8px; resize:none; overflow:hidden;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,400)+'px';"></textarea>
-                        <input type="text" id="comm-edit-img" class="field" placeholder="Header Image URL (optional)" style="margin-bottom:12px;">
+                        <div style="margin-bottom:8px;">
+                            <input type="file" id="comm-edit-img-file" accept="image/*" style="display:none;" onchange="uploadHubBanner(this,'comm-edit-img','comm-edit-banner-thumb','comm-edit-banner-wrap','comm-edit-banner-progress')">
+                            <button type="button" class="btn" onclick="document.getElementById('comm-edit-img-file').click()" style="width:100%;margin-bottom:6px;font-size:0.73rem;">📷 Upload Banner Image</button>
+                            <div id="comm-edit-banner-wrap" class="banner-drag-wrap" onmousedown="_bannerDragStart(event,'comm-edit-banner-thumb','comm-edit-img-position')" ontouchstart="_bannerDragStart(event,'comm-edit-banner-thumb','comm-edit-img-position')" style="margin-bottom:6px;">
+                                <img id="comm-edit-banner-thumb" src="" style="width:100%;height:180px;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none;">
+                                <div class="banner-drag-hint">↔ Drag to reposition</div>
+                            </div>
+                            <input type="hidden" id="comm-edit-img-position" value="50% 50%">
+                            <div id="comm-edit-banner-progress" style="display:none;font-size:0.7rem;color:var(--teal);margin-bottom:6px;"></div>
+                            <input type="text" id="comm-edit-img" class="field" placeholder="Or paste image URL" style="font-size:0.72rem;">
+                        </div>
+                        <textarea id="comm-edit-rules" class="field" rows="3" placeholder="Hub Rules (optional — shown to all visitors)" style="margin-bottom:12px; resize:none; overflow:hidden; font-size:0.73rem;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,300)+'px';"></textarea>
                         <div style="border-top:1px solid var(--border); padding-top:12px; margin-bottom:12px;">
                             <div style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); margin-bottom:10px; letter-spacing:0.3px;">★ SUBSCRIPTIONS</div>
                             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.75rem; color:var(--text-primary); margin-bottom:10px;">
@@ -11436,11 +11454,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </label>
                             <div id="comm-edit-sub-price-row" style="display:none; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
                                 Monthly price:
-                                <select id="comm-edit-sub-price" class="field" style="width:auto; padding:4px 8px; font-size:0.73rem;">
-                                    <option value="20">20 ★</option>
-                                    <option value="25">25 ★</option>
-                                </select>
+                                <input type="number" id="comm-edit-sub-price" class="field" min="10" max="500" value="20" style="width:70px; padding:4px 8px; font-size:0.73rem;">
+                                <span>★ / mo &nbsp;<span style="color:var(--text-muted);">(10–500 ★)</span></span>
                             </div>
+                        </div>
+                        <div style="border-top:1px solid var(--border); padding-top:12px; margin-bottom:12px;">
+                            <div style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px; letter-spacing:0.3px;">🛡 CO-MODERATORS</div>
+                            <div style="font-size:0.68rem; color:var(--text-muted); margin-bottom:8px;">Co-mods can hide posts in your Hub. Enter wallet addresses, one per line.</div>
+                            <textarea id="comm-edit-comods" class="field" rows="2" placeholder="0x123…abc&#10;0x456…def" style="resize:none; overflow:hidden; font-size:0.68rem; font-family:var(--font-mono);" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px';"></textarea>
                         </div>
                         <div style="display:flex; gap:8px;">
                             <button class="btn btn-purple" onclick="saveEditCommunityHub()">Save Changes</button>
@@ -13085,6 +13106,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     let isActionPending    = false;  // global transaction lock — prevents double-spend on any async action
     let _activeCommunity   = null;   // null = no community context; object = { id, name, ownerId, ... } of active Hub
     let _hubSubStatus      = 'none'; // viewer's subscription status for the active Hub: 'active' | 'expired' | 'none'
+    let _hubActiveSubAddrs = new Set(); // wallet addrs with active subs in current Hub (for subscriber badge)
     let _earnUnsub         = null;   // Firestore onSnapshot teardown for subscribeToEarnings
     let _adminRevenueUnsub = null;   // Firestore onSnapshot teardown for subscribeAdminRevenue
     let _notifUnsub        = null;   // Firestore onSnapshot teardown for notification listener
@@ -20520,12 +20542,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const firestoreLabel = postType === 1 ? 'text_post' : postType === 2 ? 'photo_post' : 'video_post';
         const senderAddrComm = userAddress.toLowerCase();
         if (!isAdmin) {
-            logAdminRevenue(senderAddrComm, firestoreLabel, feeAmount);
+            // Guest posts: 50% to hub owner, 50% platform. Owner posts: 100% platform.
+            var _isGuestBroadcast = senderAddrComm !== (_activeCommunity.ownerId || '').toLowerCase();
+            var _hubOwnerCut = _isGuestBroadcast ? Math.round(feeAmount * 0.5 * 100) / 100 : 0;
+            var _platBroadcastCut = Math.round((feeAmount - _hubOwnerCut) * 100) / 100;
+            var _hubOwnerAddr = (_activeCommunity.ownerId || '').toLowerCase();
+
+            logAdminRevenue(senderAddrComm, firestoreLabel, _platBroadcastCut);
             logTransaction('spend', feeAmount, {
                 from: senderAddrComm, to: CONFIG.ADMIN_ADDRESS.toLowerCase(),
-                description: `${postTypeLabel} Broadcast in ${_activeCommunity.name} Hub — ${feeAmount.toFixed(1)}★ (100% platform)`,
+                description: postTypeLabel + ' Broadcast in ' + _activeCommunity.name + ' Hub — ' + feeAmount.toFixed(1) + '★' + (_isGuestBroadcast ? ' (50% Hub Owner · 50% Platform)' : ' (100% Platform)'),
                 communityId: _activeCommunity.id
             });
+            // Credit hub owner their 50% cut of broadcast fee
+            if (_isGuestBroadcast && _hubOwnerCut > 0 && _hubOwnerAddr) {
+                creditCreatorStars(_hubOwnerAddr, _hubOwnerCut).catch(function(){});
+                logTransaction('earn', _hubOwnerCut, {
+                    from: senderAddrComm, to: _hubOwnerAddr,
+                    description: 'Hub Broadcast fee — ' + _activeCommunity.name + ' (' + feeAmount.toFixed(1) + '★ post · 50% to Hub)',
+                    communityId: _activeCommunity.id
+                });
+            }
             // ── Live Activity ticker ──────────────────────────────────────────
             if (typeof window.tickerLog === 'function') {
                 window.tickerLog('spend', postTypeLabel + ' in ' + _activeCommunity.name, feeAmount, '◈');
@@ -20847,6 +20884,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
         if (nameEl) nameEl.textContent = comm.name || 'Hub';
         if (descEl) descEl.textContent = comm.description || '';
+        // Hub Rules display
+        var _rulesSec  = document.getElementById('comm-rules-section');
+        var _rulesText = document.getElementById('comm-rules-text');
+        if (_rulesText) _rulesText.textContent = comm.rulesText || '';
+        if (_rulesSec)  _rulesSec.style.display = comm.rulesText ? 'block' : 'none';
 
         // ── Community Header V2: member count, creator info, follow button ────────
         window._commCreatorAddr = (comm.ownerId || '').toLowerCase();
@@ -20914,6 +20956,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         // Show edit button and analytics panel only for the Hub owner
         const isHubOwner = !!(userAddress &&
             userAddress.toLowerCase() === (comm.ownerId || '').toLowerCase());
+        // Co-moderator check
+        var isCoMod = !isHubOwner && userAddress && Array.isArray(comm.coMods) &&
+            comm.coMods.some(function(a) { return a.toLowerCase() === userAddress.toLowerCase(); });
 
         const editBtn = document.getElementById('comm-edit-btn');
         if (editBtn) editBtn.style.display = isHubOwner ? 'inline-flex' : 'none';
@@ -20954,6 +20999,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     if (userSubStatus === 'active') {
                         if (_subBtn) { _subBtn.textContent = '✅ Subscribed'; _subBtn.classList.remove('renew'); _subBtn.classList.add('subbed'); _subBtn.disabled = true; }
                         if (_subNotice) _subNotice.style.display = 'none';
+                        // Expiry warning notification — fire once per expiry cycle if ≤ 3 days away
+                        var _expiresIn = (subCheck.expiryDate || 0) - Date.now();
+                        var _warnKey   = 'hub_sub_expiry_warned_' + comm.id;
+                        if (_expiresIn > 0 && _expiresIn < 3 * 86400000) {
+                            var _lastWarn = parseInt(localStorage.getItem(_warnKey) || '0', 10);
+                            if (Date.now() - _lastWarn > 86400000) {
+                                writeNotif(userAddress, 'sub_expiring', { hubName: comm.name, communityId: comm.id, expiryDate: subCheck.expiryDate });
+                                try { localStorage.setItem(_warnKey, String(Date.now())); } catch(_) {}
+                            }
+                        } else if (_expiresIn > 3 * 86400000) {
+                            try { localStorage.removeItem(_warnKey); } catch(_) {}
+                        }
                     } else if (userSubStatus === 'expired') {
                         if (_subBtn) { _subBtn.textContent = '🔄 Renew (' + (comm.subscriptionPrice || 20) + '★/mo)'; _subBtn.classList.remove('subbed'); _subBtn.classList.add('renew'); _subBtn.disabled = false; }
                         if (_subNotice) {
@@ -20972,6 +21029,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } else {
             if (_subBtn)    _subBtn.style.display    = 'none';
             if (_subNotice) _subNotice.style.display = 'none';
+        }
+
+        // ── Pre-fetch active subscriber addresses for subscriber badge in feed ──
+        _hubActiveSubAddrs = new Set();
+        if (commSubEnabled && window.db) {
+            try {
+                var _subAddrSnap = await window.fs.getDocs(
+                    window.fs.query(
+                        window.fs.collection(window.db, 'subscriptions'),
+                        window.fs.where('communityId', '==', comm.id)
+                    )
+                );
+                var _now2 = Date.now();
+                _subAddrSnap.forEach(function(sd) {
+                    var s = sd.data();
+                    if (s.expiryDate && s.expiryDate > _now2 && s.subscriberWallet)
+                        _hubActiveSubAddrs.add(s.subscriberWallet.toLowerCase());
+                });
+            } catch(_) {}
         }
 
         // Load posts
@@ -21012,7 +21088,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.8rem;">No posts yet in this Hub. Be the first to broadcast!</div>';
                 return;
             }
-            snap.forEach(function(d) {
+            // Sort: pinned post always first
+            var _allPosts = [];
+            snap.forEach(function(d) { _allPosts.push(d); });
+            var _pinnedId = comm.pinnedPostId || null;
+            if (_pinnedId) {
+                _allPosts.sort(function(a, b) {
+                    if (a.id === _pinnedId) return -1;
+                    if (b.id === _pinnedId) return 1;
+                    return 0;
+                });
+            }
+            _allPosts.forEach(function(d) {
                 var post   = d.data();
                 if (post.isVisible === false) return;
                 var postId = d.id;
@@ -21022,7 +21109,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                post.authorAddr.toLowerCase() === userAddress.toLowerCase();
                 var isAdminUser = !!(userAddress &&
                                userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase());
-                var ownerBadge = isOwner ? '<span class="mod-badge">OWNER</span>' : '';
+                var isPinnedPost = (_pinnedId && postId === _pinnedId);
+                var _postAuthorLc = (post.authorAddr || '').toLowerCase();
+                var isSubBadge  = commSubEnabled && _postAuthorLc && _hubActiveSubAddrs.has(_postAuthorLc) && !isOwner;
+                var ownerBadge  = isOwner ? '<span class="mod-badge">OWNER</span>' : '';
+                var subBadge    = isSubBadge ? '<span class="mod-badge" style="background:rgba(124,92,191,0.18);border-color:rgba(124,92,191,0.4);color:rgba(167,139,250,1);">★ Sub</span>' : '';
+                var pinnedBadge = isPinnedPost ? '<span class="mod-badge" style="background:rgba(240,180,41,0.2);border-color:rgba(240,180,41,0.5);color:rgba(255,210,60,1);">📌 Pinned</span>' : '';
                 var mediaHtml  = buildCommunityMediaHtml(post);
                 var safeAddr   = (post.authorAddr || '').replace(/'/g, '');
                 var shortAddr  = post.authorAddr
@@ -21037,10 +21129,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             '<button class="post-own-btn edit-btn" onclick="openEditPost(\'' + postId + '\',event)" title="Edit your post">\u270e Edit</button>' +
                             '<button class="post-own-btn hide-btn" onclick="deletePost(\'' + postId + '\',event)" title="Hide this post">\u2715 Hide</button>' +
                         '</div>';
-                } else if (isAdminUser) {
+                } else if (isAdminUser || ((isHubOwner || isCoMod) && !isOwner)) {
                     headerActions =
                         '<div class="post-owner-actions">' +
-                            '<button class="post-own-btn hide-btn" onclick="deletePost(\'' + postId + '\',event)" title="Admin: hide this post">\u2715 Hide</button>' +
+                            '<button class="post-own-btn hide-btn" onclick="deletePost(\'' + postId + '\',event)" title="' + (isAdminUser ? 'Admin' : isCoMod ? 'Co-Mod' : 'Hub Owner') + ': remove from Hub">\u2715 Hide</button>' +
                         '</div>';
                 } else {
                     headerActions = '<span class="post-more">\u00b7\u00b7\u00b7</span>';
@@ -21072,7 +21164,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 var postMeta = document.createElement('div');
                 postMeta.className = 'post-meta';
-                postMeta.innerHTML = '<div class="post-author">' + escHtml(post.author || 'Anonymous') + ownerBadge + '</div>' +
+                postMeta.innerHTML = '<div class="post-author">' + escHtml(post.author || 'Anonymous') + ownerBadge + subBadge + pinnedBadge + '</div>' +
                     '<div class="post-addr">' + shortAddr + (post.isEdited ? '<span class="edited-badge">(edited)</span>' : '') + '</div>';
 
                 identity.appendChild(avImg);
@@ -21192,6 +21284,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 shareBtn.addEventListener('click', function(e) { openShareModal(postId, e); });
                 actions.appendChild(shareBtn);
+
+                // -- Pin button (hub owner only) --
+                if (isHubOwner) {
+                    (function(pid, pinned) {
+                        var pinBtn = document.createElement('div');
+                        pinBtn.className = 'pact';
+                        pinBtn.title = pinned ? 'Unpin post' : 'Pin to top of Hub';
+                        pinBtn.style.cssText = 'color:' + (pinned ? 'rgba(240,180,41,0.9)' : 'var(--text-muted)') + ';font-size:0.85rem;';
+                        pinBtn.textContent = String.fromCodePoint(0x1F4CC);
+                        pinBtn.addEventListener('click', function(e) { e.stopPropagation(); togglePinHubPost(pid, comm, pinned); });
+                        actions.appendChild(pinBtn);
+                    })(postId, isPinnedPost);
+                }
 
                 // ── Views ──
                 var viewsEl = document.createElement('div');
@@ -21359,13 +21464,31 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 d.style.height = 'auto';
                 d.style.height = Math.min(d.scrollHeight, 400) + 'px';
             }
-            if (i) i.value = _activeCommunity.headerImg || '';
+            if (i) {
+                i.value = _activeCommunity.headerImg || '';
+                var _bw = document.getElementById('comm-edit-banner-wrap');
+                var _bt = document.getElementById('comm-edit-banner-thumb');
+                var _bp = document.getElementById('comm-edit-img-position');
+                var _savedPos = _activeCommunity.headerImgPosition || '50% 50%';
+                if (_activeCommunity.headerImg && _bw && _bt) {
+                    _bt.src = _activeCommunity.headerImg;
+                    _bt.style.objectPosition = _savedPos;
+                    _bw.style.display = 'block';
+                } else if (_bw) {
+                    _bw.style.display = 'none';
+                }
+                if (_bp) _bp.value = _savedPos;
+            }
             var _se  = document.getElementById('comm-edit-sub-enabled');
             var _sp  = document.getElementById('comm-edit-sub-price');
             var _spr = document.getElementById('comm-edit-sub-price-row');
             if (_se)  _se.checked = !!_activeCommunity.subscriptionsEnabled;
             if (_sp && _activeCommunity.subscriptionPrice) _sp.value = String(_activeCommunity.subscriptionPrice);
             if (_spr) _spr.style.display = !!_activeCommunity.subscriptionsEnabled ? 'flex' : 'none';
+            var _re = document.getElementById('comm-edit-rules');
+            if (_re) { _re.value = _activeCommunity.rulesText || ''; _re.style.height = 'auto'; _re.style.height = Math.min(_re.scrollHeight, 300) + 'px'; }
+            var _cm = document.getElementById('comm-edit-comods');
+            if (_cm) { _cm.value = Array.isArray(_activeCommunity.coMods) ? _activeCommunity.coMods.join('\n') : ''; _cm.style.height = 'auto'; _cm.style.height = Math.min(_cm.scrollHeight, 200) + 'px'; }
         }
         panel.style.display = isOpen ? 'none' : 'block';
     }
@@ -21380,27 +21503,37 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var name       = (document.getElementById('comm-edit-name')?.value || '').trim();
         var desc       = (document.getElementById('comm-edit-desc')?.value || '').trim();
         var img        = (document.getElementById('comm-edit-img')?.value  || '').trim();
+        var imgPos     = (document.getElementById('comm-edit-img-position')?.value || '50% 50%').trim();
+        var rules      = (document.getElementById('comm-edit-rules')?.value || '').trim();
         var subEnabled = !!(document.getElementById('comm-edit-sub-enabled')?.checked);
         var subPrice   = parseInt(document.getElementById('comm-edit-sub-price')?.value || '20', 10);
-        if (isNaN(subPrice) || subPrice < 1) subPrice = 20;
+        if (isNaN(subPrice) || subPrice < 10) subPrice = 10;
+        if (subPrice > 500) subPrice = 500;
+        var coModsRaw  = (document.getElementById('comm-edit-comods')?.value || '');
+        var coMods     = coModsRaw.split(/[\n,]+/).map(function(a) { return a.trim().toLowerCase(); }).filter(function(a) { return a.startsWith('0x') && a.length >= 10; });
         if (!name) return showToast('Hub name cannot be empty.');
         try {
+            var _updFields = { name: name, description: desc, headerImg: img, headerImgPosition: imgPos, rulesText: rules, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice, coMods: coMods };
             await window.fs.updateDoc(
                 window.fs.doc(window.db, 'communities', _activeCommunity.id),
-                { name: name, description: desc, headerImg: img, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice }
+                _updFields
             );
-            _activeCommunity = Object.assign({}, _activeCommunity, { name: name, description: desc, headerImg: img, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice });
+            _activeCommunity = Object.assign({}, _activeCommunity, _updFields);
             var nameEl    = document.getElementById('comm-feed-name');
             var descEl    = document.getElementById('comm-feed-desc');
             var bannerImg = document.getElementById('comm-feed-banner-img');
+            var rulesEl   = document.getElementById('comm-rules-text');
+            var rulesSec  = document.getElementById('comm-rules-section');
             if (nameEl)    nameEl.textContent = name;
             if (descEl)    descEl.textContent = desc;
             if (bannerImg) {
-                if (img) { bannerImg.src = img; bannerImg.style.display = 'block'; }
+                if (img) { bannerImg.src = img; bannerImg.style.objectPosition = imgPos; bannerImg.style.display = 'block'; }
                 else       bannerImg.style.display = 'none';
             }
+            if (rulesEl)  rulesEl.textContent = rules;
+            if (rulesSec) rulesSec.style.display = rules ? 'block' : 'none';
             var idx = _allCommunities.findIndex(function(c) { return c.id === _activeCommunity.id; });
-            if (idx >= 0) _allCommunities[idx] = Object.assign({}, _allCommunities[idx], { name: name, description: desc, headerImg: img, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice });
+            if (idx >= 0) _allCommunities[idx] = Object.assign({}, _allCommunities[idx], _updFields);
             toggleCommEditPanel();
             showToast('Hub updated ✓');
         } catch (e) {
@@ -21409,6 +21542,62 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     window.saveEditCommunityHub = saveEditCommunityHub;
+
+    // ─── Pin / Unpin a post to the top of the Hub ────────────────────────────────
+    async function togglePinHubPost(postId, comm, currentlyPinned) {
+        if (!window.db || !window.fs || !comm) return;
+        try {
+            var newPinnedId = currentlyPinned ? null : postId;
+            await window.fs.updateDoc(window.fs.doc(window.db, 'communities', comm.id), { pinnedPostId: newPinnedId });
+            _activeCommunity = Object.assign({}, _activeCommunity, { pinnedPostId: newPinnedId });
+            var idx = _allCommunities.findIndex(function(c) { return c.id === comm.id; });
+            if (idx >= 0) _allCommunities[idx] = Object.assign({}, _allCommunities[idx], { pinnedPostId: newPinnedId });
+            showToast(currentlyPinned ? 'Post unpinned.' : '📌 Post pinned to top of Hub!');
+            await openCommunityFeed(_activeCommunity, { updateUrl: false });
+        } catch(e) { console.warn('[togglePinHubPost]', e); showToast('Failed to pin post.'); }
+    }
+    window.togglePinHubPost = togglePinHubPost;
+
+    // ─── Upload hub banner to Firebase Storage ────────────────────────────────────
+    async function uploadHubBanner(input, urlFieldId, thumbId, wrapId, progressId) {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return showToast('Please select an image file.');
+        if (file.size > 5 * 1024 * 1024) return showToast('Banner image must be under 5 MB.');
+        if (!window.storage || !window.fsStorage) return showToast('Storage not ready. Try again.');
+        var progressEl = document.getElementById(progressId);
+        var wrapEl     = document.getElementById(wrapId);
+        var thumbEl    = document.getElementById(thumbId);
+        var urlEl      = document.getElementById(urlFieldId);
+        if (progressEl) { progressEl.textContent = 'Uploading… 0%'; progressEl.style.display = 'block'; }
+        try {
+            var storageRef = window.fsStorage.ref(window.storage, 'hub-banners/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_'));
+            var uploadTask = window.fsStorage.uploadBytesResumable(storageRef, file);
+            await new Promise(function(resolve, reject) {
+                uploadTask.on('state_changed',
+                    function(snap) {
+                        var pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                        if (progressEl) progressEl.textContent = 'Uploading… ' + pct + '%';
+                    },
+                    reject,
+                    async function() {
+                        var url = await window.fsStorage.getDownloadURL(uploadTask.snapshot.ref);
+                        if (urlEl)   urlEl.value = url;
+                        if (thumbEl) { thumbEl.src = url; }
+                        if (wrapEl)  wrapEl.style.display = 'block';
+                        if (progressEl) { progressEl.textContent = '✓ Done!'; setTimeout(function() { progressEl.style.display = 'none'; }, 2000); }
+                        input.value = '';
+                        resolve();
+                    }
+                );
+            });
+        } catch(e) {
+            console.error('[uploadHubBanner]', e);
+            if (progressEl) progressEl.style.display = 'none';
+            showToast('Upload failed. Try again.');
+        }
+    }
+    window.uploadHubBanner = uploadHubBanner;
 
     // ─── Hub Analytics — load once on Hub open, owner only ───────────────────────
     async function loadHubAnalytics(comm) {
