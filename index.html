@@ -35191,8 +35191,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 (function() {
     'use strict';
 
-    var TG_TOKEN   = '8846966845:AAH8321KD5_YlpRMm7dhRfW_wjG0Loupo3c';
-    var TG_CHAT_ID = '-1003983614079';
+    var SUPPORT_CF_URL = 'https://us-central1-socialhubaptm.cloudfunctions.net/sendSupportMessage';
     var ASHLEY     = '0xe348fedea1850a0c2d4ac0fed3f903774de1e16a';
     var ASHLEY_NAME = 'Ashley · SocialHub';
 
@@ -35228,33 +35227,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
-        var timestamp = new Date().toLocaleString('en-GB', {
-            day:'2-digit', month:'short', year:'numeric',
-            hour:'2-digit', minute:'2-digit', timeZoneName:'short'
-        });
-
-        var text =
-            '🆘 *Support Request*\n' +
-            '👤 *Name:* ' + name + '\n' +
-            '👛 *Wallet:* ' + (wallet || 'Not connected') + '\n' +
-            '📝 *Issue:* ' + issue + '\n' +
-            '🕐 ' + timestamp;
-
         try {
-            var resp = await fetch(
-                'https://api.telegram.org/bot' + TG_TOKEN + '/sendMessage',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id:    TG_CHAT_ID,
-                        text:       text,
-                        parse_mode: 'Markdown'
-                    })
-                }
-            );
+            var resp = await fetch(SUPPORT_CF_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, wallet: wallet, issue: issue })
+            });
             var data = await resp.json();
-            if (!data.ok) throw new Error(data.description || 'Telegram error');
+            if (!data.ok) throw new Error(data.error || 'Failed to send');
 
             // Clear fields and show success
             document.getElementById('support-name').value  = '';
