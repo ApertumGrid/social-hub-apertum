@@ -17444,7 +17444,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             updateUI();
             updateDrawerUI();
             if (input) input.value = "";
-            const tray = document.getElementById(`tray-${postId}`);
+            const tray = document.getElementById('comm-tray-' + postId) || document.getElementById('tray-' + postId);
             if (tray) tray.style.display = 'block';
             showToast("Comment Live! Creator +0.8★");
         } catch (e) {
@@ -20233,10 +20233,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const postData = postSnap.exists() ? postSnap.data() : null;
             const commId   = postData ? (postData.communityId || null) : null;
 
-            // Authorisation: must be post author OR admin
+            // Authorisation: post author, admin, or hub owner/co-mod of the post's community
             const isAdmin = userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
-            if (!isAdmin && postData && postData.authorAddr &&
-                postData.authorAddr.toLowerCase() !== userAddress.toLowerCase()) {
+            const _commForDel = commId && _activeCommunity && _activeCommunity.id === commId ? _activeCommunity : null;
+            const _isHubOwnerDel = _commForDel && userAddress.toLowerCase() === (_commForDel.ownerId || '').toLowerCase();
+            const _isCoModDel = _commForDel && Array.isArray(_commForDel.coMods) &&
+                _commForDel.coMods.some(function(a) { return a.toLowerCase() === userAddress.toLowerCase(); });
+            const isSelf = postData && postData.authorAddr &&
+                postData.authorAddr.toLowerCase() === userAddress.toLowerCase();
+            if (!isAdmin && !isSelf && !_isHubOwnerDel && !_isCoModDel) {
                 return showToast('You can only hide your own posts.');
             }
 
@@ -20888,6 +20893,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     '<div class="comm-card-meta">' +
                         '<span class="comm-owner-chip">Owner: ' + shortAddr + '</span>' +
                         '<span class="comm-member-count">' + ((comm.postCount || 0).toLocaleString()) + ' posts</span>' +
+                        ((comm.memberCount || 0) > 0 ? '<span class="comm-member-count">· ' + (comm.memberCount).toLocaleString() + ' member' + (comm.memberCount !== 1 ? 's' : '') + '</span>' : '') +
                         (parseFloat(comm.totalStarsEarned || 0) > 0
                             ? '<span class="comm-earned-badge" title="Total Stars earned by this Hub">★ ' + parseFloat(comm.totalStarsEarned).toFixed(1) + ' earned</span>'
                             : '') +
@@ -25259,6 +25265,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 _followingSet.delete(commId);
                 if (followBtn) { followBtn.textContent = '+ Follow Hub'; followBtn.classList.remove('following'); }
                 showToast('Unfollowed ' + (_activeCommunity.name || 'Hub') + '.');
+                window.fs.updateDoc(
+                    window.fs.doc(window.db, 'communities', commId),
+                    { memberCount: window.fs.increment(-1) }
+                ).catch(function(){});
                 if (typeof loadMyNetwork === 'function') loadMyNetwork();
 
             } else {
@@ -25307,7 +25317,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 // STEP C: Deduct 1★ from sender (now that spend is in Firestore)
                 await deductStars(1);
-                if (typeof window.tickerLog === 'function') window.tickerLog('spend', 'Hub Comment', 1, '■');
+                if (typeof window.tickerLog === 'function') window.tickerLog('spend', 'Hub Follow', 1, '■');
 
                 // STEP D: Credit 0.9★ to community creator.
                 // On self-deal this is a SEPARATE write — must always run.
@@ -25321,7 +25331,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 logAdminRevenue(senderAddr, 'community_follow_fee', 0.1);
                 window.fs.updateDoc(
                     window.fs.doc(window.db, 'communities', commId),
-                    { totalStarsEarned: window.fs.increment(0.9) }
+                    { totalStarsEarned: window.fs.increment(0.9), memberCount: window.fs.increment(1) }
                 ).catch(function(){});
 
                 // STEP F: Log the earn entry with the CORRECT 90% amount (0.9, not 1.0)
