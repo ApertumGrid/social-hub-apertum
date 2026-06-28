@@ -185,7 +185,7 @@
   .cross{color:var(--dim)}
 
   /* ── TESTIMONIAL STYLE CALLOUTS ── */
-  .callouts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .callouts{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:640px){.callouts{grid-template-columns:1fr}}
   .callout{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
   .callout::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
@@ -256,7 +256,7 @@
     </div>
     <div class="hero-stats fade-up d4">
       <div class="hero-stat">
-        <div class="hero-stat-val gold-text">4</div>
+        <div class="hero-stat-val gold-text">5</div>
         <div class="hero-stat-lbl">Revenue Streams</div>
       </div>
       <div class="hero-stat">
@@ -264,8 +264,8 @@
         <div class="hero-stat-lbl">Sub Revenue to You</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-val purple-text">50%</div>
-        <div class="hero-stat-lbl">of Every Guest Post Fee</div>
+        <div class="hero-stat-val purple-text">90%</div>
+        <div class="hero-stat-lbl">of Your Posting Fee</div>
       </div>
       <div class="hero-stat">
         <div class="hero-stat-val green-text">$10</div>
@@ -311,7 +311,7 @@
   <div class="container">
     <div class="sec-hd">
       <div class="sec-tag gold">Revenue Streams</div>
-      <h2>Four ways your Hub <span class="gold-text">makes money</span></h2>
+      <h2>Five ways your Hub <span class="gold-text">makes money</span></h2>
       <p>Unlike other platforms where only the platform profits from activity, SocialHub cuts you in on everything that happens inside your Hub.</p>
     </div>
     <div class="streams">
@@ -420,6 +420,32 @@
         </div>
       </div>
 
+      <!-- STREAM 5: POSTING FEE -->
+      <div class="stream-card" style="grid-column:1/-1; border-color:rgba(251,146,60,0.35); background:rgba(251,146,60,0.06);">
+        <div class="stream-num" style="color:#fb923c;">Stream 05</div>
+        <div class="stream-icon">✏</div>
+        <h3 style="color:#fb923c;">Custom Posting Fee</h3>
+        <p>Set a per-post fee that guests pay every time they broadcast inside your Hub. You keep <strong>90%</strong> instantly — the platform takes only 10%. Or lock your Hub to <strong>Owner Only</strong> mode and curate every post yourself.</p>
+        <div class="stream-rows">
+          <div class="stream-row">
+            <span class="stream-row-lbl">You receive per guest post</span>
+            <span class="stream-row-val" style="color:#fb923c;">90% of your fee</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Platform keeps</span>
+            <span class="stream-row-val" style="color:var(--dim);">10% only</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Owner Only mode</span>
+            <span class="stream-row-val" style="color:#fb923c;">Lock guests out entirely</span>
+          </div>
+          <div class="stream-row">
+            <span class="stream-row-lbl">Setting this fee</span>
+            <span class="stream-row-val" style="color:#fb923c;">Free — edit anytime</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -430,7 +456,7 @@
     <div class="sec-hd">
       <div class="sec-tag gold">Earnings Calculator</div>
       <h2>What could your Hub <span class="gold-text">earn per month?</span></h2>
-      <p>Move the sliders to see your realistic monthly earnings across all four revenue streams.</p>
+      <p>Move the sliders to see your realistic monthly earnings across all five revenue streams.</p>
     </div>
     <div class="calc-wrap">
       <div class="calc-grid">
@@ -492,6 +518,14 @@
             <input type="range" id="s-price" min="10" max="500" value="50" oninput="calcEarn()">
           </div>
 
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Posting fee per guest post (★)</span>
+              <span class="slider-val" id="v-pfee">0</span>
+            </div>
+            <input type="range" id="s-pfee" min="0" max="200" value="0" oninput="calcEarn()">
+          </div>
+
         </div>
         <div>
           <div class="calc-result">
@@ -512,6 +546,10 @@
               <div class="calc-line">
                 <span class="calc-line-lbl">🔒 Subscriptions (90%)</span>
                 <span class="calc-line-val purple-text" id="r-sub">—</span>
+              </div>
+              <div class="calc-line">
+                <span class="calc-line-lbl">✏ Posting fees (90%)</span>
+                <span class="calc-line-val" style="color:#fb923c;" id="r-pfee">—</span>
               </div>
             </div>
             <div class="calc-total">
@@ -580,6 +618,16 @@
         <div class="feat-icon">🔒</div>
         <h3>Subscriber-Only Posts</h3>
         <p>Mark any post as Subscribers Only. Non-subscribers see a blurred preview with a lock overlay — a powerful conversion tool that sells itself.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🚪</div>
+        <h3>Posting Mode Control</h3>
+        <p>Switch between <strong>Everyone</strong> (open Hub) and <strong>Owner Only</strong> mode at any time. In Owner Only mode, only you can post — guests can still view and interact, but not broadcast.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">💎</div>
+        <h3>Custom Posting Fee</h3>
+        <p>Charge guests a ★ fee to post in your Hub. You receive 90% of every posting fee automatically — no manual payouts, no delays. Set it to 0 to keep it free.</p>
       </div>
     </div>
   </div>
@@ -703,6 +751,16 @@
         <div class="col-hub purple-text check">✓ Apertum · non-custodial</div>
       </div>
       <div class="compare-row">
+        <div class="col-feat">Charge a posting fee to guest posters</div>
+        <div class="col-other cross">✗ Not possible</div>
+        <div class="col-hub" style="color:#fb923c;" class="check">✓ 90% posting fee to you</div>
+      </div>
+      <div class="compare-row">
+        <div class="col-feat">Lock Hub to owner-only posting</div>
+        <div class="col-other cross">✗ No control</div>
+        <div class="col-hub" style="color:#fb923c;" class="check">✓ One-tap Owner Only mode</div>
+      </div>
+      <div class="compare-row">
         <div class="col-feat">Launch cost</div>
         <div class="col-other">Monthly SaaS fees</div>
         <div class="col-hub gold-text check">✓ One-time ~$10 forever</div>
@@ -735,11 +793,16 @@
         <div class="callout-val purple-text">1,350 ★</div>
         <p>From 30 subscribers at 50 ★/mo. That's your most reliable stream — recurring, growing, compounding monthly.</p>
       </div>
+      <div class="callout" style="border-color:rgba(251,146,60,0.35); background:rgba(251,146,60,0.06);">
+        <div class="callout-icon">✏</div>
+        <div class="callout-val" style="color:#fb923c;">1,350 ★</div>
+        <p>From a 5★ posting fee × 8 guest posts/day × 30 days × 90% to you. Even a small fee adds up fast when your Hub is active.</p>
+      </div>
     </div>
     <div style="text-align:center; margin-top:32px; padding:24px; background:rgba(240,180,41,0.05); border:1px solid rgba(240,180,41,0.15); border-radius:var(--radius);">
-      <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Combined Estimate — 100 members, 30 subscribers at 50★</div>
-      <div style="font-size:2.5rem; font-weight:900; letter-spacing:-0.02em;" class="gold-text">2,055 ★ / month</div>
-      <div style="color:var(--muted); font-size:0.9rem; margin-top:6px;">≈ $20.55 USD in APTM · paid out from a single ~$10 launch investment</div>
+      <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Combined Estimate — 100 members, 30 subscribers at 50★ + 5★ posting fee</div>
+      <div style="font-size:2.5rem; font-weight:900; letter-spacing:-0.02em;" class="gold-text">3,405 ★ / month</div>
+      <div style="color:var(--muted); font-size:0.9rem; margin-top:6px;">≈ $34.05 USD in APTM · paid out from a single ~$10 launch investment</div>
     </div>
   </div>
 </section>
@@ -776,6 +839,7 @@
     var fol   = +document.getElementById('s-fol').value;
     var subs  = +document.getElementById('s-sub').value;
     var price = +document.getElementById('s-price').value;
+    var pfee  = +document.getElementById('s-pfee').value;
 
     document.getElementById('v-text').textContent  = text;
     document.getElementById('v-img').textContent   = img;
@@ -784,19 +848,22 @@
     document.getElementById('v-fol').textContent   = fol;
     document.getElementById('v-sub').textContent   = subs;
     document.getElementById('v-price').textContent = price;
+    document.getElementById('v-pfee').textContent  = pfee === 0 ? '0 (off)' : pfee;
 
     var DAYS = 30;
     var broadcast    = ((text * 0.6) + (img * 1.5) + (vid * 5.0)) * DAYS;
     var interact     = inter * 0.4 * DAYS;
     var follow       = fol * 0.9;
     var subscription = subs * price * 0.9;
-    var total = broadcast + interact + follow + subscription;
+    var postingFees  = pfee > 0 ? pfee * 0.9 * (text + img + vid) * DAYS : 0;
+    var total = broadcast + interact + follow + subscription + postingFees;
     var usd   = (total * 0.01).toFixed(2);
 
     document.getElementById('r-broadcast').textContent = broadcast.toFixed(1) + ' ★';
     document.getElementById('r-interact').textContent  = interact.toFixed(1) + ' ★';
     document.getElementById('r-follow').textContent    = follow.toFixed(1) + ' ★';
     document.getElementById('r-sub').textContent       = subscription.toFixed(1) + ' ★';
+    document.getElementById('r-pfee').textContent      = pfee > 0 ? postingFees.toFixed(1) + ' ★' : '—';
     document.getElementById('r-total').textContent     = Math.round(total).toLocaleString() + ' ★';
     document.getElementById('r-usd').textContent       = '≈ $' + usd + ' USD in APTM';
   }
