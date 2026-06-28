@@ -11487,6 +11487,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <div style="font-size:0.68rem; color:var(--text-muted); margin-bottom:8px;">Co-mods can hide posts in your Hub. Enter wallet addresses, one per line.</div>
                             <textarea id="comm-edit-comods" class="field" rows="2" placeholder="0x123…abc&#10;0x456…def" style="resize:none; overflow:hidden; font-size:0.68rem; font-family:var(--font-mono);" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,200)+'px';"></textarea>
                         </div>
+                        <div style="border-top:1px solid var(--border); padding-top:12px; margin-bottom:12px;">
+                            <div style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                                <button type="button" id="comm-edit-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-edit-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('owner_only')">Owner Only</button>
+                            </div>
+                            <input type="hidden" id="comm-edit-posting-mode" value="open">
+                            <div id="comm-edit-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
+                                Posting fee:
+                                <input type="number" id="comm-edit-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
+                                <span>&#9733; &nbsp;<span style="color:var(--text-muted);">(0 = free &middot; 90% to you)</span></span>
+                            </div>
+                        </div>
                         <div style="display:flex; gap:8px;">
                             <button class="btn btn-purple" onclick="saveEditCommunityHub()">Save Changes</button>
                             <button class="btn" onclick="toggleCommEditPanel()">Cancel</button>
@@ -11629,6 +11642,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         </div>
                         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:10px;">
                             Not sure yet? <a href="hub-owner.html" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none;font-weight:600;">See how Hub earnings work &#8599;</a>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                                <button type="button" id="comm-create-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-create-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('owner_only')">Owner Only</button>
+                            </div>
+                            <input type="hidden" id="comm-create-posting-mode" value="open">
+                            <div id="comm-create-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
+                                Posting fee:
+                                <input type="number" id="comm-create-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
+                                <span>&#9733; &nbsp;<span style="color:var(--text-muted);">(0 = free &middot; 90% to you)</span></span>
+                            </div>
                         </div>
                         <div style="display:flex;gap:8px;">
                             <button class="btn btn-purple" onclick="submitStartCommunity()">Launch Hub &mdash; 1,000 &#9733;</button>
@@ -20498,10 +20524,26 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.handleCommFileSelect = handleCommFileSelect;
 
     function commUpdateFeeDisplay() {
-        const el = document.getElementById('comm-post-fee-display');
+        const el  = document.getElementById('comm-post-fee-display');
+        const btn = document.getElementById('comm-broadcast-btn');
         if (!el) return;
-        const isAdmin = userAddress && userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
+        const isAdmin     = userAddress && userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
+        const isHubOwnerD = _activeCommunity && userAddress &&
+                            userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
+        const postingMode = (_activeCommunity && _activeCommunity.postingMode) || 'open';
+        const postingFee  = parseFloat((_activeCommunity && _activeCommunity.postingFee) || 0);
+
+        if (postingMode === 'owner_only' && !isHubOwnerD && !isAdmin) {
+            el.textContent = '🔒 Owner posts only — guests cannot broadcast here';
+            el.style.color = 'rgba(239,68,68,0.8)';
+            if (btn) btn.disabled = true;
+            return;
+        }
+        el.style.color = '';
+        if (btn) btn.disabled = false;
+
         if (isAdmin) { el.textContent = 'Admin bypass — 0★ broadcast fee'; return; }
+
         let fee = CONFIG.FEES.TEXT;
         if (commMediaTabMode === 'file' && commSelectedFile) {
             fee = commSelectedFile.type.startsWith('video/') ? CONFIG.FEES.VIDEO : CONFIG.FEES.PHOTO;
@@ -20509,9 +20551,38 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const url = (document.getElementById('comm-post-media')?.value || '').trim();
             if (url) fee = isVideoUrl(url) ? CONFIG.FEES.VIDEO : CONFIG.FEES.PHOTO;
         }
-        el.textContent = `Broadcast cost: ${fee.toFixed(1)}★ (100% platform)`;
+        const extraFee = postingFee > 0 && !isHubOwnerD ? postingFee : 0;
+        if (extraFee > 0) {
+            el.textContent = `Broadcast cost: ${(fee + extraFee).toFixed(1)}★ (${fee.toFixed(1)}★ platform + ${extraFee.toFixed(1)}★ Hub fee)`;
+        } else {
+            el.textContent = `Broadcast cost: ${fee.toFixed(1)}★`;
+        }
     }
     window.commUpdateFeeDisplay = commUpdateFeeDisplay;
+
+    function commCreatePostingMode(mode) {
+        var pmInput = document.getElementById('comm-create-posting-mode');
+        var btnOpen = document.getElementById('comm-create-pm-open');
+        var btnOwn  = document.getElementById('comm-create-pm-owner');
+        var feeRow  = document.getElementById('comm-create-fee-row');
+        if (pmInput) pmInput.value = mode;
+        if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
+        if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
+        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+    }
+    window.commCreatePostingMode = commCreatePostingMode;
+
+    function commEditPostingMode(mode) {
+        var pmInput = document.getElementById('comm-edit-posting-mode');
+        var btnOpen = document.getElementById('comm-edit-pm-open');
+        var btnOwn  = document.getElementById('comm-edit-pm-owner');
+        var feeRow  = document.getElementById('comm-edit-fee-row');
+        if (pmInput) pmInput.value = mode;
+        if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
+        if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
+        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+    }
+    window.commEditPostingMode = commEditPostingMode;
 
     // Update the community composer avatar/handle whenever the wallet changes
     function syncCommComposerIdentity() {
@@ -20531,7 +20602,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!_activeCommunity) return showToast('No active community. Please open a Hub first.');
 
         // ── Determine fee — admin gets a full waiver ──────────────────────────
-        const isAdmin = userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
+        const isAdmin     = userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
+        const _isHubOwner = userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
+
+        // ── Posting mode guard ────────────────────────────────────────────────
+        if ((_activeCommunity.postingMode || 'open') === 'owner_only' && !_isHubOwner && !isAdmin) {
+            return showToast('Only the Hub owner can post here.');
+        }
         let mediaUrl   = '';
         let feeAmount  = CONFIG.FEES.TEXT;
         let postType   = 1;
@@ -20556,6 +20633,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
         }
 
+        // ── Hub posting fee (on top of broadcast fee for non-owners) ─────────
+        const _hubPostingFee = parseFloat(_activeCommunity.postingFee || 0);
+        const _chargeHubFee  = _hubPostingFee > 0 && !_isHubOwner && !isAdmin;
+        const _totalFee      = feeAmount + (_chargeHubFee ? _hubPostingFee : 0);
+
         // ── Balance check (skipped for admin) ────────────────────────────────
         if (!isAdmin) {
             let livePurchased = 0, liveEarned = 0;
@@ -20570,11 +20652,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     }
                 } catch (e) { console.warn('[handleCommBroadcast] balance check failed:', e); }
             }
-            if ((livePurchased + liveEarned) < feeAmount) {
+            if ((livePurchased + liveEarned) < _totalFee) {
                 return alert(
                     `Insufficient Stars!\n` +
                     `Post Type:       ${postTypeLabel}\n` +
-                    `Required:        ${feeAmount.toFixed(1)}★\n` +
+                    `Required:        ${_totalFee.toFixed(1)}★\n` +
                     `Total Available: ${(livePurchased + liveEarned).toFixed(1)}★\n\n` +
                     `Deposit more APTM to increase your balance.`
                 );
@@ -20599,7 +20681,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         // ── Deduct stars (skipped for admin) ─────────────────────────────────
         if (!isAdmin) {
             try {
-                await deductSpendableStars(userAddress, feeAmount);
+                await deductSpendableStars(userAddress, _totalFee);
             } catch (e) {
                 console.error('[handleCommBroadcast] deduction failed:', e);
                 return alert('Failed to deduct stars. Please try again.');
@@ -20631,9 +20713,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     communityId: _activeCommunity.id
                 });
             }
+            // ── Hub posting fee: 90% owner, 10% platform ──────────────────────
+            if (_chargeHubFee && _hubOwnerAddr) {
+                var _pfOwnerCut = Math.round(_hubPostingFee * 0.9 * 100) / 100;
+                var _pfPlatCut  = Math.round((_hubPostingFee - _pfOwnerCut) * 100) / 100;
+                creditCreatorStars(_hubOwnerAddr, _pfOwnerCut).catch(function(){});
+                logTransaction('earn', _pfOwnerCut, {
+                    from: senderAddrComm, to: _hubOwnerAddr,
+                    description: 'Hub Posting fee — ' + _activeCommunity.name + ' (' + _hubPostingFee.toFixed(1) + '★ · 90% to Hub)',
+                    communityId: _activeCommunity.id
+                });
+                logAdminRevenue(senderAddrComm, 'hub_posting_fee', _pfPlatCut);
+            }
             // ── Live Activity ticker ──────────────────────────────────────────
             if (typeof window.tickerLog === 'function') {
-                window.tickerLog('spend', postTypeLabel + ' in ' + _activeCommunity.name, feeAmount, '◈');
+                window.tickerLog('spend', postTypeLabel + ' in ' + _activeCommunity.name, _totalFee, '◈');
             }
         }
 
@@ -20653,7 +20747,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 timestamp:       Date.now(),
                 hypes:           0,
                 type:            postType,
-                feePaid:         isAdmin ? 0 : feeAmount,
+                feePaid:         isAdmin ? 0 : _totalFee,
                 isBoosted:       false,
                 category:        'Global',
                 communityId:     _activeCommunity.id,
@@ -21557,6 +21651,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (_re) { _re.value = _activeCommunity.rulesText || ''; _re.style.height = 'auto'; _re.style.height = Math.min(_re.scrollHeight, 300) + 'px'; }
             var _cm = document.getElementById('comm-edit-comods');
             if (_cm) { _cm.value = Array.isArray(_activeCommunity.coMods) ? _activeCommunity.coMods.join('\n') : ''; _cm.style.height = 'auto'; _cm.style.height = Math.min(_cm.scrollHeight, 200) + 'px'; }
+            var _pf = document.getElementById('comm-edit-posting-fee');
+            if (_pf) _pf.value = String(_activeCommunity.postingFee || 0);
+            commEditPostingMode(_activeCommunity.postingMode || 'open');
         }
         panel.style.display = isOpen ? 'none' : 'block';
     }
@@ -21577,11 +21674,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var subPrice   = parseInt(document.getElementById('comm-edit-sub-price')?.value || '20', 10);
         if (isNaN(subPrice) || subPrice < 10) subPrice = 10;
         if (subPrice > 500) subPrice = 500;
-        var coModsRaw  = (document.getElementById('comm-edit-comods')?.value || '');
-        var coMods     = coModsRaw.split(/[\n,]+/).map(function(a) { return a.trim().toLowerCase(); }).filter(function(a) { return a.startsWith('0x') && a.length >= 10; });
+        var coModsRaw   = (document.getElementById('comm-edit-comods')?.value || '');
+        var coMods      = coModsRaw.split(/[\n,]+/).map(function(a) { return a.trim().toLowerCase(); }).filter(function(a) { return a.startsWith('0x') && a.length >= 10; });
+        var postingMode = (document.getElementById('comm-edit-posting-mode')?.value || 'open');
+        var postingFee  = parseFloat(document.getElementById('comm-edit-posting-fee')?.value || '0');
+        if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
         if (!name) return showToast('Hub name cannot be empty.');
         try {
-            var _updFields = { name: name, description: desc, headerImg: img, headerImgPosition: imgPos, rulesText: rules, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice, coMods: coMods };
+            var _updFields = { name: name, description: desc, headerImg: img, headerImgPosition: imgPos, rulesText: rules, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice, coMods: coMods, postingMode: postingMode, postingFee: postingFee };
             await window.fs.updateDoc(
                 window.fs.doc(window.db, 'communities', _activeCommunity.id),
                 _updFields
@@ -22158,10 +22258,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!userAddress) return showToast('Connect your wallet first!');
         if (!window.db)   return showToast('Firebase not ready.');
 
-        var name   = (document.getElementById('comm-name-input')?.value  || '').trim();
-        var desc   = (document.getElementById('comm-desc-input')?.value  || '').trim();
-        var imgUrl = (document.getElementById('comm-img-input')?.value   || '').trim();
-        var alias  = (document.getElementById('comm-alias-input')?.value || '').trim().toLowerCase();
+        var name        = (document.getElementById('comm-name-input')?.value  || '').trim();
+        var desc        = (document.getElementById('comm-desc-input')?.value  || '').trim();
+        var imgUrl      = (document.getElementById('comm-img-input')?.value   || '').trim();
+        var alias       = (document.getElementById('comm-alias-input')?.value || '').trim().toLowerCase();
+        var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'open');
+        var postingFee  = parseFloat(document.getElementById('comm-create-posting-fee')?.value || '0');
+        if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
 
         if (!name) return showToast('Please enter a community name.');
 
@@ -22250,7 +22353,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 ownerId:     userAddress,
                 ownerName:   ownerName,
                 createdAt:   Date.now(),
-                postCount:   0
+                postCount:   0,
+                postingMode: postingMode,
+                postingFee:  postingFee
             };
             // Only write alias field if one was provided (keeps doc clean for hubs without one)
             if (alias) commData.alias = alias;
