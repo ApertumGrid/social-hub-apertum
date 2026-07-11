@@ -8675,6 +8675,34 @@ html body #profile-hero .hero-tier-badge.tier-diamond {
 .cp-follow-btn:active{transform:scale(.97);}
 .cp-follow-btn.following{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);}
 .cp-badges{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 16px 14px;min-height:0;}
+/* ── Viewer Rankings sheet (tap 👁 viewer count) ── */
+#vr-scrim{position:fixed;inset:0;z-index:8996;background:rgba(0,0,0,0.6);display:none;backdrop-filter:blur(2px);}
+#vr-scrim.open{display:block;}
+#vr-sheet{position:fixed;bottom:0;left:0;right:0;z-index:8997;background:linear-gradient(160deg,#0f0b20 0%,#0a0d18 100%);border-top:1px solid rgba(124,92,191,0.3);border-radius:22px 22px 0 0;padding:0 0 env(safe-area-inset-bottom,0);max-height:78vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.34,1.2,.64,1);}
+#vr-sheet.open{transform:translateY(0);}
+.vr-header{display:flex;align-items:center;justify-content:center;padding:4px 16px 12px;flex-shrink:0;position:relative;}
+.vr-title{font-size:1rem;font-weight:800;color:#fff;letter-spacing:.2px;}
+#vr-list{flex:1;overflow-y:auto;padding:0 16px 8px;}
+.vr-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.vr-row:last-child{border-bottom:none;}
+.vr-rank{width:22px;text-align:center;font-size:.85rem;font-weight:900;flex-shrink:0;}
+.vr-rank.r1{color:#FFD700;font-size:1rem;}
+.vr-rank.r2{color:#C0C0C0;font-size:.95rem;}
+.vr-rank.r3{color:#CD7F32;font-size:.9rem;}
+.vr-av{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.1);}
+.vr-info{flex:1;min-width:0;}
+.vr-name{font-size:.88rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vr-stars{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:1px;}
+.vr-score{font-size:.88rem;font-weight:800;color:rgba(255,200,50,.9);flex-shrink:0;}
+.vr-empty-msg{text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;padding:28px 16px;}
+#vr-self-row{flex-shrink:0;border-top:1px solid rgba(124,92,191,.25);background:rgba(124,92,191,.08);padding:10px 16px;}
+.vr-self-inner{display:flex;align-items:center;gap:10px;}
+.vr-self-av{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(124,92,191,.4);flex-shrink:0;}
+.vr-self-info{flex:1;min-width:0;}
+.vr-self-name{font-size:.85rem;font-weight:700;color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vr-self-hint{font-size:.7rem;color:rgba(255,255,255,.4);}
+.vr-gift-btn{background:linear-gradient(135deg,#7c3aed,#5b21b6);border:none;color:#fff;font-size:.78rem;font-weight:800;padding:7px 14px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.vr-gift-btn:active{transform:scale(.95);}
 /* ── Genesis dot ── */
 .genesis-dot{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,rgba(240,180,41,0.25),rgba(190,130,10,0.18));border:1.5px solid rgba(240,180,41,0.65);display:inline-flex;align-items:center;justify-content:center;cursor:default;position:relative;flex-shrink:0;box-shadow:0 0 6px rgba(240,180,41,0.2);}
 .genesis-dot svg{width:10px;height:10px;display:block;}
@@ -10208,8 +10236,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         <button class="mdash-btn"        id="mdash-profile"     onclick="showMobileTab('profile')">
             <span class="mbtn-icon">◉</span>My Profile
         </button>
-        <button class="mdash-btn"        id="mdash-inbox"       onclick="showMobileTab('inbox')">
+        <button class="mdash-btn"        id="mdash-inbox"       onclick="showMobileTab('inbox')" style="position:relative;">
             <span class="mbtn-icon">✉</span>Inbox
+            <span class="notif-dot" id="notif-dot-inbox-mob" style="position:absolute;top:4px;right:14px;" aria-label="New message"></span>
         </button>
         <button class="mdash-btn"        id="mdash-marketplace" onclick="showMobileTab('marketplace')">
             <span class="mbtn-icon">🛍</span>Marketplace
@@ -11945,6 +11974,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                             <!-- Viewer icon strip — mirrors host strip -->
                             <div id="viewer-icon-strip">
+                                <button class="his-btn" id="vis-sound-btn" onclick="_toggleViewerSound()" title="Sound">🔊</button>
                                 <button class="his-btn" onclick="_openViewerGiftDrawer()" title="Send a Gift">🎁</button>
                                 <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
                                 <button class="his-btn" id="vis-stage-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
@@ -12173,7 +12203,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                         border-radius:10px; padding:11px 14px; font-size:0.82rem; color:#fff;
                                         outline:none; box-sizing:border-box;
                                         transition:border-color 0.2s;
-                                    " onfocus="this.style.borderColor='rgba(224,62,62,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                    " onfocus="this.style.borderColor='rgba(224,62,62,0.5)'; var _lte=document.getElementById('live-title-error'); if(_lte)_lte.style.display='none';" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                    <div id="live-title-error" style="display:none; font-size:0.7rem; color:#e8415a; margin-top:6px; font-weight:600;">⚠ Please enter a stream title before going live.</div>
                                 </div>
 
                                 <div style="margin-bottom:24px;">
@@ -12354,6 +12385,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </div>
                             <div class="lsib-right">
                                 <span id="lbib-viewers" class="lsib-viewers">👁 0</span>
+                                <span id="lbib-hypes" class="lsib-hypes">❤️ 0</span>
                             </div>
                         </div>
                         <!-- Video box with overlays -->
@@ -12542,6 +12574,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </button>
                             <button class="studio-btn" id="btn-toggle-chat" onclick="toggleLiveChat()" title="Allow or block viewer comments">
                                 <span class="studio-btn-icon">💬</span> Comments
+                            </button>
+                            <button class="studio-btn" id="btn-live-stats" onclick="openLiveStats()">
+                                <span class="studio-btn-icon">📊</span> Stats
                             </button>
                             <button class="studio-btn" id="btn-end-stream-toolbar"
                                     onclick="if(typeof endLiveStream==='function')endLiveStream()"
@@ -29358,6 +29393,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 _titleInput.style.borderColor = 'rgba(224,62,62,0.75)';
                 setTimeout(() => { if (_titleInput) _titleInput.style.borderColor = 'rgba(255,255,255,0.1)'; }, 2500);
             }
+            var _lte = document.getElementById('live-title-error');
+            if (_lte) _lte.style.display = 'block';
             return;
         }
         if (!category) {
@@ -30546,10 +30583,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     }
                 }
 
-                // Achievement icons in cp-badges (Genesis omitted per scope)
+                // Genesis dot + achievement icons in cp-badges
                 var bdgEl = document.getElementById('cp-badges');
                 if (bdgEl) {
                     var _cpBdgHtml = '';
+                    if (bdg.genesis) {
+                        _cpBdgHtml += '<span class="genesis-dot" data-label="Genesis 50" title="Genesis 50 Creator"><svg viewBox="0 0 10 10"><polygon points="5,0.5 6.5,3.5 10,4 7.5,6.5 8.2,10 5,8.2 1.8,10 2.5,6.5 0,4 3.5,3.5" fill="rgba(240,180,41,0.95)"/></svg></span>';
+                    }
                     if (bdg.firstEarnings) {
                         _cpBdgHtml += '<span class="achievement-icon ach-first-earn" data-label="First Earnings" title="First Earnings"><svg viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.2" stroke="rgba(134,239,172,0.75)" stroke-width="1.3"/><polyline points="4,6.2 5.5,7.8 8.2,4.2" stroke="rgba(134,239,172,0.95)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
                     }
@@ -30608,6 +30648,101 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         // Hide the main info bar follow button too
         var mainFb = document.getElementById('lsib-follow');
         if(mainFb) mainFb.style.display = 'none';
+    };
+
+    // ── Viewer Rankings bottom sheet (tap 👁 viewer count) — gift leaderboard ──
+    window._openViewerRankings = async function() {
+        var streamId = _watchingStreamId;
+        if(!streamId) return;
+
+        var sheet = document.getElementById('vr-sheet');
+        var scrim = document.getElementById('vr-scrim');
+        var list  = document.getElementById('vr-list');
+        var empty = document.getElementById('vr-empty');
+        var selfRow = document.getElementById('vr-self-row');
+        if(!sheet || !scrim) return;
+
+        // Show immediately with loading state
+        list.innerHTML = '<div class="vr-empty-msg">Loading…</div>';
+        if(empty)   empty.style.display   = 'none';
+        if(selfRow) selfRow.style.display = 'none';
+        scrim.classList.add('open');
+        setTimeout(function(){ sheet.classList.add('open'); }, 10);
+
+        if(!window.db || !window.fs) return;
+        try {
+            var { collection, getDocs, query, orderBy, limit } = window.fs;
+            var q = query(
+                collection(window.db, 'live_streams', streamId, 'top_gifters'),
+                orderBy('totalStars', 'desc'),
+                limit(20)
+            );
+            var snap = await getDocs(q);
+
+            var myAddr = (window.userAddress || '').toLowerCase();
+            var myHandle = window._liveUserHandle || '';
+            var myAvatar = window._liveUserAvatar || '';
+            var myRank = -1;
+            var myEntry = null;
+            var rankColors = ['r1','r2','r3'];
+            var rows = [];
+
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                var rank = rows.length + 1;
+                var av = d.avatar || ('https://api.dicebear.com/7.x/identicon/svg?seed=' + doc.id);
+                var stars = d.totalStars || 0;
+                var starsDisplay = stars >= 1000 ? (stars/1000).toFixed(1).replace(/\.0$/,'') + 'K' : stars.toFixed(1).replace(/\.0$/,'');
+                var rankCls = rank <= 3 ? 'vr-rank ' + rankColors[rank-1] : 'vr-rank';
+                var rankLabel = rank <= 3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+                rows.push(
+                    '<div class="vr-row">' +
+                    '<span class="' + rankCls + '">' + rankLabel + '</span>' +
+                    '<img class="vr-av" src="' + _esc(av) + '" onerror="this.src=\'https://api.dicebear.com/7.x/identicon/svg?seed=hub\'">' +
+                    '<div class="vr-info">' +
+                    '<div class="vr-name">' + _esc(d.name || 'Viewer') + '</div>' +
+                    '<div class="vr-stars">' + rank + (rank===1?' st':rank===2?' nd':rank===3?' rd':' th') + ' place</div>' +
+                    '</div>' +
+                    '<span class="vr-score">★ ' + starsDisplay + '</span>' +
+                    '</div>'
+                );
+                if(myAddr && doc.id === myAddr) {
+                    myRank = rank;
+                    myEntry = d;
+                }
+            });
+
+            list.innerHTML = rows.length ? rows.join('') : '';
+            if(empty) empty.style.display = rows.length ? 'none' : '';
+
+            // Self row — show if viewer has a wallet connected
+            if(selfRow && myAddr) {
+                var selfAv = document.getElementById('vr-self-av');
+                var selfNm = document.getElementById('vr-self-name');
+                if(selfAv) selfAv.src = myEntry ? (myEntry.avatar || myAvatar) : myAvatar;
+                if(selfNm) selfNm.textContent = myEntry ? (myEntry.name || myHandle) : myHandle;
+                selfRow.style.display = '';
+                var hint = selfRow.querySelector('.vr-self-hint');
+                var giftBtn = selfRow.querySelector('.vr-gift-btn');
+                if(myRank > 0) {
+                    if(hint) hint.textContent = 'You\'re ranked #' + myRank;
+                    if(giftBtn) giftBtn.style.display = 'none';
+                } else {
+                    if(hint) hint.textContent = 'Send a Gift to climb the rankings';
+                    if(giftBtn) giftBtn.style.display = '';
+                }
+            }
+        } catch(e) {
+            console.warn('[ViewerRankings]', e);
+            list.innerHTML = '<div class="vr-empty-msg">Could not load rankings.</div>';
+        }
+    };
+
+    window._closeViewerRankings = function() {
+        var sheet = document.getElementById('vr-sheet');
+        var scrim = document.getElementById('vr-scrim');
+        if(sheet) sheet.classList.remove('open');
+        if(scrim) scrim.classList.remove('open');
     };
 
     // ── Info bar heart button — gives 1★ to creator (24-hour cooldown) ──
@@ -31754,6 +31889,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             liveViewerCount  = d.viewers     || 0;
             setText('live-stat-stars',   liveStarsEarned.toFixed(1) + ' ★');
             setText('live-stat-hypes',   String(liveHypeCount));
+            setText('lbib-hypes', '❤️ ' + liveHypeCount);
             setText('live-stat-viewers', String(liveViewerCount));
             setText('live-broadcast-viewers', '👁 ' + liveViewerCount);
             // Update host goal bar in real-time as stars come in
@@ -34241,6 +34377,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             liveViewerCount  = d.viewers     || 0;
             setText('live-stat-stars',   liveStarsEarned.toFixed(1) + ' ★');
             setText('live-stat-hypes',   String(liveHypeCount));
+            setText('lbib-hypes', '❤️ ' + liveHypeCount);
             setText('live-stat-viewers', String(liveViewerCount));
             setText('lsib-viewers',  '👁 ' + liveViewerCount);
             setText('lbib-viewers',  '👁 ' + liveViewerCount);
@@ -36536,6 +36673,30 @@ function _copyReplayLink(link) {
     </div>
     <div class="cp-badges" id="cp-badges" style="display:none;"></div>
     <button id="cp-follow-btn" class="cp-follow-btn" onclick="window._cpFollow()">+ Follow</button>
+</div>
+
+<!-- ── VIEWER RANKINGS BOTTOM SHEET (tap 👁 count) ────────────────────── -->
+<div id="vr-scrim" onclick="window._closeViewerRankings()"></div>
+<div id="vr-sheet">
+    <div class="cp-handle"></div>
+    <div class="vr-header">
+        <span class="vr-title">Viewer Rankings</span>
+        <button class="cp-close" onclick="window._closeViewerRankings()">✕</button>
+    </div>
+    <div id="vr-list"></div>
+    <div id="vr-empty" style="display:none;">
+        <div class="vr-empty-msg">🎁 No gifts yet — be the first to top the chart!</div>
+    </div>
+    <div id="vr-self-row" style="display:none;">
+        <div class="vr-self-inner">
+            <img id="vr-self-av" class="vr-self-av" src="" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=x'">
+            <div class="vr-self-info">
+                <span id="vr-self-name" class="vr-self-name"></span>
+                <span class="vr-self-hint">Send a Gift to climb the rankings</span>
+            </div>
+            <button class="vr-gift-btn" onclick="window._closeViewerRankings();window._openViewerGiftDrawer()">🎁 Gift</button>
+        </div>
+    </div>
 </div>
 
 <!-- ══ MARKETPLACE MODALS ════════════════════════════════════════════ -->
