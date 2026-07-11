@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -22690,7 +22689,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var data = await resp.json();
             if (data.error) { showToast(data.error); return; }
             showToast('🎰 ' + qty + ' ticket' + (qty > 1 ? 's' : '') + ' bought! You have ' + data.tickets + ' in this round.');
-            if (typeof deductStars === 'function') deductStars(cost);
+            // NOTE: balance is deducted server-side by the buyLotteryTickets CF (authoritative,
+            // on-chain-verified). The user_balances onSnapshot listener refreshes the UI.
+            // Do NOT call deductStars() here — it persists a SECOND spentStarsTotal write,
+            // which double-charged buyers (ledger showed 50★ but balance dropped 100★).
         } catch(e) {
             showToast('Network error. Try again.');
         } finally {
