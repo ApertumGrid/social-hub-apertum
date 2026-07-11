@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -10,6 +11,9 @@
     <script>try{if(localStorage.getItem('sh_theme')!=='light')document.documentElement.classList.add('dark');}catch(e){}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>SOCIALHUB — The Future of Social</title>
+
+    <!-- Telegram Mini App SDK — loads only when running inside Telegram, no-op otherwise -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <!-- PWA: iOS -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -41,12 +45,12 @@
     <meta property="og:title"        content="SOCIALHUB — The Future of Social" id="og-title">
     <meta property="og:description"  content="A Web3 social platform where your earnings are on-chain. Post, tip, follow — and earn real APTM." id="og-desc">
     <meta property="og:image"        content="https://i.postimg.cc/NM62Rv8R/Screenshot-2026-05-15-111751.png" id="og-image">
-    <meta property="og:url"          content="https://socialhubglobal.com/" id="og-url">
+    <meta property="og:url"          content="https://socialhubapertum.com/" id="og-url">
     <meta name="twitter:card"        content="summary_large_image">
     <meta name="twitter:title"       content="SOCIALHUB — The Future of Social" id="tw-title">
     <meta name="twitter:description" content="A Web3 social platform where your earnings are on-chain. Post, earn real APTM, withdraw any time." id="tw-desc">
     <meta name="twitter:image"       content="https://i.postimg.cc/NM62Rv8R/Screenshot-2026-05-15-111751.png" id="tw-image">
-    <link rel="canonical"            href="https://socialhubglobal.com/">
+    <link rel="canonical"            href="https://socialhubapertum.com/">
 
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 
@@ -8650,6 +8654,28 @@ html body #profile-hero .hero-tier-badge.tier-diamond {
 .hero-tier-dot.tier-silver{background:linear-gradient(135deg,#c8c8c8,#9a9a9a);border-color:rgba(200,200,200,0.55);}
 .hero-tier-dot.tier-gold{background:linear-gradient(135deg,#f0b429,#c07e08);border-color:rgba(240,180,41,0.7);box-shadow:0 0 8px rgba(240,180,41,0.35);}
 .hero-tier-dot.tier-diamond{background:linear-gradient(135deg,#2dd4bf,#c4a8ff);border-color:rgba(45,212,191,0.6);box-shadow:0 0 10px rgba(45,212,191,0.28);}
+/* ── Creator profile popup (live-stream host) ── */
+#cp-scrim{position:fixed;inset:0;z-index:8996;background:rgba(0,0,0,0.6);display:none;backdrop-filter:blur(2px);}
+#cp-scrim.open{display:block;}
+#cp-sheet{position:fixed;bottom:0;left:0;right:0;z-index:8997;background:linear-gradient(160deg,#0f0b20 0%,#0a0d18 100%);border-top:1px solid rgba(124,92,191,0.3);border-radius:22px 22px 0 0;padding:0 0 env(safe-area-inset-bottom,12px);max-height:80vh;overflow-y:auto;transform:translateY(100%);transition:transform .32s cubic-bezier(.34,1.2,.64,1);}
+#cp-sheet.open{transform:translateY(0);}
+.cp-handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:12px auto 8px;}
+.cp-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);font-size:.85rem;width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cp-avatar-wrap{display:flex;justify-content:center;margin:8px 0 12px;}
+.cp-avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid rgba(124,92,191,.5);box-shadow:0 0 24px rgba(124,92,191,.3);}
+.cp-name{text-align:center;font-size:1.15rem;font-weight:800;color:#fff;padding:0 48px 2px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;}
+.cp-addr{text-align:center;font-size:.7rem;color:rgba(255,255,255,.35);font-family:var(--font-mono,monospace);margin-bottom:8px;}
+.cp-bio{text-align:center;font-size:.82rem;color:rgba(255,255,255,.6);line-height:1.45;padding:0 24px;margin-bottom:14px;min-height:0;max-height:60px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
+.cp-bio:empty{display:none;}
+.cp-stats{display:flex;align-items:center;justify-content:center;gap:0;margin:0 16px 18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 0;}
+.cp-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.cp-stat-val{font-size:1rem;font-weight:800;color:#fff;}
+.cp-stat-lbl{font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;}
+.cp-stat-divider{width:1px;height:32px;background:rgba(255,255,255,.1);}
+.cp-follow-btn{display:block;margin:0 16px 16px;width:calc(100% - 32px);padding:14px;background:linear-gradient(135deg,#7c3aed,#5b21b6);border:none;color:#fff;font-size:.95rem;font-weight:800;border-radius:14px;cursor:pointer;letter-spacing:.3px;}
+.cp-follow-btn:active{transform:scale(.97);}
+.cp-follow-btn.following{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);}
+.cp-badges{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 16px 14px;min-height:0;}
 /* ── Genesis dot ── */
 .genesis-dot{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,rgba(240,180,41,0.25),rgba(190,130,10,0.18));border:1.5px solid rgba(240,180,41,0.65);display:inline-flex;align-items:center;justify-content:center;cursor:default;position:relative;flex-shrink:0;box-shadow:0 0 6px rgba(240,180,41,0.2);}
 .genesis-dot svg{width:10px;height:10px;display:block;}
@@ -10112,14 +10138,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <!-- Shown when NOT connected -->
                     <div id="wdd-connect-section">
                         <div style="padding:8px 12px 6px;font-size:0.65rem;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;text-transform:uppercase;">Choose Wallet</div>
-                        <button class="wdd-option" onclick="_connectWithProvider('metamask');toggleWalletDropdown()">
+                        <button id="wdd-mm-btn" class="wdd-option" onclick="_connectWithProvider('metamask');toggleWalletDropdown()">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" class="wdd-logo" onerror="this.style.display='none'">
                             <div class="wdd-option-text">
                                 <span class="wdd-name">MetaMask</span>
                                 <span class="wdd-sub" id="wdd-mm-status">Browser extension</span>
                             </div>
                         </button>
-                        <button class="wdd-option" onclick="_connectWithProvider('xova');toggleWalletDropdown()">
+                        <button id="wdd-xova-btn" class="wdd-option" onclick="_connectWithProvider('xova');toggleWalletDropdown()">
                             <img src="https://xova.app/favicon.ico"
                                  class="wdd-logo"
                                  alt="XOVA"
@@ -10327,6 +10353,70 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 </div>
 
                 <div class="feed-heading">Signal Feed</div>
+
+                <!-- Star Lottery card — populated by loadLottery() -->
+                <div id="lottery-card" style="display:none;margin-bottom:12px;border-radius:16px;background:linear-gradient(135deg,rgba(168,85,247,0.13) 0%,rgba(236,72,153,0.08) 100%);border:1px solid rgba(168,85,247,0.35);padding:18px 18px 14px;overflow:hidden;flex-shrink:0;">
+                    <div onclick="toggleLotteryCard()" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;cursor:pointer;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:1.3rem;">🎰</span>
+                            <div>
+                                <div style="font-size:0.72rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;">Star Lottery</div>
+                                <div style="font-size:0.62rem;color:var(--text-muted);">Daily draw · 80% to winner · 10★ per ticket</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                            <div id="lottery-countdown" style="font-size:0.68rem;font-weight:800;color:rgba(168,85,247,0.9);background:rgba(168,85,247,0.12);padding:5px 11px;border-radius:20px;border:1px solid rgba(168,85,247,0.25);font-variant-numeric:tabular-nums;">--:--:--</div>
+                            <span id="lottery-chevron" style="font-size:0.7rem;color:rgba(168,85,247,0.9);transition:transform 0.2s;">&#9660;</span>
+                        </div>
+                    </div>
+                    <div id="lottery-body">
+                    <div style="text-align:center;margin-bottom:14px;">
+                        <div id="lottery-pot" style="font-size:2.4rem;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1.1;">0★</div>
+                        <div id="lottery-pot-sub" style="font-size:0.68rem;color:var(--teal);font-weight:600;margin-top:2px;">≈ $0.00 USD · Winner gets 0★</div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:24px;margin-bottom:14px;">
+                        <div style="text-align:center;">
+                            <div id="lottery-wallets" style="font-size:1rem;font-weight:800;color:#fff;">0</div>
+                            <div style="font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Players</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div id="lottery-tickets" style="font-size:1rem;font-weight:800;color:#fff;">0</div>
+                            <div style="font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Tickets</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="font-size:1rem;font-weight:800;color:rgba(168,85,247,0.9);">Max 50</div>
+                            <div style="font-size:0.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Per Wallet</div>
+                        </div>
+                    </div>
+                    <div id="lottery-my-tickets" style="display:none;text-align:center;margin-bottom:10px;font-size:0.68rem;color:rgba(168,85,247,0.95);font-weight:700;background:rgba(168,85,247,0.1);border-radius:8px;padding:5px 10px;"></div>
+                    <div id="lottery-rollover" style="display:none;text-align:center;margin-bottom:8px;font-size:0.65rem;color:var(--gold);font-weight:600;"></div>
+                    <div id="lottery-buy-section" style="display:none;">
+                        <div style="display:flex;gap:6px;margin-bottom:8px;justify-content:center;flex-wrap:wrap;">
+                            <button class="lqb" onclick="setLotteryQty(1)"  data-qty="1"  style="padding:5px 13px;border-radius:20px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.2);color:rgba(200,160,255,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;">1</button>
+                            <button class="lqb" onclick="setLotteryQty(5)"  data-qty="5"  style="padding:5px 13px;border-radius:20px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.1);color:rgba(200,160,255,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;">5</button>
+                            <button class="lqb" onclick="setLotteryQty(10)" data-qty="10" style="padding:5px 13px;border-radius:20px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.1);color:rgba(200,160,255,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;">10</button>
+                            <button class="lqb" onclick="setLotteryQty(25)" data-qty="25" style="padding:5px 13px;border-radius:20px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.1);color:rgba(200,160,255,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;">25</button>
+                            <button class="lqb" onclick="setLotteryQty(50)" data-qty="50" style="padding:5px 13px;border-radius:20px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.1);color:rgba(200,160,255,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;">50</button>
+                        </div>
+                        <button id="lottery-buy-btn" onclick="buyLotteryTickets()" style="width:100%;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(168,85,247,0.85),rgba(236,72,153,0.75));border:none;color:#fff;font-size:0.8rem;font-weight:800;cursor:pointer;letter-spacing:0.3px;transition:opacity 0.15s;">Buy 1 Ticket · 10★</button>
+                    </div>
+                    <div id="lottery-connect-prompt" style="display:none;text-align:center;padding:8px 0 2px;">
+                        <span style="font-size:0.68rem;color:var(--text-muted);">Connect your wallet to enter the draw</span>
+                    </div>
+                    <div id="lottery-last-winner" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid rgba(168,85,247,0.2);text-align:center;font-size:0.65rem;color:var(--text-muted);"></div>
+                    </div>
+                </div>
+
+                <!-- Telegram community banner — one-time dismissible -->
+                <div id="tg-community-banner" style="margin-bottom:12px;border-radius:14px;background:linear-gradient(135deg,rgba(36,161,222,0.13) 0%,rgba(45,212,191,0.08) 100%);border:1px solid rgba(36,161,222,0.35);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+                    <div style="font-size:1.4rem;flex-shrink:0;">&#9992;</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.72rem;font-weight:800;color:rgba(36,161,222,0.95);letter-spacing:0.4px;margin-bottom:3px;">JOIN OUR TELEGRAM COMMUNITY</div>
+                        <div style="font-size:0.67rem;color:var(--text-muted);line-height:1.45;">Earnings tips, Hub showcase, live alerts &amp; announcements.</div>
+                    </div>
+                    <button onclick="joinSocialHubTelegram()" style="flex-shrink:0;padding:8px 14px;border-radius:10px;background:rgba(36,161,222,0.18);border:1px solid rgba(36,161,222,0.4);color:rgba(36,161,222,0.95);font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background 0.15s;">Join &#8594;</button>
+                    <button onclick="dismissTgBanner()" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:1rem;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;">&#215;</button>
+                </div>
 
                 <!-- Walletless visitor banner — visible by default, JS hides it once wallet connects -->
                 <div id="visitor-banner" style="margin-bottom:14px;border-radius:16px;background:linear-gradient(135deg,rgba(124,92,191,0.12) 0%,rgba(45,212,191,0.08) 100%);border:1px solid rgba(124,92,191,0.3);padding:20px 22px;">
@@ -10856,6 +10946,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <div class="mcd-header">
                         <div class="mcd-title">🔐 Master Commander Dashboard</div>
                         <div class="mcd-live-badge"><span class="mcd-live-dot"></span> LIVE</div>
+                    </div>
+
+                    <!-- 🎰 Lottery control -->
+                    <div style="border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;background:rgba(168,85,247,0.06);">
+                        <div style="font-size:0.7rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">🎰 Lottery Control</div>
+                        <div id="lottery-admin-status" style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px;">No active round.</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button onclick="adminInitLottery()" style="padding:7px 12px;border-radius:8px;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:rgba(200,160,255,0.95);font-size:0.68rem;font-weight:700;cursor:pointer;">Init Round</button>
+                            <button onclick="adminSeedLottery()" style="padding:7px 12px;border-radius:8px;background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);color:var(--teal);font-size:0.68rem;font-weight:700;cursor:pointer;">Seed Pot</button>
+                            <button onclick="adminDrawLottery()" style="padding:7px 12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-size:0.68rem;font-weight:700;cursor:pointer;">Force Draw</button>
+                        </div>
                     </div>
 
                     <!-- Solvency Light -->
@@ -11427,6 +11528,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <img id="comm-feed-banner-img" class="comm-feed-banner" src="" alt="" crossorigin="anonymous" style="display:none;">
                     <div class="comm-feed-name" id="comm-feed-name"></div>
                     <div class="comm-feed-desc" id="comm-feed-desc"></div>
+                    <div class="comm-feed-website" id="comm-feed-website" style="display:none; margin-bottom:10px; font-size:0.8rem;"></div>
 
                     <!-- Community Header V2: member count, creator, follow button -->
                     <div class="comm-header-v2" id="comm-header-v2">
@@ -11458,6 +11560,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); margin-bottom:12px;">✎ Edit Hub Details</div>
                         <input type="text" id="comm-edit-name" class="field" placeholder="Hub Name" style="margin-bottom:8px;">
                         <textarea id="comm-edit-desc" class="field" rows="3" placeholder="Description" style="margin-bottom:8px; resize:none; overflow:hidden;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,400)+'px';"></textarea>
+                        <input type="url" id="comm-edit-website" class="field" placeholder="Website URL (optional)" style="margin-bottom:8px; font-size:0.73rem;">
                         <div style="margin-bottom:8px;">
                             <input type="file" id="comm-edit-img-file" accept="image/*" style="display:none;" onchange="uploadHubBanner(this,'comm-edit-img','comm-edit-banner-thumb','comm-edit-banner-wrap','comm-edit-banner-progress')">
                             <button type="button" class="btn" onclick="document.getElementById('comm-edit-img-file').click()" style="width:100%;margin-bottom:6px;font-size:0.73rem;">📷 Upload Banner Image</button>
@@ -11626,8 +11729,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <textarea id="comm-desc-input" class="field" rows="4"
                                   placeholder="Short description — press Enter for line breaks, they will be preserved exactly as you type them."
                                   style="margin-bottom:8px; resize:vertical;"></textarea>
-                        <input type="text" id="comm-img-input" class="field"
-                               placeholder="Header Image URL (optional)" style="margin-bottom:12px;">
+                        <div style="margin-bottom:12px;">
+                            <input type="file" id="comm-create-img-file" accept="image/*" style="display:none;" onchange="uploadHubBanner(this,'comm-img-input','comm-create-banner-thumb','comm-create-banner-wrap','comm-create-banner-progress')">
+                            <button type="button" class="btn" onclick="document.getElementById('comm-create-img-file').click()" style="width:100%;margin-bottom:6px;font-size:0.73rem;">📷 Upload Banner Image</button>
+                            <div id="comm-create-banner-wrap" class="banner-drag-wrap" onmousedown="_bannerDragStart(event,'comm-create-banner-thumb','comm-create-img-position')" ontouchstart="_bannerDragStart(event,'comm-create-banner-thumb','comm-create-img-position')" style="margin-bottom:6px;">
+                                <img id="comm-create-banner-thumb" src="" style="width:100%;height:180px;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none;">
+                                <div class="banner-drag-hint">↔ Drag to reposition</div>
+                            </div>
+                            <input type="hidden" id="comm-create-img-position" value="50% 50%">
+                            <div id="comm-create-banner-progress" style="display:none;font-size:0.7rem;color:var(--teal);margin-bottom:6px;"></div>
+                            <input type="text" id="comm-img-input" class="field" placeholder="Or paste image URL" style="font-size:0.72rem;">
+                        </div>
                         <!-- Hub Handle / Alias — free feature, stored as comm.alias -->
                         <div class="alias-input-wrap">
                             <span class="alias-prefix">?hub=</span>
@@ -11640,6 +11752,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             Optional. Creates a shareable link like <strong>?hub=your-handle</strong>.
                             Letters, numbers, and hyphens only. Free for all Hub creators.
                         </div>
+                        <input type="url" id="comm-website-input" class="field"
+                               placeholder="Website URL (optional) — e.g. yoursite.com"
+                               style="margin-bottom:12px; font-size:0.78rem;">
                         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:10px;">
                             Not sure yet? <a href="hub-owner.html" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none;font-weight:600;">See how Hub earnings work &#8599;</a>
                         </div>
@@ -13959,7 +14074,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         name:        'SocialHub',
                         description: 'Web3 Social Platform on Apertum',
                         url:         'https://www.socialhubapertum.com',
-                        icons:       ['https://socialhubglobal.com/favicon.ico']
+                        icons:       ['https://socialhubapertum.com/favicon.ico']
                     }
                 });
                 if (_wcIsMobile) {
@@ -14870,6 +14985,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     lastConnectedAt:  Date.now()
                 });
                 console.log('[Firebase] New users doc created for', walletAddr.slice(0,8));
+                // If connecting from Telegram Mini App, pre-fill handle + avatar from Telegram identity
+                if (window._isTMA && window._tgSuggestedHandle) {
+                    var _hiEl = document.getElementById('handle-input');
+                    var _avEl = document.getElementById('avatar-input');
+                    if (_hiEl && !_hiEl.value) _hiEl.value = window._tgSuggestedHandle;
+                    if (_avEl && !_avEl.value && window._tgAvatarUrl) _avEl.value = window._tgAvatarUrl;
+                    userHandle = window._tgSuggestedHandle;
+                    if (window._tgAvatarUrl) userAvatar = window._tgAvatarUrl;
+                    updateUI();
+                }
                 // Send welcome message from Ashley to new user
                 if (typeof window._sendWelcomeMessage === 'function') {
                     window._sendWelcomeMessage(walletAddr).catch(function() {});
@@ -15129,7 +15254,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     function copyReferralLink() {
         var addr = (typeof userAddress !== 'undefined') ? userAddress : window.userAddress;
         if (!addr) { showToast('Connect your wallet first'); return; }
-        var link = 'https://socialhubglobal.com?ref=' + addr.toLowerCase();
+        var link = 'https://socialhubapertum.com?ref=' + addr.toLowerCase();
         navigator.clipboard.writeText(link).then(function() {
             showToast('Referral link copied!');
         }).catch(function() {
@@ -21047,11 +21172,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var nameEl    = document.getElementById('comm-feed-name');
         var descEl    = document.getElementById('comm-feed-desc');
         if (bannerImg) {
-            if (comm.headerImg) { bannerImg.src = comm.headerImg; bannerImg.style.display = 'block'; }
+            if (comm.headerImg) { bannerImg.src = comm.headerImg; bannerImg.style.objectPosition = comm.headerImgPosition || '50% 50%'; bannerImg.style.display = 'block'; }
             else bannerImg.style.display = 'none';
         }
         if (nameEl) nameEl.textContent = comm.name || 'Hub';
         if (descEl) descEl.textContent = comm.description || '';
+        _setHubWebsiteDisplay(comm.website || '');
         // Hub Rules display
         var _rulesSec  = document.getElementById('comm-rules-section');
         var _rulesText = document.getElementById('comm-rules-text');
@@ -21647,6 +21773,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
                 if (_bp) _bp.value = _savedPos;
             }
+            var _w = document.getElementById('comm-edit-website');
+            if (_w) _w.value = _activeCommunity.website || '';
             var _se  = document.getElementById('comm-edit-sub-enabled');
             var _sp  = document.getElementById('comm-edit-sub-price');
             var _spr = document.getElementById('comm-edit-sub-price-row');
@@ -21665,6 +21793,31 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     window.toggleCommEditPanel = toggleCommEditPanel;
 
+    // ─── Hub website helpers ─────────────────────────────────────────────────────
+    function _normalizeWebsiteUrl(raw) {
+        var u = (raw || '').trim();
+        if (!u) return '';
+        if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+        try {
+            var parsed = new URL(u);
+            if (!/\./.test(parsed.hostname)) return '';   // must look like a real domain
+            return parsed.href;
+        } catch (_) { return ''; }
+    }
+    function _setHubWebsiteDisplay(url) {
+        var el = document.getElementById('comm-feed-website');
+        if (!el) return;
+        if (url) {
+            var label = url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+            el.innerHTML = '🔗 <a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer" ' +
+                'style="color:var(--teal); text-decoration:none; font-weight:600;">' + escHtml(label) + '</a>';
+            el.style.display = 'block';
+        } else {
+            el.innerHTML = '';
+            el.style.display = 'none';
+        }
+    }
+
     // ─── Save Hub edits to Firestore ─────────────────────────────────────────────
     async function saveEditCommunityHub() {
         if (!_activeCommunity || !userAddress) return;
@@ -21675,6 +21828,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var desc       = (document.getElementById('comm-edit-desc')?.value || '').trim();
         var img        = (document.getElementById('comm-edit-img')?.value  || '').trim();
         var imgPos     = (document.getElementById('comm-edit-img-position')?.value || '50% 50%').trim();
+        var website    = _normalizeWebsiteUrl(document.getElementById('comm-edit-website')?.value || '');
         var rules      = (document.getElementById('comm-edit-rules')?.value || '').trim();
         var subEnabled = !!(document.getElementById('comm-edit-sub-enabled')?.checked);
         var subPrice   = parseInt(document.getElementById('comm-edit-sub-price')?.value || '20', 10);
@@ -21687,7 +21841,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
         if (!name) return showToast('Hub name cannot be empty.');
         try {
-            var _updFields = { name: name, description: desc, headerImg: img, headerImgPosition: imgPos, rulesText: rules, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice, coMods: coMods, postingMode: postingMode, postingFee: postingFee };
+            var _updFields = { name: name, description: desc, website: website, headerImg: img, headerImgPosition: imgPos, rulesText: rules, subscriptionsEnabled: subEnabled, subscriptionPrice: subPrice, coMods: coMods, postingMode: postingMode, postingFee: postingFee };
             await window.fs.updateDoc(
                 window.fs.doc(window.db, 'communities', _activeCommunity.id),
                 _updFields
@@ -21700,6 +21854,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var rulesSec  = document.getElementById('comm-rules-section');
             if (nameEl)    nameEl.textContent = name;
             if (descEl)    descEl.textContent = desc;
+            _setHubWebsiteDisplay(website);
             if (bannerImg) {
                 if (img) { bannerImg.src = img; bannerImg.style.objectPosition = imgPos; bannerImg.style.display = 'block'; }
                 else       bannerImg.style.display = 'none';
@@ -22267,6 +22422,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var name        = (document.getElementById('comm-name-input')?.value  || '').trim();
         var desc        = (document.getElementById('comm-desc-input')?.value  || '').trim();
         var imgUrl      = (document.getElementById('comm-img-input')?.value   || '').trim();
+        var imgPos      = (document.getElementById('comm-create-img-position')?.value || '50% 50%').trim();
+        var website     = _normalizeWebsiteUrl(document.getElementById('comm-website-input')?.value || '');
         var alias       = (document.getElementById('comm-alias-input')?.value || '').trim().toLowerCase();
         var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'open');
         var postingFee  = parseFloat(document.getElementById('comm-create-posting-fee')?.value || '0');
@@ -22356,6 +22513,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 name:        name,
                 description: desc,
                 headerImg:   imgUrl,
+                headerImgPosition: imgPos,
+                website:     website,
                 ownerId:     userAddress,
                 ownerName:   ownerName,
                 createdAt:   Date.now(),
@@ -22374,6 +22533,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var n  = document.getElementById('comm-name-input');  if (n)  n.value = '';
             var d2 = document.getElementById('comm-desc-input');  if (d2) d2.value = '';
             var im = document.getElementById('comm-img-input');   if (im) im.value = '';
+            var wb = document.getElementById('comm-website-input'); if (wb) wb.value = '';
             var al = document.getElementById('comm-alias-input'); if (al) { al.value = ''; al.dataset.userEdited = 'false'; }
             var hint = document.getElementById('alias-hint');
             if (hint) { hint.className = 'alias-hint'; hint.innerHTML = 'Optional. Creates a shareable link like <strong>?hub=your-handle</strong>. Letters, numbers, and hyphens only. Free for all Hub creators.'; }
@@ -22386,6 +22546,194 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     window.submitStartCommunity = submitStartCommunity;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STAR LOTTERY — daily raffle (ported from Global; APTM CF + USD labels)
+    // ═══════════════════════════════════════════════════════════════════════
+    var _LOTTERY_CF         = 'https://us-central1-socialhubaptm.cloudfunctions.net';
+    var _lotteryQty         = 1;
+    var _lotteryRound       = null;
+    var _lotteryUnsub       = null;
+    var _lotteryCountdownIv = null;
+
+    function setLotteryQty(qty) {
+        _lotteryQty = qty;
+        document.querySelectorAll('.lqb').forEach(function(b) {
+            var active = parseInt(b.getAttribute('data-qty')) === qty;
+            b.style.background = active ? 'rgba(168,85,247,0.45)' : 'rgba(168,85,247,0.1)';
+            b.style.borderColor = active ? 'rgba(168,85,247,0.9)' : 'rgba(168,85,247,0.4)';
+        });
+        var btn = document.getElementById('lottery-buy-btn');
+        if (btn) btn.textContent = 'Buy ' + qty + ' Ticket' + (qty > 1 ? 's' : '') + ' · ' + (qty * 10) + '★';
+    }
+    window.setLotteryQty = setLotteryQty;
+
+    function toggleLotteryCard() {
+        var body = document.getElementById('lottery-body');
+        var chev = document.getElementById('lottery-chevron');
+        if (!body) return;
+        var collapsed = body.style.display === 'none';
+        body.style.display = collapsed ? '' : 'none';
+        if (chev) chev.style.transform = collapsed ? '' : 'rotate(-90deg)';
+        try { localStorage.setItem('sh_lottery_collapsed', collapsed ? '0' : '1'); } catch(_) {}
+    }
+    window.toggleLotteryCard = toggleLotteryCard;
+
+    function loadLottery() {
+        if (!window.db || !window.fs) { setTimeout(loadLottery, 800); return; }
+        window.fs.onSnapshot(window.fs.doc(window.db, 'lottery_meta', 'config'), function(metaSnap) {
+            var card = document.getElementById('lottery-card');
+            if (!metaSnap.exists()) { if (card) card.style.display = 'none'; return; }
+            var meta    = metaSnap.data();
+            var roundId = meta.currentRoundId;
+            if (meta.lastWinner) {
+                var lwEl = document.getElementById('lottery-last-winner');
+                if (lwEl) { lwEl.style.display = 'block'; lwEl.innerHTML = '🏆 Last winner: <strong>' + meta.lastWinner + '</strong> won ' + (meta.lastWinnerAmount || 0) + '★'; }
+            }
+            var st = document.getElementById('lottery-admin-status');
+            if (st) st.textContent = roundId ? ('Round: ' + String(roundId).slice(0,10) + '… | active') : 'No active round.';
+            if (!roundId) { if (card) card.style.display = 'none'; return; }
+            if (_lotteryUnsub) _lotteryUnsub();
+            _lotteryUnsub = window.fs.onSnapshot(window.fs.doc(window.db, 'lottery_rounds', roundId), function(rSnap) {
+                if (!rSnap.exists()) return;
+                _lotteryRound = Object.assign({ id: roundId }, rSnap.data());
+                _renderLotteryCard(_lotteryRound);
+            });
+        });
+    }
+    window.loadLottery = loadLottery;
+
+    function _renderLotteryCard(round) {
+        var card = document.getElementById('lottery-card');
+        if (!card) return;
+        if (round.status === 'complete') { card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        var pot = round.pot || 0;
+        var el  = document.getElementById('lottery-pot');
+        if (el) el.textContent = pot.toLocaleString() + '★';
+        var sub = document.getElementById('lottery-pot-sub');
+        if (sub) sub.textContent = '≈ $' + (pot * 0.01).toFixed(2) + ' USD · Winner gets ' + Math.round(pot * 0.8) + '★';
+        var wEl = document.getElementById('lottery-wallets');
+        var tEl = document.getElementById('lottery-tickets');
+        if (wEl) wEl.textContent = (round.walletCount || 0).toLocaleString();
+        if (tEl) tEl.textContent = (round.totalTickets || 0).toLocaleString();
+        var rvEl = document.getElementById('lottery-rollover');
+        if (rvEl) {
+            if ((round.rollovers || 0) > 0) {
+                rvEl.style.display = 'block';
+                rvEl.textContent = '🔄 Jackpot has rolled over ' + round.rollovers + 'x — pot keeps growing until 2+ players enter!';
+            } else { rvEl.style.display = 'none'; }
+        }
+        var buyEl = document.getElementById('lottery-buy-section');
+        var conEl = document.getElementById('lottery-connect-prompt');
+        if (window.userAddress) {
+            if (buyEl) buyEl.style.display = 'block';
+            if (conEl) conEl.style.display = 'none';
+            _loadMyLotteryTickets(round.id, round.totalTickets || 1);
+        } else {
+            if (buyEl) buyEl.style.display = 'none';
+            if (conEl) conEl.style.display = 'block';
+        }
+        if (_lotteryCountdownIv) clearInterval(_lotteryCountdownIv);
+        _updateLotteryCountdown(round.endsAt);
+        _lotteryCountdownIv = setInterval(function() { _updateLotteryCountdown(round.endsAt); }, 1000);
+        setLotteryQty(_lotteryQty);
+        try {
+            if (localStorage.getItem('sh_lottery_collapsed') === '1') {
+                var lb = document.getElementById('lottery-body');
+                var lc = document.getElementById('lottery-chevron');
+                if (lb) lb.style.display = 'none';
+                if (lc) lc.style.transform = 'rotate(-90deg)';
+            }
+        } catch(_) {}
+    }
+
+    function _updateLotteryCountdown(endsAt) {
+        var el   = document.getElementById('lottery-countdown');
+        if (!el) return;
+        var rem  = Math.max(0, endsAt - Date.now());
+        var h    = Math.floor(rem / 3600000);
+        var m    = Math.floor((rem % 3600000) / 60000);
+        var s    = Math.floor((rem % 60000) / 1000);
+        el.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        el.style.color = rem < 3600000 ? 'rgba(239,68,68,0.95)' : 'rgba(168,85,247,0.9)';
+        if (rem === 0) el.textContent = 'Drawing...';
+    }
+
+    async function _loadMyLotteryTickets(roundId, totalTickets) {
+        if (!window.userAddress || !window.db) return;
+        try {
+            var snap = await window.fs.getDoc(window.fs.doc(window.db, 'lottery_entries', roundId + '_' + window.userAddress.toLowerCase()));
+            var myEl = document.getElementById('lottery-my-tickets');
+            if (snap.exists() && snap.data().tickets > 0) {
+                var t    = snap.data().tickets;
+                var pct  = totalTickets > 0 ? Math.round(t / totalTickets * 100) : 0;
+                if (myEl) { myEl.style.display = 'block'; myEl.textContent = '🎟 You have ' + t + ' ticket' + (t > 1 ? 's' : '') + ' — ' + pct + '% chance of winning'; }
+            } else {
+                if (myEl) myEl.style.display = 'none';
+            }
+        } catch(_) {}
+    }
+
+    async function buyLotteryTickets() {
+        if (!window.userAddress) return showToast('Connect your wallet first.');
+        if (!_lotteryRound || _lotteryRound.status !== 'open') return showToast('No active lottery round.');
+        var qty  = _lotteryQty || 1;
+        var cost = qty * 10;
+        var btn  = document.getElementById('lottery-buy-btn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Buying...'; }
+        try {
+            var resp = await fetch(_LOTTERY_CF + '/buyLotteryTickets', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userAddress: window.userAddress, userHandle: (window.userHandle || 'Anonymous'), quantity: qty })
+            });
+            var data = await resp.json();
+            if (data.error) { showToast(data.error); return; }
+            showToast('🎰 ' + qty + ' ticket' + (qty > 1 ? 's' : '') + ' bought! You have ' + data.tickets + ' in this round.');
+            if (typeof deductStars === 'function') deductStars(cost);
+        } catch(e) {
+            showToast('Network error. Try again.');
+        } finally {
+            if (btn) { btn.disabled = false; setLotteryQty(_lotteryQty); }
+        }
+    }
+    window.buyLotteryTickets = buyLotteryTickets;
+
+    // Admin lottery helpers — owner-only UI inside the Master Commander Dashboard
+    async function adminInitLottery() {
+        if (!window.userAddress) return;
+        var resp = await fetch(_LOTTERY_CF + '/createLotteryRound', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminAddress: window.userAddress })
+        });
+        var data = await resp.json();
+        showToast(data.ok ? '✅ Round created: ' + (data.roundId || '').slice(0,8) + '…' : (data.error || 'Error'));
+    }
+    window.adminInitLottery = adminInitLottery;
+    async function adminSeedLottery() {
+        var amt = prompt('Seed pot with how many ★?', '200');
+        if (!amt || isNaN(parseFloat(amt))) return;
+        var resp = await fetch(_LOTTERY_CF + '/seedLotteryPot', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminAddress: window.userAddress, amount: parseFloat(amt) })
+        });
+        var data = await resp.json();
+        showToast(data.ok ? '✅ Pot seeded with ' + amt + '★' : (data.error || 'Error'));
+    }
+    window.adminSeedLottery = adminSeedLottery;
+    async function adminDrawLottery() {
+        if (!await _shConfirm('Force draw the lottery now?')) return;
+        var resp = await fetch(_LOTTERY_CF + '/drawLottery', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminAddress: window.userAddress })
+        });
+        var data = await resp.json();
+        if (data.rolledOver) return showToast('⚠️ Rolled over — need 2+ players.');
+        showToast(data.ok ? '🏆 Winner: ' + data.winner + ' — ' + data.winnerAmount + '★' : (data.error || 'Error'));
+    }
+    window.adminDrawLottery = adminDrawLottery;
+
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ if (typeof loadLottery === 'function') loadLottery(); }, 1200); });
 
     // Replace global handleBroadcast with the unified Index 25 version
     window.handleBroadcast = handleBroadcastWithSignal;
@@ -24275,7 +24623,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const a = e.target.closest('a');
         if (!a || !a.href) return;
         const href = a.href;
-        if (href.startsWith('javascript:') || href.includes('socialhubglobal.com')) return;
+        if (href.startsWith('javascript:') || href.includes('socialhubapertum.com')) return;
         e.preventDefault();
         if (await _shConfirm(
             'You are leaving SocialHub\n' +
@@ -26509,7 +26857,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     function _buildPostShareUrl(postId) {
         try {
-            var fnBase = 'https://share.socialhubglobal.com';
+            var fnBase = 'https://socialhubaptm.web.app';
             var url = new URL(fnBase);
             url.searchParams.set('post', postId);
             // Cache-bust: Telegram caches per URL, so each share gets a unique
@@ -26517,7 +26865,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             url.searchParams.set('t', Date.now());
             return url.toString();
         } catch (_) {
-            return 'https://share.socialhubglobal.com/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
+            return 'https://socialhubaptm.web.app/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
         }
     }
 
@@ -26678,7 +27026,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             ctx.fillText('SocialHub', 28, 40);
             ctx.fillStyle = '#2dd4bf';
             ctx.font = '11px "Sora", "Segoe UI", sans-serif';
-            ctx.fillText('socialhubglobal.com  \u00b7  Earn APTM', 28, 58);
+            ctx.fillText('socialhubapertum.com  \u00b7  Earn APTM', 28, 58);
 
             // Divider
             ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
@@ -26790,7 +27138,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                   '<div style="display:flex;gap:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);">' +
                     '<span style="font-size:0.75rem;color:rgba(255,255,255,0.38);">\u2764 ' + hypeCount + ' likes</span>' +
                     '<span style="font-size:0.75rem;color:rgba(255,255,255,0.38);">\ud83d\udcac ' + (cmtCount||'0') + ' comments</span>' +
-                    '<span style="margin-left:auto;font-size:0.68rem;color:rgba(255,255,255,0.22);">socialhubglobal.com</span>' +
+                    '<span style="margin-left:auto;font-size:0.68rem;color:rgba(255,255,255,0.22);">socialhubapertum.com</span>' +
                   '</div>' +
                 '</div>' +
               '</div>' +
@@ -30132,6 +30480,132 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if(fb) fb.disabled = true;
         if(typeof window._battleFollow === 'function') await window._battleFollow(window._lsibHostAddr);
         if(fb) fb.style.display = 'none';
+    };
+
+    // ── Creator profile bottom sheet (tap live host info bar) ──────
+    var _cpHostAddr = null;
+
+    window._openCreatorProfile = async function() {
+        if(!window._lsibHostAddr) return;
+        _cpHostAddr = window._lsibHostAddr;
+
+        var sheet  = document.getElementById('cp-sheet');
+        var scrim  = document.getElementById('cp-scrim');
+        if(!sheet || !scrim) return;
+
+        // Populate immediately from data already in the info bar
+        var nameEl = document.getElementById('lsib-name');
+        var avEl   = document.getElementById('lsib-av');
+        setText('cp-name', nameEl ? nameEl.textContent : 'Creator');
+        var addrShort = _cpHostAddr.slice(0,6) + '…' + _cpHostAddr.slice(-4);
+        setText('cp-addr', addrShort);
+        var cpAv = document.getElementById('cp-avatar');
+        if(cpAv) cpAv.src = avEl ? avEl.src : '';
+        setText('cp-bio', '');
+        setText('cp-followers', '—');
+        setText('cp-following', '—');
+        setText('cp-stars', '—');
+
+        // Follow button state
+        var fb = document.getElementById('cp-follow-btn');
+        var myA = (window.userAddress || '').toLowerCase();
+        var isOwn = myA && myA === _cpHostAddr;
+        if(fb) fb.style.display = isOwn ? 'none' : '';
+        var isFollowing = typeof window._isFollowing === 'function' ? window._isFollowing(_cpHostAddr) : false;
+        if(fb) { fb.textContent = isFollowing ? '✓ Following' : '+ Follow'; fb.classList.toggle('following', isFollowing); }
+
+        // Show immediately
+        scrim.classList.add('open');
+        setTimeout(function(){ sheet.classList.add('open'); }, 10);
+
+        // Lazy-load bio, followers, following, creator stars
+        if(!window.db || !window.fs) return;
+        try {
+            var { getDoc, doc, query, collection, where, getDocs } = window.fs;
+
+            // User profile (bio, displayName, avatar override)
+            var uSnap = await getDoc(doc(window.db, 'users', _cpHostAddr));
+            if(uSnap.exists()) {
+                var ud = uSnap.data();
+                if(ud.displayName) setText('cp-name', ud.displayName);
+                if(ud.bio)        { setText('cp-bio', ud.bio); }
+                if(ud.avatarUrl && cpAv) cpAv.src = ud.avatarUrl;
+                // Render profile badges
+                var bdg = ud.badges || {};
+
+                // Verified tick — inline with cp-name
+                var _cpNameEl = document.getElementById('cp-name');
+                if (_cpNameEl) {
+                    var _cpNameText = _cpNameEl.textContent.trim();
+                    if (bdg.verified) {
+                        _cpNameEl.innerHTML = _cpNameText + '<span class="sh-verified-tick" title="Verified Creator"><svg viewBox="0 0 9 7" fill="none"><polyline points="1,3.5 3.2,5.5 8,1" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+                    } else {
+                        _cpNameEl.textContent = _cpNameText;
+                    }
+                }
+
+                // Achievement icons in cp-badges (Genesis omitted per scope)
+                var bdgEl = document.getElementById('cp-badges');
+                if (bdgEl) {
+                    var _cpBdgHtml = '';
+                    if (bdg.firstEarnings) {
+                        _cpBdgHtml += '<span class="achievement-icon ach-first-earn" data-label="First Earnings" title="First Earnings"><svg viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.2" stroke="rgba(134,239,172,0.75)" stroke-width="1.3"/><polyline points="4,6.2 5.5,7.8 8.2,4.2" stroke="rgba(134,239,172,0.95)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+                    }
+                    bdgEl.innerHTML = _cpBdgHtml;
+                    bdgEl.style.display = _cpBdgHtml ? 'flex' : 'none';
+                    bdgEl.style.justifyContent = 'center';
+                    bdgEl.style.gap = '6px';
+                }
+            }
+
+            // Follower count
+            var follQ = query(collection(window.db, 'social_graph'), where('following', '==', _cpHostAddr));
+            var follSnap = await getDocs(follQ);
+            setText('cp-followers', _fmtNum(follSnap.size));
+
+            // Following count
+            var fngQ = query(collection(window.db, 'social_graph'), where('follower', '==', _cpHostAddr));
+            var fngSnap = await getDocs(fngQ);
+            setText('cp-following', _fmtNum(fngSnap.size));
+
+            // Creator stars earned (from user_balances)
+            var balSnap = await getDoc(doc(window.db, 'user_balances', _cpHostAddr));
+            if(balSnap.exists()) {
+                var bald = balSnap.data();
+                var earned = parseFloat(bald.creatorStars || 0);
+                setText('cp-stars', _fmtNum(Math.round(earned)) + ' ★');
+            }
+        } catch(e) { console.warn('[CreatorProfile]', e); }
+    };
+
+    function _fmtNum(n) {
+        if(n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + 'M';
+        if(n >= 1000)    return (n/1000).toFixed(1).replace(/\.0$/,'') + 'K';
+        return String(n);
+    }
+
+    window._closeCreatorProfile = function() {
+        var sheet = document.getElementById('cp-sheet');
+        var scrim = document.getElementById('cp-scrim');
+        if(sheet) sheet.classList.remove('open');
+        if(scrim) scrim.classList.remove('open');
+        _cpHostAddr = null;
+    };
+
+    window._cpFollow = async function() {
+        if(!_cpHostAddr) return;
+        var fb = document.getElementById('cp-follow-btn');
+        if(fb) fb.disabled = true;
+        if(typeof window._battleFollow === 'function') await window._battleFollow(_cpHostAddr);
+        var isNowFollowing = typeof window._isFollowing === 'function' ? window._isFollowing(_cpHostAddr) : false;
+        if(fb) {
+            fb.textContent = isNowFollowing ? '✓ Following' : '+ Follow';
+            fb.classList.toggle('following', isNowFollowing);
+            fb.disabled = false;
+        }
+        // Hide the main info bar follow button too
+        var mainFb = document.getElementById('lsib-follow');
+        if(mainFb) mainFb.style.display = 'none';
     };
 
     // ── Info bar heart button — gives 1★ to creator (24-hour cooldown) ──
@@ -36031,6 +36505,37 @@ function _copyReplayLink(link) {
         </div>
     </div>
 </div>
+<!-- ── CREATOR PROFILE BOTTOM SHEET (tap live host info bar) ────────── -->
+<div id="cp-scrim" onclick="window._closeCreatorProfile()"></div>
+<div id="cp-sheet">
+    <div class="cp-handle"></div>
+    <button class="cp-close" onclick="window._closeCreatorProfile()">✕</button>
+    <div class="cp-avatar-wrap">
+        <img id="cp-avatar" src="" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=x'" class="cp-avatar">
+    </div>
+    <div class="cp-name" id="cp-name"></div>
+    <div class="cp-addr" id="cp-addr"></div>
+    <div class="cp-bio"  id="cp-bio"></div>
+    <div class="cp-stats">
+        <div class="cp-stat">
+            <span class="cp-stat-val" id="cp-followers">—</span>
+            <span class="cp-stat-lbl">Followers</span>
+        </div>
+        <div class="cp-stat-divider"></div>
+        <div class="cp-stat">
+            <span class="cp-stat-val" id="cp-following">—</span>
+            <span class="cp-stat-lbl">Following</span>
+        </div>
+        <div class="cp-stat-divider"></div>
+        <div class="cp-stat">
+            <span class="cp-stat-val" id="cp-stars">—</span>
+            <span class="cp-stat-lbl">Stars Earned</span>
+        </div>
+    </div>
+    <div class="cp-badges" id="cp-badges" style="display:none;"></div>
+    <button id="cp-follow-btn" class="cp-follow-btn" onclick="window._cpFollow()">+ Follow</button>
+</div>
+
 <!-- ══ MARKETPLACE MODALS ════════════════════════════════════════════ -->
 
 <!-- Create Listing Modal -->
@@ -39094,6 +39599,129 @@ window.toggleCreatorAnalytics = function() {
     </div>
 </div>
 
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// TELEGRAM MINI APP — init, expand, back button, wallet UI adaptation
+// Runs only when the page is loaded inside Telegram's WebView.
+// Safe no-op in all other environments.
+// ═══════════════════════════════════════════════════════════════════════
+(function _initTMA() {
+    var _tgWA = window.Telegram && window.Telegram.WebApp;
+
+    var _isTMA = !!(_tgWA && _tgWA.initData && _tgWA.initData.length > 0);
+    window._isTMA = _isTMA;
+    if (!_isTMA) return;
+
+    _tgWA.ready();
+    _tgWA.expand();
+
+    if (_tgWA.colorScheme === 'light') {
+        try { localStorage.setItem('sh_theme', 'light'); } catch(_) {}
+        document.documentElement.classList.remove('dark');
+    }
+
+    var _tgUser = (_tgWA.initDataUnsafe && _tgWA.initDataUnsafe.user) || {};
+    window._tgSuggestedHandle = _tgUser.username
+        ? '@' + _tgUser.username
+        : (_tgUser.first_name || '');
+    window._tgAvatarUrl = _tgUser.photo_url || '';
+
+    function _adaptWalletUI() {
+        var mmBtn  = document.getElementById('wdd-mm-btn');
+        var xoBtn  = document.getElementById('wdd-xova-btn');
+        var wcSub  = document.getElementById('wdd-wc-sub');
+        var hdr    = document.querySelector('#wdd-connect-section > div');
+
+        if (mmBtn)  mmBtn.style.display  = 'none';
+        if (xoBtn)  xoBtn.style.display  = 'none';
+        if (wcSub)  wcSub.textContent    = 'Recommended inside Telegram';
+
+        if (hdr && !document.getElementById('wdd-tma-notice')) {
+            var n = document.createElement('div');
+            n.id = 'wdd-tma-notice';
+            n.style.cssText = 'padding:5px 12px 2px;font-size:0.65rem;color:rgba(45,212,191,0.9);font-weight:600;display:flex;align-items:center;gap:5px;';
+            n.innerHTML = '<span>&#9992;</span> Running in Telegram &mdash; connect with WalletConnect';
+            hdr.after(n);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _adaptWalletUI);
+    } else {
+        _adaptWalletUI();
+    }
+
+    var _tgBack = _tgWA.BackButton;
+
+    function _syncBackBtn() {
+        var inHub = !!(window._activeCommunity ||
+            (window.location.search && new URLSearchParams(window.location.search).get('hub')));
+        if (inHub) { _tgBack.show(); } else { _tgBack.hide(); }
+    }
+    window._syncTgBackButton = _syncBackBtn;
+
+    _tgBack.onClick(function() {
+        if (window._activeCommunity && typeof commHandleBack === 'function') {
+            commHandleBack();
+        } else {
+            window.history.back();
+        }
+        setTimeout(_syncBackBtn, 300);
+    });
+
+    window.addEventListener('popstate', function() { setTimeout(_syncBackBtn, 150); });
+
+    function _patchFeedFns() {
+        if (window.openCommunityFeed && !window._tgFeedPatched) {
+            var _origOpen  = window.openCommunityFeed;
+            var _origClose = window.closeCommunityFeed;
+            window.openCommunityFeed = function() {
+                var r = _origOpen.apply(this, arguments);
+                setTimeout(_syncBackBtn, 200);
+                return r;
+            };
+            if (_origClose) {
+                window.closeCommunityFeed = function() {
+                    var r = _origClose.apply(this, arguments);
+                    setTimeout(_syncBackBtn, 200);
+                    return r;
+                };
+            }
+            window._tgFeedPatched = true;
+        }
+    }
+    _patchFeedFns();
+    document.addEventListener('DOMContentLoaded', _patchFeedFns);
+    setTimeout(_patchFeedFns, 1500);
+
+    console.log('[TMA] Telegram Mini App initialised. User:', window._tgSuggestedHandle || '(no username)');
+})();
+
+// ── Telegram community banner helpers ────────────────────────────────
+function joinSocialHubTelegram() {
+    var url = 'https://t.me/SocialHubApertum';
+    if (window._isTMA && window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+        window.open(url, '_blank');
+    }
+}
+function dismissTgBanner() {
+    var b = document.getElementById('tg-community-banner');
+    if (b) b.style.display = 'none';
+    try { localStorage.setItem('sh_tg_banner_dismissed', '1'); } catch(_) {}
+}
+// Hide banner immediately if previously dismissed
+(function() {
+    try {
+        if (localStorage.getItem('sh_tg_banner_dismissed') === '1') {
+            var b = document.getElementById('tg-community-banner');
+            if (b) b.style.display = 'none';
+        }
+    } catch(_) {}
+})();
+</script>
 </body>
 </html>
 
