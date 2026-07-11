@@ -10389,7 +10389,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <span style="font-size:1.3rem;">🎰</span>
                             <div>
                                 <div style="font-size:0.72rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;">Star Lottery</div>
-                                <div style="font-size:0.62rem;color:var(--text-muted);">Daily draw · 80% to winner · 10★ per ticket</div>
+                                <div style="font-size:0.62rem;color:var(--text-muted);">Daily draw · 80% to winner · 10★ (≈ $0.10 USD) per ticket</div>
                             </div>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
@@ -10400,7 +10400,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <div id="lottery-body">
                     <div style="text-align:center;margin-bottom:14px;">
                         <div id="lottery-pot" style="font-size:2.4rem;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1.1;">0★</div>
-                        <div id="lottery-pot-sub" style="font-size:0.68rem;color:var(--teal);font-weight:600;margin-top:2px;">≈ $0.00 USD · Winner gets 0★</div>
+                        <div id="lottery-pot-sub" style="font-size:0.68rem;color:var(--teal);font-weight:600;margin-top:2px;">Winner gets 0★ (≈ $0.00 USD)</div>
                     </div>
                     <div style="display:flex;justify-content:center;gap:24px;margin-bottom:14px;">
                         <div style="text-align:center;">
@@ -22622,7 +22622,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var roundId = meta.currentRoundId;
             if (meta.lastWinner) {
                 var lwEl = document.getElementById('lottery-last-winner');
-                if (lwEl) { lwEl.style.display = 'block'; lwEl.innerHTML = '🏆 Last winner: <strong>' + meta.lastWinner + '</strong> won ' + (meta.lastWinnerAmount || 0) + '★'; }
+                if (lwEl) { lwEl.style.display = 'block'; lwEl.innerHTML = '🏆 Last winner: <strong>' + meta.lastWinner + '</strong> won ' + (meta.lastWinnerAmount || 0) + '★ (≈ $' + ((meta.lastWinnerAmount || 0) * 0.01).toFixed(2) + ' USD)'; }
             }
             var st = document.getElementById('lottery-admin-status');
             if (st) st.textContent = roundId ? ('Round: ' + String(roundId).slice(0,10) + '… | active') : 'No active round.';
@@ -22644,9 +22644,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         card.style.display = 'block';
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
-        if (el) el.textContent = pot.toLocaleString() + '★';
+        if (el) el.textContent = pot.toLocaleString() + '★ (≈ $' + (pot * 0.01).toFixed(2) + ' USD)';
         var sub = document.getElementById('lottery-pot-sub');
-        if (sub) sub.textContent = '≈ $' + (pot * 0.01).toFixed(2) + ' USD · Winner gets ' + Math.round(pot * 0.8) + '★';
+        if (sub) sub.textContent = 'Winner gets ' + Math.round(pot * 0.8) + '★ (≈ $' + (Math.round(pot * 0.8) * 0.01).toFixed(2) + ' USD)';
         var wEl = document.getElementById('lottery-wallets');
         var tEl = document.getElementById('lottery-tickets');
         if (wEl) wEl.textContent = (round.walletCount || 0).toLocaleString();
