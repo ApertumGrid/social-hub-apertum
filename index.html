@@ -22719,7 +22719,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         try {
             var resp = await fetch(_LOTTERY_CF + '/buyLotteryTickets', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userAddress: window.userAddress, userHandle: (window.userHandle || 'Anonymous'), quantity: qty })
+                body: JSON.stringify({ userAddress: window.userAddress, userHandle: (userHandle || window.userHandle || 'Anonymous'), quantity: qty })
             });
             var data = await resp.json();
             if (data.error) { showToast(data.error); return; }
