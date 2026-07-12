@@ -6399,6 +6399,36 @@
         }
         #platform-qr-btn:hover { border-color: rgba(124,92,191,0.5); color: var(--purple-lt); }
         @media (max-width: 768px) { #platform-qr-btn { display: none !important; } }
+        /* ── Language selector (Google Translate — temporary until a native selector ships) ── */
+        #lang-select-wrap {
+            display: inline-flex; align-items: center; gap: 4px;
+            height: 32px; padding: 0 10px 0 11px; border-radius: 20px; box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+            transition: border-color 0.15s; flex-shrink: 0;
+        }
+        #lang-select-wrap:hover { border-color: rgba(124,92,191,0.5); }
+        #lang-select-wrap .lang-globe { font-size: 0.9rem; line-height: 1; opacity: 0.8; pointer-events: none; }
+        #google_translate_element { display: inline-flex; align-items: center; line-height: 1; }
+        /* Strip Google's default gadget chrome — keep only the <select> */
+        #google_translate_element .goog-te-gadget { font-size: 0 !important; line-height: 0 !important; color: transparent !important; }
+        #google_translate_element .goog-te-gadget > span,
+        #google_translate_element .goog-te-gadget img,
+        #google_translate_element .goog-logo-link { display: none !important; }
+        #google_translate_element .goog-te-combo {
+            margin: 0 !important; padding: 0 2px !important; height: auto !important;
+            background: transparent !important; color: var(--text-secondary) !important;
+            border: 0 !important; outline: 0 !important; box-shadow: none !important;
+            font-family: var(--font-body, inherit) !important; font-size: 0.75rem !important; font-weight: 600 !important;
+            cursor: pointer !important; max-width: 120px; -webkit-appearance: none; appearance: none;
+        }
+        #google_translate_element .goog-te-combo:hover { color: var(--purple-lt) !important; }
+        #google_translate_element .goog-te-combo option { color: #111; background: #fff; }
+        /* Suppress Google's injected top banner + tooltip and stop the page being pushed down */
+        .goog-te-banner-frame, .goog-te-banner-frame.skiptranslate { display: none !important; }
+        #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+        .goog-text-highlight { background: none !important; box-shadow: none !important; }
+        body { top: 0 !important; }
+        @media (max-width: 480px) { #google_translate_element .goog-te-combo { max-width: 88px; font-size: 0.7rem !important; } }
         .mkt-form-label {
             font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
             text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block;
@@ -10132,6 +10162,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <span style="width:8px;height:8px;border-radius:50%;background:#e03e3e;box-shadow:0 0 6px #e03e3e;animation:vaultPulse 1.8s ease infinite;flex-shrink:0;"></span>
                 Live Stream
             </button>
+            <!-- Language selector (Google Translate — temporary) -->
+            <div id="lang-select-wrap" title="Translate this page">
+                <span class="lang-globe">🌐</span>
+                <div id="google_translate_element"></div>
+            </div>
             <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light mode">🌙</button>
             <div id="notif-wrap" style="position:relative;">
                 <button class="notif-bell-btn" id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notifications">
@@ -39885,6 +39920,17 @@ function dismissTgBanner() {
     } catch(_) {}
 })();
 </script>
+<!-- Google Translate widget (temporary language selector — top nav) -->
+<script>
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+    }, 'google_translate_element');
+}
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
 
