@@ -14958,6 +14958,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
         inputEl.value = '';
     }
+    window._uploadBannerFile = _uploadBannerFile;
 
     async function _uploadAvatarFile(inputEl) {
         const file = inputEl && inputEl.files && inputEl.files[0];
@@ -14982,6 +14983,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
         inputEl.value = '';
     }
+    window._uploadAvatarFile = _uploadAvatarFile;
 
     async function saveProfile() {
         const nameVal   = document.getElementById('handle-input').value.trim();
@@ -15001,9 +15003,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         // Always save to localStorage / window for immediate use
         localStorage.setItem('hub_userName', nameVal);
-        if (picVal) localStorage.setItem('hub_userPic', picVal);
+        if (picVal) {
+            localStorage.setItem('hub_userPic', picVal);
+        } else {
+            localStorage.removeItem('hub_userPic');
+        }
         userHandle = nameVal;
-        if (picVal) userAvatar = picVal;
+        userAvatar = picVal || '';
         window.userBannerUrl      = bannerUrl;
         window.userBannerPosition = bannerPos;
         window.userBio            = bio;
@@ -15019,7 +15025,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const userRef = window.fs.doc(window.db, "users", userAddress.toLowerCase());
                 await window.fs.setDoc(userRef, {
                     displayName:   nameVal,
-                    avatarUrl:     picVal || userAvatar,
+                    avatarUrl:     picVal || '',
                     bannerUrl:      bannerUrl,
                     bannerPosition: bannerPos,
                     bannerStyle:    _pendingBannerStyle,
@@ -27933,7 +27939,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         <div style="font-size:0.67rem;color:var(--text-muted);opacity:0.7;margin-bottom:8px;">Recommended size: 400 × 400 px — square images work best.</div>
         <input type="file" id="avatar-file-input" accept="image/jpeg,image/jpg,image/png" style="display:none;" onchange="_uploadAvatarFile(this)">
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <button onclick="document.getElementById('avatar-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
+            <button type="button" onclick="document.getElementById('avatar-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
         </div>
         <input type="text" id="avatar-input" class="field" placeholder="Or paste an image URL" style="margin-top:0;margin-bottom:0;">
         <div id="avatar-upload-status" style="font-size:0.7rem;color:var(--teal);margin-top:6px;margin-bottom:14px;display:none;"></div>
@@ -27953,7 +27959,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         <!-- Banner upload button -->
         <input type="file" id="banner-file-input" accept="image/*" style="display:none;" onchange="_uploadBannerFile(this)">
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <button onclick="document.getElementById('banner-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
+            <button type="button" onclick="document.getElementById('banner-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
             <button onclick="_clearBanner()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;" title="Remove banner">✕ Remove</button>
         </div>
         <input type="text" id="banner-input" class="field" placeholder="Or paste a banner image URL" style="margin-top:0;margin-bottom:0;" oninput="_previewBannerUrl(this.value)">
