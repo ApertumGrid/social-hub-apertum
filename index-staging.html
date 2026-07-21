@@ -14080,7 +14080,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
                 const WC_PROJECT_ID = (window.APP_CONFIG && window.APP_CONFIG.wcProjectId) || '422b74ec70be253bbdc47a7479725899';
-                var _wcIsMobile = window.innerWidth <= 900 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                var _wcIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
                 if (!window._WCEthProviderClass) {
                     showToast('Loading WalletConnect…');
                     const mod = await Promise.race([
