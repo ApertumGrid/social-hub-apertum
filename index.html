@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -14885,6 +14884,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         inputEl.value = '';
     }
 
+    async function _uploadAvatarFile(inputEl) {
+        const file = inputEl && inputEl.files && inputEl.files[0];
+        if (!file) return;
+        if (!window.storage || !window.fsStorage) {
+            return alert('Firebase Storage not ready. Try again in a moment.');
+        }
+        const statusEl = document.getElementById('avatar-upload-status');
+        if (statusEl) { statusEl.style.display = ''; statusEl.textContent = 'Uploading…'; }
+        try {
+            const path      = 'media/' + Date.now() + '_avatar_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const storRef   = window.fsStorage.ref(window.storage, path);
+            const task      = window.fsStorage.uploadBytesResumable(storRef, file);
+            await new Promise((resolve, reject) => task.on('state_changed', null, reject, resolve));
+            const downloadURL = await window.fsStorage.getDownloadURL(task.snapshot.ref);
+            const ai = document.getElementById('avatar-input');
+            if (ai) ai.value = downloadURL;
+            if (statusEl) { statusEl.textContent = '✓ Uploaded'; setTimeout(() => { statusEl.style.display = 'none'; }, 2500); }
+        } catch(e) {
+            if (statusEl) statusEl.textContent = 'Upload failed — paste a URL instead';
+            console.warn('Avatar upload:', e);
+        }
+        inputEl.value = '';
+    }
+
     async function saveProfile() {
         const nameVal   = document.getElementById('handle-input').value.trim();
         const picVal    = document.getElementById('avatar-input').value.trim();
@@ -27833,7 +27856,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         <!-- Avatar -->
         <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Profile Picture</div>
-        <input type="text" id="avatar-input" class="field" placeholder="Paste image URL" style="margin-top:0;margin-bottom:14px;">
+        <input type="file" id="avatar-file-input" accept="image/jpeg,image/jpg,image/png" style="display:none;" onchange="_uploadAvatarFile(this)">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <button onclick="document.getElementById('avatar-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
+        </div>
+        <input type="text" id="avatar-input" class="field" placeholder="Or paste an image URL" style="margin-top:0;margin-bottom:0;">
+        <div id="avatar-upload-status" style="font-size:0.7rem;color:var(--teal);margin-top:6px;margin-bottom:14px;display:none;"></div>
 
         <!-- Banner -->
         <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Cover Banner <span style="font-weight:400;text-transform:none;color:var(--text-muted);letter-spacing:0;">(optional — shows behind your avatar)</span></div>
