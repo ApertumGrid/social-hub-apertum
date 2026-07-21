@@ -14109,7 +14109,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
                     showQrModal:    !_wcIsMobile,
-                    chains:         [APTM_CHAIN_ID],
+                    chains:         [1],
+                    optionalChains: [APTM_CHAIN_ID],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
                         1:               'https://cloudflare-eth.com'
