@@ -22778,8 +22778,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var myEl = document.getElementById('lottery-my-tickets');
             if (snap.exists() && snap.data().tickets > 0) {
                 var t    = snap.data().tickets;
-                var pct  = totalTickets > 0 ? Math.round(t / totalTickets * 100) : 0;
-                if (myEl) { myEl.style.display = 'block'; myEl.textContent = '🎟 You have ' + t + ' ticket' + (t > 1 ? 's' : '') + ' — ' + pct + '% chance of winning'; }
+                if (myEl) { myEl.style.display = 'block'; myEl.textContent = '🎟 You have ' + t + ' ticket' + (t > 1 ? 's' : ''); }
             } else {
                 if (myEl) myEl.style.display = 'none';
             }
