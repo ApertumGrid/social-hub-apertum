@@ -4410,11 +4410,12 @@
         .inbox-msg-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
         .inbox-msg-head-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
         @media (max-width: 600px) {
-            .inbox-pane { grid-template-columns: 1fr; }
+            .inbox-pane { grid-template-columns: 1fr; width: 100%; max-width: 100%; box-sizing: border-box; }
             .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; }
-            .inbox-compose { padding: 8px; gap: 8px; }
+            .inbox-main { width: 100%; max-width: 100%; box-sizing: border-box; }
+            .inbox-compose { padding: 8px; gap: 8px; width: 100%; max-width: 100%; box-sizing: border-box; }
             .inbox-compose textarea { flex: 1; min-width: 0; font-size: 0.85rem; padding: 8px 10px; }
-            .inbox-compose .inbox-send-btn { flex-shrink: 0; min-width: 56px; max-width: 56px; padding: 8px 4px; font-size: 0.75rem; white-space: nowrap; }
+            .inbox-compose .inbox-send-btn { flex-shrink: 0; min-width: 54px; padding: 9px 8px; font-size: 0.75rem; }
         }
         .mcd-stream-val {
             font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
@@ -16981,6 +16982,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (categoryBarEl) { categoryBarEl.classList.remove('signals-hidden'); categoryBarEl.style.display = ''; }
             const _tcHome = document.getElementById('trending-hubs-card');
             if (_tcHome) _tcHome.style.display = '';
+            // Show lottery card on home
+            const _lotteryCard = document.getElementById('lottery-card');
+            if (_lotteryCard && _lotteryRound && _lotteryRound.status !== 'complete') _lotteryCard.style.display = 'block';
             // Restore feed-col scroll in case Flicks mode left it locked
             const _fcHome = document.getElementById('feed-col');
             if (_fcHome) _fcHome.style.overflowY = '';
@@ -17014,6 +17018,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // FIX 1: Hide signals bar and category bar on all non-home tabs
             if (signalsBarEl)  signalsBarEl.classList.add('signals-hidden');
             if (categoryBarEl) categoryBarEl.classList.add('signals-hidden');
+            // Hide lottery card on non-home tabs
+            const _lotteryCard = document.getElementById('lottery-card');
+            if (_lotteryCard) _lotteryCard.style.display = 'none';
 
             // Clean up Flicks mode if active — restores feed-col scroll and clears inline styles
             if (_followMode === 'flicks') {
@@ -22752,21 +22759,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var card = document.getElementById('lottery-card');
         if (!card) return;
         if (round.status === 'complete') { card.style.display = 'none'; return; }
-        // Only show lottery on home feed - check if any other page is visible
-        var pageProfile = document.getElementById('page-profile');
-        var pageInbox = document.getElementById('page-inbox');
-        var pageEarnings = document.getElementById('page-earnings');
-        var pageCommunities = document.getElementById('page-communities');
-        var pageMarketplace = document.getElementById('page-marketplace');
-        var pageLive = document.getElementById('page-live');
-        var isOtherPageVisible = (pageProfile && pageProfile.style.display !== 'none') ||
-                                  (pageInbox && pageInbox.style.display !== 'none') ||
-                                  (pageEarnings && pageEarnings.style.display !== 'none') ||
-                                  (pageCommunities && pageCommunities.style.display !== 'none') ||
-                                  (pageMarketplace && pageMarketplace.style.display !== 'none') ||
-                                  (pageLive && pageLive.style.display !== 'none');
-        if (isOtherPageVisible) { card.style.display = 'none'; return; }
-        card.style.display = 'block';
+        // Visibility is controlled by tab switching - only update content here
+        // (showTab handles show/hide based on active tab)
+        if (card.style.display !== 'none') card.style.display = 'block';
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
         if (el) el.textContent = pot.toLocaleString() + '★ (≈ $' + (pot * 0.01).toFixed(2) + ' USD)';
@@ -23398,6 +23393,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const signalsBar   = document.getElementById('signals-bar');
         const categoryBar  = document.getElementById('category-bar');
         const trendingCard = document.getElementById('trending-hubs-card');
+        const lotteryCard  = document.getElementById('lottery-card');
 
         if (isFlicks) {
             // Immersive full-screen Flicks (CSS targets body.flicks-active on mobile)
@@ -23405,6 +23401,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (signalsBar)   signalsBar.style.display   = 'none';
             if (categoryBar)  categoryBar.style.display  = 'none';
             if (trendingCard) trendingCard.style.display = 'none';
+            if (lotteryCard)  lotteryCard.style.display  = 'none';
             if (feedCol) feedCol.style.overflowY = 'hidden';
             setTimeout(() => {
                 if (!feedCol || !flicksFeed) return;
@@ -23426,6 +23423,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (signalsBar)   signalsBar.style.display   = '';
         if (categoryBar)  categoryBar.style.display  = '';
         if (trendingCard) trendingCard.style.display = '';
+        if (lotteryCard && _lotteryRound && _lotteryRound.status !== 'complete') lotteryCard.style.display = 'block';
         closeFlickComposer();
 
         if (mode === 'following') {
