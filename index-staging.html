@@ -14121,9 +14121,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         icons:       ['https://socialhubapertum.com/favicon.ico']
                     }
                 });
-                // Test: simple wallet sheet function
+                // Mobile wallet chooser with single-encoded deep links
                 window._wcOpenWalletSheet = function(wcUri) {
-                    alert('WalletConnect URI received: ' + wcUri.substring(0, 50));
+                    var old = document.getElementById('wc-wallet-sheet');
+                    if (old) old.remove();
+                    var enc = encodeURIComponent(wcUri);
+                    var wallets = [
+                        { name: 'MetaMask', link: 'https://metamask.app.link/wc?uri=' + enc },
+                        { name: 'Trust Wallet', link: 'https://link.trustwallet.com/wc?uri=' + enc },
+                        { name: 'Coinbase Wallet', link: 'https://go.cb-w.com/wc?uri=' + enc },
+                        { name: 'Other wallet', link: wcUri }
+                    ];
+                    var ov = document.createElement('div');
+                    ov.id = 'wc-wallet-sheet';
+                    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;';
+                    var card = document.createElement('div');
+                    card.style.cssText = 'width:100%;max-width:480px;background:#17141f;border-radius:22px 22px 0 0;padding:20px;';
+                    var html = '<div style="font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:16px;">Connect a wallet</div>';
+                    wallets.forEach(function(w) {
+                        html += '<a href="' + w.link + '" style="display:block;color:#fff;padding:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;text-decoration:none;">' + w.name + '</a>';
+                    });
+                    card.innerHTML = html;
+                    ov.appendChild(card);
+                    document.body.appendChild(ov);
+                    ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
                 };
                 if (_wcIsMobile) {
                     wcProv.on('display_uri', function(_wcUri) {
