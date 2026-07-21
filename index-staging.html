@@ -14108,7 +14108,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(_) {}
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
-                    showQrModal:    true,
+                    showQrModal:    !_wcIsMobile,
                     chains:         [1],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
