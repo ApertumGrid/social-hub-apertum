@@ -4409,7 +4409,12 @@
         .inbox-compose .inbox-send-btn { flex-shrink: 0; width: auto; min-width: 64px; padding: 8px 16px; height: auto; align-self: flex-end; }
         .inbox-msg-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
         .inbox-msg-head-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
-        @media (max-width: 600px) { .inbox-pane { grid-template-columns: 1fr; } .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; } }
+        @media (max-width: 600px) {
+            .inbox-pane { grid-template-columns: 1fr; }
+            .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; }
+            .inbox-compose { padding: 10px; gap: 6px; }
+            .inbox-compose .inbox-send-btn { min-width: 60px; padding: 8px 12px; font-size: 0.75rem; }
+        }
         .mcd-stream-val {
             font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
             color: var(--text-primary);
@@ -22746,6 +22751,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var card = document.getElementById('lottery-card');
         if (!card) return;
         if (round.status === 'complete') { card.style.display = 'none'; return; }
+        // Only show lottery on home feed
+        var pageHome = document.getElementById('page-home');
+        var isHomePage = pageHome && pageHome.style.display !== 'none';
+        if (!isHomePage) { card.style.display = 'none'; return; }
         card.style.display = 'block';
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
