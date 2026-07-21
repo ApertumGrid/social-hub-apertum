@@ -14121,10 +14121,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         icons:       ['https://socialhubapertum.com/favicon.ico']
                     }
                 });
+                // Test: simple wallet sheet function
+                window._wcOpenWalletSheet = function(wcUri) {
+                    alert('WalletConnect URI received: ' + wcUri.substring(0, 50));
+                };
                 if (_wcIsMobile) {
-                    showToast('Select your wallet app in the popup to connect');
-                } else {
-                    showToast('Scan the QR code with your wallet app to connect');
+                    wcProv.on('display_uri', function(_wcUri) {
+                        try { window._wcOpenWalletSheet(_wcUri); }
+                        catch (_e) { console.error('[WC] wallet sheet failed:', _e); }
+                    });
                 }
                 await new Promise(function(resolve, reject) {
                     var _wcDone = false;
