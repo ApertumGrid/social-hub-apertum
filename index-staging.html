@@ -14109,7 +14109,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId:      WC_PROJECT_ID,
                     showQrModal:    !_wcIsMobile,
-                    chains:         [1],
+                    chains:         [APTM_CHAIN_ID],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
                         1:               'https://cloudflare-eth.com'
@@ -14187,7 +14187,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
                 await new Promise(function(resolve, reject) {
                     var _wcDone = false;
-                    function _ok() { if (!_wcDone) { _wcDone = true; resolve(); } }
+                    function _ok() {
+                        if (!_wcDone) {
+                            _wcDone = true;
+                            var wcSheet = document.getElementById('wc-wallet-sheet');
+                            if (wcSheet) wcSheet.remove();
+                            resolve();
+                        }
+                    }
                     function _fail(e) { if (!_wcDone) { _wcDone = true; reject(e); } }
                     wcProv.once('connect', _ok);
                     wcProv.once('accountsChanged', function(accs) { if (accs && accs.length > 0) _ok(); });
