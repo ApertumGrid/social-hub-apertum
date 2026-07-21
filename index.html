@@ -4412,8 +4412,9 @@
         @media (max-width: 600px) {
             .inbox-pane { grid-template-columns: 1fr; }
             .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; }
-            .inbox-compose { padding: 10px; gap: 6px; }
-            .inbox-compose .inbox-send-btn { min-width: 60px; padding: 8px 12px; font-size: 0.75rem; }
+            .inbox-compose { padding: 8px; gap: 8px; }
+            .inbox-compose textarea { flex: 1; min-width: 0; font-size: 0.85rem; padding: 8px 10px; }
+            .inbox-compose .inbox-send-btn { flex-shrink: 0; min-width: 56px; max-width: 56px; padding: 8px 4px; font-size: 0.75rem; white-space: nowrap; }
         }
         .mcd-stream-val {
             font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
@@ -22751,10 +22752,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var card = document.getElementById('lottery-card');
         if (!card) return;
         if (round.status === 'complete') { card.style.display = 'none'; return; }
-        // Only show lottery on home feed
-        var pageHome = document.getElementById('page-home');
-        var isHomePage = pageHome && pageHome.style.display !== 'none';
-        if (!isHomePage) { card.style.display = 'none'; return; }
+        // Only show lottery on home feed - check if any other page is visible
+        var pageProfile = document.getElementById('page-profile');
+        var pageInbox = document.getElementById('page-inbox');
+        var pageEarnings = document.getElementById('page-earnings');
+        var pageCommunities = document.getElementById('page-communities');
+        var pageMarketplace = document.getElementById('page-marketplace');
+        var pageLive = document.getElementById('page-live');
+        var isOtherPageVisible = (pageProfile && pageProfile.style.display !== 'none') ||
+                                  (pageInbox && pageInbox.style.display !== 'none') ||
+                                  (pageEarnings && pageEarnings.style.display !== 'none') ||
+                                  (pageCommunities && pageCommunities.style.display !== 'none') ||
+                                  (pageMarketplace && pageMarketplace.style.display !== 'none') ||
+                                  (pageLive && pageLive.style.display !== 'none');
+        if (isOtherPageVisible) { card.style.display = 'none'; return; }
         card.style.display = 'block';
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
