@@ -14184,11 +14184,35 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         try { window._wcOpenWalletSheet(_wcUri); }
                         catch (_e) { console.error('[WC] wallet sheet failed:', _e); }
                     });
+                    showToast('Select your wallet app in the popup to connect');
+                } else {
+                    showToast('Scan the QR code with your wallet app to connect');
                 }
-                await Promise.race([
-                    wcProv.enable(),
-                    new Promise(function(_, rej) { setTimeout(function() { rej(new Error('WalletConnect timed out after 2 minutes. Clear MetaMask connections (Settings → Connections → remove SocialHub) and try again.')); }, 120000); })
-                ]);
+                await new Promise(function(resolve, reject) {
+                    var _wcDone = false;
+                    function _ok() { if (!_wcDone) { _wcDone = true; resolve(); } }
+                    function _fail(e) { if (!_wcDone) { _wcDone = true; reject(e); } }
+                    wcProv.once('connect', _ok);
+                    wcProv.once('accountsChanged', function(accs) { if (accs && accs.length > 0) _ok(); });
+                    function _onVisible() {
+                        if (document.visibilityState === 'visible' && wcProv.accounts && wcProv.accounts.length > 0) {
+                            document.removeEventListener('visibilitychange', _onVisible);
+                            _ok();
+                        }
+                    }
+                    document.addEventListener('visibilitychange', _onVisible);
+                    wcProv.enable().then(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _ok();
+                    }).catch(function(e) {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(e);
+                    });
+                    setTimeout(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(new Error('WalletConnect timed out. Select MetaMask in the popup, approve the request, then return to SocialHub.'));
+                    }, 300000);
+                });
                 var _wcSheetDone = document.getElementById('wc-wallet-sheet');
                 if (_wcSheetDone) _wcSheetDone.remove();
                 window._activeWCProvider = wcProv;
