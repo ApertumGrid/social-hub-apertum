@@ -22763,9 +22763,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var card = document.getElementById('lottery-card');
         if (!card) return;
         if (round.status === 'complete') { card.style.display = 'none'; return; }
-        // Visibility is controlled by tab switching - only update content here
-        // (showTab handles show/hide based on active tab)
-        if (card.style.display !== 'none') card.style.display = 'block';
+        // Show lottery card if we're on home feed (not on another tab, and not in flicks mode)
+        var pageHome = document.getElementById('page-home');
+        var isFlicksActive = document.body.classList.contains('flicks-active');
+        var isHomeVisible = pageHome && (pageHome.style.display === 'contents' || pageHome.style.display === '');
+        if (isHomeVisible && !isFlicksActive) {
+            card.style.display = 'block';
+        }
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
         if (el) el.textContent = pot.toLocaleString() + '★ (≈ $' + (pot * 0.01).toFixed(2) + ' USD)';
@@ -40031,14 +40035,21 @@ function dismissTgBanner() {
     if (b) b.style.display = 'none';
     try { localStorage.setItem('sh_tg_banner_dismissed', '1'); } catch(_) {}
 }
-// Hide banner immediately if previously dismissed
+// Hide banner if previously dismissed - wait for DOM
 (function() {
-    try {
-        if (localStorage.getItem('sh_tg_banner_dismissed') === '1') {
-            var b = document.getElementById('tg-community-banner');
-            if (b) b.style.display = 'none';
-        }
-    } catch(_) {}
+    function hideTgBannerIfDismissed() {
+        try {
+            if (localStorage.getItem('sh_tg_banner_dismissed') === '1') {
+                var b = document.getElementById('tg-community-banner');
+                if (b) b.style.display = 'none';
+            }
+        } catch(_) {}
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideTgBannerIfDismissed);
+    } else {
+        hideTgBannerIfDismissed();
+    }
 })();
 </script>
 </body>
