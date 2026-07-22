@@ -4410,12 +4410,16 @@
         .inbox-msg-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
         .inbox-msg-head-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
         @media (max-width: 600px) {
-            .inbox-pane { grid-template-columns: 1fr; width: 100%; max-width: 100%; box-sizing: border-box; }
-            .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; }
-            .inbox-main { width: 100%; max-width: 100%; box-sizing: border-box; }
-            .inbox-compose { padding: 8px; gap: 8px; width: 100%; max-width: 100%; box-sizing: border-box; }
-            .inbox-compose textarea { flex: 1; min-width: 0; font-size: 0.85rem; padding: 8px 10px; }
-            .inbox-compose .inbox-send-btn { flex-shrink: 0; min-width: 54px; padding: 9px 8px; font-size: 0.75rem; }
+            .inbox-pane { display: flex; flex-direction: column; }
+            .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+            .inbox-sidebar.hide-mobile { display: none; }
+            .inbox-main { display: flex; flex-direction: column; min-height: 420px; }
+            .inbox-main.hide-mobile { display: none; }
+            .inbox-compose { padding: 10px; gap: 10px; }
+            .inbox-compose textarea { font-size: 0.85rem; }
+            .inbox-compose .inbox-send-btn { padding: 10px 16px; font-size: 0.8rem; }
+            .inbox-msg-head { position: relative; }
+            .inbox-back-btn { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-primary); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; }
         }
         .mcd-stream-val {
             font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
@@ -11852,13 +11856,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <!-- INBOX UI: mailbox active — shown by JS -->
                 <div id="inbox-active-view" style="display:none;">
                     <div class="inbox-pane">
-                        <div class="inbox-sidebar">
+                        <div class="inbox-sidebar" id="inbox-sidebar">
                             <div class="inbox-sidebar-head">Conversations</div>
                             <div class="inbox-thread-list" id="inbox-thread-list">
                                 <div style="padding:20px 14px; font-size:0.72rem; color:var(--text-muted); text-align:center;">No messages yet.<br>Start a conversation from any profile.</div>
                             </div>
                         </div>
-                        <div class="inbox-main" id="inbox-main">
+                        <div class="inbox-main hide-mobile" id="inbox-main">
                             <div class="inbox-empty-state">Select a conversation or start a new one.</div>
                         </div>
                     </div>
@@ -25555,9 +25559,26 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
+    function _closeThread() {
+        const main = document.getElementById('inbox-main');
+        const sidebar = document.getElementById('inbox-sidebar');
+        if (window.innerWidth <= 600) {
+            if (sidebar) sidebar.classList.remove('hide-mobile');
+            if (main) main.classList.add('hide-mobile');
+        }
+    }
+    window._closeThread = _closeThread;
+
     function _openThread(threadId, otherAddr, otherName) {
         const main = document.getElementById('inbox-main');
+        const sidebar = document.getElementById('inbox-sidebar');
         if (!main || !window.db) return;
+
+        // Mobile: hide sidebar, show main
+        if (window.innerWidth <= 600) {
+            if (sidebar) sidebar.classList.add('hide-mobile');
+            main.classList.remove('hide-mobile');
+        }
 
         // Feature 3: clear unread flag for current user when they open the thread
         if (userAddress) {
@@ -25571,6 +25592,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         main.innerHTML = `
             <div class="inbox-msg-head">
+                <button class="inbox-back-btn" onclick="_closeThread()" style="display:none;">←</button>
                 <div class="inbox-msg-head-name">${_escNet(otherName)}</div>
             </div>
             <div class="inbox-messages" id="msg-list-${threadId}"><div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.72rem;">Loading…</div></div>
@@ -25582,6 +25604,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${threadId}','${otherAddr}','${_escNet(otherName)}');}"></textarea>
                 <button class="btn btn-purple btn-sm inbox-send-btn" onclick="sendMessage('${threadId}','${otherAddr}','${_escNet(otherName)}')">Send</button>
             </div>`;
+
+        // Show back button on mobile
+        if (window.innerWidth <= 600) {
+            const backBtn = main.querySelector('.inbox-back-btn');
+            if (backBtn) backBtn.style.display = 'block';
+        }
         // Load messages
         const addr = userAddress ? userAddress.toLowerCase() : '';
         window.fs.getDocs(window.fs.query(
