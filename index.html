@@ -16103,18 +16103,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     // Fall back per-user to their net stars value when initial_deposit
                     // is missing or zero — catches users who deposited before that
                     // field was added, preventing silent under-counting of liability.
-                    // USDT model: liability = depositedUsdt - (spentStarsTotal × $0.01)
-                    let totalDepositedUsdt = 0;
+                    // APTM model: liability = depositedAptm - (spentStarsTotal × $0.01 / aptmPrice)
+                    let totalDepositedAptm = 0;
                     snap.forEach(function(d) {
                         const data      = d.data();
-                        const depUsdt   = parseFloat(data.depositedUsdt) || 0;
+                        const depAptm   = parseFloat(data.depositedAptm) || 0;
                         const userSpent = parseFloat(data.spentStarsTotal) || 0;
                         totalPurchased     += parseFloat(data.stars)        || 0;
                         totalEarned        += parseFloat(data.creatorStars) || 0;
                         totalSpentStars    += userSpent;
-                        totalDepositedUsdt += depUsdt;
+                        totalDepositedAptm += depAptm;
                     });
-                    window._mcdTotalDepositedUsdt = totalDepositedUsdt;
+                    window._mcdTotalDepositedAptm = totalDepositedAptm;
                     const totalCirculating = totalPurchased + totalEarned;
                     const s2 = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
                     s2('mcd-circulating', totalCirculating.toFixed(2) + ' ★');
@@ -16177,10 +16177,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return;
             }
 
-            // User liability: total USDT deposited minus USDT value of stars spent
-            const totalDepositedUsdt = window._mcdTotalDepositedUsdt || 0;
+            // Get APTM price first (needed for liability calculations)
+            const _mcPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
+
+            // User liability: total APTM deposited minus APTM value of stars spent
+            const totalDepositedAptm = window._mcdTotalDepositedAptm || 0;
             const totalSpentStars    = window._mcdSpentStars          || 0;
-            const userLiabilityUsdt  = Math.max(0, totalDepositedUsdt - (totalSpentStars * CONFIG.STAR_USD));
+            const totalCreatorStars  = window._mcdEarned              || 0;
+            // Convert stars to APTM at current price
+            const spentAptm   = (totalSpentStars * CONFIG.STAR_USD) / _mcPrice;
+            const creatorAptm = (totalCreatorStars * CONFIG.STAR_USD) / _mcPrice;
+            const userLiabilityAptm  = Math.max(0, totalDepositedAptm - spentAptm + creatorAptm);
+            const userLiabilityUsdt  = userLiabilityAptm * _mcPrice;
             const adminRevUsdt       = adminRevStars * CONFIG.STAR_USD;
 
             const isSolvent      = contractBalUsdt >= userLiabilityUsdt;
@@ -16190,7 +16198,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 : '∞';
 
             // Convert USD values → APTM for display
-            const _mcPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
             const contractAptm    = (contractBalUsdt   / _mcPrice).toFixed(4);
             const liabilityAptm   = (userLiabilityUsdt / _mcPrice).toFixed(4);
             const adminRevAptm    = (adminRevUsdt       / _mcPrice).toFixed(4);
