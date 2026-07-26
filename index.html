@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -29510,6 +29509,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── Go Live ───────────────────────────────────────────────────
     var _isStartingLive = false; // mutex — prevents re-entrant / double-join
     window.startLiveStream = async function() {
+        // Guard 0: Live streaming temporarily disabled during upgrade
+        showToast('Live Streaming is temporarily unavailable — upgrading now, check back soon!');
+        return;
+
         // Guard 1: already hosting — do not allow a second join on the same client
         if (isHosting) { console.warn('[Live] startLiveStream called while already hosting — ignoring.'); return; }
         // Guard 2: a call is already in flight (countdown fired twice, or patch chain re-entered)
