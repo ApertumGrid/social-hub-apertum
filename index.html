@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -16322,7 +16323,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             console.log(`[AdminWithdraw] ── Complete. adminWithdraw() confirmed on block ${receipt.blockNumber} ──`);
             showToast(`✓ Platform revenue withdrawn via adminWithdraw() — block ${receipt.blockNumber}`);
-            if (typeof window._checkFirstEarnings === 'function') window._checkFirstEarnings(userAddress, '$' + poolUsdt.toFixed(2) + ' APTM');
+            if (typeof window._checkFirstEarnings === 'function') window._checkFirstEarnings(userAddress, poolUsdt.toFixed(2) + ' APTM');
             updateUI();
             updateDrawerUI();
             syncData();
@@ -39910,7 +39911,7 @@ window.toggleCreatorAnalytics = function() {
         <div class="fem-trophy">🏆</div>
         <div class="fem-title">First Creator Payout Complete</div>
         <div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:8px;">You withdrew</div>
-        <div class="fem-amount" id="fem-amount">$0.00 APTM</div>
+        <div class="fem-amount" id="fem-amount">0.00 APTM</div>
         <div class="fem-badge">✓ First Earnings Achieved</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.5;">This badge is permanently on your creator profile. You did it — welcome to the creator economy on SocialHub! 🎉</div>
         <button class="fem-close-btn" onclick="window._closeFEModal()">Awesome! Keep Creating →</button>
