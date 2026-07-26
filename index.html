@@ -13357,6 +13357,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         "function userWithdraw(uint256 amount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
         "function creatorWithdraw(uint256 amount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
         "function withdrawAll(uint256 depositAmount, uint256 earnedAmount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
+        "function adminWithdrawToTreasury() external",
         "function depositedAPTM(address user) view returns (uint256)",
         "function withdrawableAPTM(address user) view returns (uint256)",
         "function getBalance(address user) view returns (uint256 deposited, uint256 withdrawable, uint256 total)",
@@ -18261,6 +18262,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const depBN  = ethers.BigNumber.from(String(depositAmount  || '0'));
             const earnBN = ethers.BigNumber.from(String(earnedAmount   || '0'));
 
+            // Calculate ACTUAL withdrawal amount (post-settlement, from CF)
+            const actualWithdrawnAptm = parseFloat(ethers.utils.formatEther(depBN.add(earnBN))).toFixed(4);
+
             showToast('Submitting withdrawal to blockchain…');
             const tx = await hubContract.withdrawAll(depBN, earnBN, nonce, expiry, signature, { gasLimit: 300000 });
             const receipt = await tx.wait();
@@ -18287,10 +18291,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[Withdraw] Firebase zero failed:', e); }
             }
 
-            logTransaction('settle', totalAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + totalAptm + ' APTM to wallet' });
+            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
             updateUI(); updateDrawerUI();
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
-            alert('Withdrawal Successful! ' + totalAptm + ' APTM sent to your wallet.');
+            alert('Withdrawal Successful! ' + actualWithdrawnAptm + ' APTM sent to your wallet.');
             syncData();
 
         } catch (err) {
