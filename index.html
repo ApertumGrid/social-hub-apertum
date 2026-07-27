@@ -10544,6 +10544,40 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     </div>
                 </div>
 
+                <!-- Co-host camera/mic permission modal -->
+                <div id="cohost-permission-modal" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;">
+                    <div style="background:var(--bg-card);border:1.5px solid rgba(224,62,62,0.4);border-radius:20px;max-width:420px;width:100%;padding:28px 22px;text-align:center;">
+                        <div style="font-size:2.2rem;margin-bottom:12px;">🎙️</div>
+                        <div style="font-size:1.05rem;font-weight:800;color:var(--text-primary);margin-bottom:14px;">Join as Co-Host</div>
+                        <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;margin-bottom:20px;text-align:left;">
+                            To join the stream as a co-host, you need to grant camera and microphone access.<br><br>
+                            <strong style="color:#e03e3e;">Tap the button below</strong> to enable your camera and microphone, then you'll join the stage.
+                        </div>
+
+                        <!-- Mic test feedback banner (shown during verification) -->
+                        <div id="mic-test-banner" style="display:none;background:rgba(224,62,62,0.1);border:1px solid rgba(224,62,62,0.3);border-radius:8px;padding:12px 16px;margin-bottom:12px;flex-direction:column;gap:8px;">
+                            <div style="color:#e03e3e; font-size:0.85rem; font-weight:600;">
+                                🎙 Testing microphone - say something...
+                            </div>
+                            <div style="background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;">
+                                <div id="mic-test-indicator" style="background:linear-gradient(90deg,#4ade80,#22c55e);height:100%;width:0%;transition:width 0.1s;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Permission error (shown if verification fails) -->
+                        <div id="cohost-permission-error" style="display:none;"></div>
+
+                        <div style="display:flex;gap:10px;">
+                            <button onclick="closeCohostPermissionModal()" style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-size:0.85rem;font-weight:600;cursor:pointer;">
+                                Cancel
+                            </button>
+                            <button id="cohost-enable-btn" onclick="enableCohostMedia()" style="flex:2;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#e03e3e,#b02020);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(224,62,62,0.3);">
+                                📹 Enable Camera &amp; Mic
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Compose -->
                 <div class="card composer-collapsed" id="composer-card" style="border-color: rgba(124,92,191,0.25);">
                     <div class="composer-row" onclick="expandComposer()" title="Click to compose a signal">
@@ -29506,13 +29540,252 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     };
 
+    // ── Detect in-app WebView (for mic permission troubleshooting) ────
+    function detectInAppBrowser() {
+        const ua = navigator.userAgent || '';
+        // Telegram WebView
+        if (ua.includes('Telegram')) return true;
+        // Instagram/Facebook in-app
+        if (ua.includes('Instagram') || ua.includes('FBAN') || ua.includes('FBAV')) return true;
+        // Twitter/X in-app
+        if (ua.includes('Twitter')) return true;
+        // Generic WebView markers
+        if (ua.includes('wv') || ua.includes('WebView')) return true;
+        return false;
+    }
+
+    // ── Verify microphone track is actually live (with user feedback) ──
+    async function verifyMicTrack(audioTrack) {
+        // Check 1: Track exists
+        if (!audioTrack) {
+            return { ok: false, reason: 'no_track', message: 'Microphone track missing' };
+        }
+
+        // Check 2: MediaStreamTrack is live
+        const mediaTrack = audioTrack.getMediaStreamTrack();
+        if (!mediaTrack || mediaTrack.readyState !== 'live') {
+            return { ok: false, reason: 'not_live', message: 'Microphone track not active' };
+        }
+
+        // Check 3: Volume level verification with visible UI prompt
+        // Show "Say something to test your mic" banner
+        const banner = document.getElementById('mic-test-banner');
+        if (banner) {
+            banner.style.display = 'flex';
+            const indicator = document.getElementById('mic-test-indicator');
+            if (indicator) indicator.style.width = '0%';
+        }
+
+        const bannerShowTime = Date.now();
+        const minDisplayMs = 1500; // Minimum 1.5 seconds so user can see it
+
+        let maxVolume = 0;
+        const samples = 10;
+        const sampleInterval = 50; // ms
+
+        for (let i = 0; i < samples; i++) {
+            try {
+                const volume = audioTrack.getVolumeLevel();
+                if (volume > maxVolume) maxVolume = volume;
+
+                // Update visual indicator
+                const indicator = document.getElementById('mic-test-indicator');
+                if (indicator) {
+                    const percent = Math.min(100, volume * 200); // Scale 0-0.5 volume to 0-100%
+                    indicator.style.width = percent + '%';
+                }
+
+                if (maxVolume > 0.01) break; // Early exit if we detect sound
+            } catch (e) {
+                console.warn('[verifyMic] getVolumeLevel failed:', e);
+            }
+            await new Promise(r => setTimeout(r, sampleInterval));
+        }
+
+        // Keep banner visible for minimum display time
+        const elapsed = Date.now() - bannerShowTime;
+        if (elapsed < minDisplayMs) {
+            await new Promise(r => setTimeout(r, minDisplayMs - elapsed));
+        }
+
+        // Hide the banner again — verification is done
+        if (banner) banner.style.display = 'none';
+
+        // Check 4: Detect in-app WebView (additional context)
+        const isWebView = detectInAppBrowser();
+
+        if (maxVolume === 0) {
+            return {
+                ok: false,
+                reason: 'silent',
+                message: isWebView
+                    ? 'Microphone blocked by app. Please open this page in your system browser (Safari/Chrome).'
+                    : 'No sound detected. Please speak or make noise when testing your microphone, then try again.',
+                isWebView
+            };
+        }
+
+        return { ok: true, maxVolume };
+    }
+
+    // ── Co-host permission modal controls ─────────────────────────────
+    var _cohostTargetSlot = null; // Store target slot for promotion
+
+    window.openCohostPermissionModal = function(targetSlot) {
+        _cohostTargetSlot = targetSlot;
+        const modal = document.getElementById('cohost-permission-modal');
+        if (modal) modal.style.display = 'flex';
+    };
+
+    window.closeCohostPermissionModal = function() {
+        const modal = document.getElementById('cohost-permission-modal');
+        if (modal) modal.style.display = 'none';
+        _cohostTargetSlot = null;
+
+        // Clear any error state
+        const errorDiv = document.getElementById('cohost-permission-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+        }
+
+        // Reset button
+        const enableBtn = document.getElementById('cohost-enable-btn');
+        if (enableBtn) {
+            enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
+            enableBtn.style.pointerEvents = '';
+            enableBtn.style.opacity = '';
+        }
+    };
+
+    // ── Enable Co-host Media (permission + verification flow) ────────
+    window.enableCohostMedia = async function() {
+        const enableBtn = document.getElementById('cohost-enable-btn');
+        const errorDiv = document.getElementById('cohost-permission-error');
+
+        // Show loading state
+        if (enableBtn) {
+            enableBtn.innerHTML = '<span style="font-size:1rem;">⏳</span> Requesting permissions...';
+            enableBtn.style.pointerEvents = 'none';
+            enableBtn.style.opacity = '0.6';
+        }
+
+        // Clear previous errors
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+        }
+
+        try {
+            if (!window.AgoraRTC) {
+                throw new Error('Agora SDK not loaded yet — please wait a moment and try again.');
+            }
+
+            // Close any existing co-host tracks first
+            if (cohostVideoTrack) {
+                try { cohostVideoTrack.close(); } catch(_) {}
+                cohostVideoTrack = null;
+            }
+            if (cohostAudioTrack) {
+                try { cohostAudioTrack.close(); } catch(_) {}
+                cohostAudioTrack = null;
+            }
+
+            // Acquire tracks (synchronously in this click handler)
+            [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
+
+            // Verify microphone is actually working
+            const verification = await verifyMicTrack(cohostAudioTrack);
+
+            if (!verification.ok) {
+                // Verification failed - close tracks and show error in modal
+                if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
+                if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
+
+                if (errorDiv) {
+                    errorDiv.innerHTML = `
+                        <div style="
+                            background:rgba(224,62,62,0.15);
+                            border:1px solid rgba(224,62,62,0.4);
+                            border-radius:8px;
+                            padding:12px;
+                            margin-bottom:16px;
+                            text-align:left;
+                        ">
+                            <div style="color:#e03e3e; font-size:0.85rem; font-weight:600; margin-bottom:6px;">
+                                ⚠️ Microphone Error
+                            </div>
+                            <div style="color:rgba(255,255,255,0.8); font-size:0.8rem; line-height:1.5;">
+                                ${verification.message}
+                            </div>
+                        </div>
+                    `;
+                    errorDiv.style.display = 'block';
+                }
+
+                // Reset button
+                if (enableBtn) {
+                    enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
+                    enableBtn.style.pointerEvents = '';
+                    enableBtn.style.opacity = '';
+                }
+                return;
+            }
+
+            // Success - close modal and proceed with promotion
+            const _slotForPromo = _cohostTargetSlot;
+            closeCohostPermissionModal();
+
+            if (_slotForPromo !== null) {
+                await _promoteToCoHost(_slotForPromo);
+            }
+
+            console.log('[CoHost] Media verified - mic max volume:', verification.maxVolume);
+
+        } catch (e) {
+            console.error('[CoHost] Permission error:', e);
+
+            // Close tracks on error
+            if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
+            if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
+
+            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
+                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
+                : e.message || 'Failed to access camera/microphone. Please try again.';
+
+            if (errorDiv) {
+                errorDiv.innerHTML = `
+                    <div style="
+                        background:rgba(224,62,62,0.15);
+                        border:1px solid rgba(224,62,62,0.4);
+                        border-radius:8px;
+                        padding:12px;
+                        margin-bottom:16px;
+                        text-align:left;
+                    ">
+                        <div style="color:#e03e3e; font-size:0.85rem; font-weight:600; margin-bottom:6px;">
+                            ⚠️ Permission Error
+                        </div>
+                        <div style="color:rgba(255,255,255,0.8); font-size:0.8rem; line-height:1.5;">
+                            ${msg}
+                        </div>
+                    </div>
+                `;
+                errorDiv.style.display = 'block';
+            }
+
+            // Reset button
+            if (enableBtn) {
+                enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
+                enableBtn.style.pointerEvents = '';
+                enableBtn.style.opacity = '';
+            }
+        }
+    };
+
     // ── Go Live ───────────────────────────────────────────────────
     var _isStartingLive = false; // mutex — prevents re-entrant / double-join
     window.startLiveStream = async function() {
-        // Guard 0: Live streaming temporarily disabled during upgrade
-        showToast('Live Streaming is temporarily unavailable — upgrading now, check back soon!');
-        return;
-
         // Guard 1: already hosting — do not allow a second join on the same client
         if (isHosting) { console.warn('[Live] startLiveStream called while already hosting — ignoring.'); return; }
         // Guard 2: a call is already in flight (countdown fired twice, or patch chain re-entered)
@@ -29671,132 +29944,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 try {
                     await agoraClient.subscribe(remoteUser, mediaType);
                     if (mediaType === 'video') {
-                        // Always remove any stale pip and rebuild fresh.
-                        // This is critical: _applyHostSpotlight and spotBtn live inside this
-                        // closure. If the pip already exists from a previous co-host session
-                        // the old closure is gone and the spotlight button becomes dead.
-                        // Rebuilding every time guarantees the closure is always live.
-                        const stalePip = document.getElementById('cohost-pip-host');
-                        if (stalePip) stalePip.remove();
-
-                        const cohostPip = document.createElement('div');
-                        cohostPip.id = 'cohost-pip-host';
-                        var _pipSide = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
-                        cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSide + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
-
-                        const label = document.createElement('div');
-                        label.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;color:#fff;background:rgba(124,92,191,0.8);padding:1px 5px;border-radius:4px;z-index:1;';
-                        label.textContent = '🎤 Co-host';
-                        cohostPip.appendChild(label);
-
-                        const closeBtn = document.createElement('button');
-                        closeBtn.textContent = '✕';
-                        closeBtn.style.cssText = 'position:absolute;top:2px;right:4px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:0.55rem;cursor:pointer;z-index:2;line-height:1;';
-                        closeBtn.onclick = function(){ cohostPip.style.display='none'; };
-                        cohostPip.appendChild(closeBtn);
-
-                        const cohostUid = remoteUser.uid; // capture uid for this pip
-
-                        // Look up wallet address from cohost_requests NOW while we have context
-                        // Store it on the pip element so gift button can use it without a lookup
-                        var _cohostWalletAddr = '';
-                        if (currentStreamId && window.db && window.fs) {
-                            window.fs.getDocs(window.fs.collection(window.db, 'live_streams', currentStreamId, 'cohost_requests')).then(function(snap) {
-                                snap.forEach(function(d) {
-                                    var r = d.data() || {};
-                                    var reqUid = (r.uid == null ? '' : String(r.uid));
-                                    if (r.status === 'approved' && reqUid === String(cohostUid)) {
-                                        _cohostWalletAddr = d.id; // docId IS the wallet address
-                                        cohostPip.dataset.walletAddr = d.id;
-                                        cohostPip.dataset.handle = r.handle || 'Co-host';
-                                        label.textContent = '🎤 ' + (r.handle || 'Co-host');
-                                    }
-                                });
-                            }).catch(function(){});
-                        }
-
-                        // Spotlight button — fullscreen co-host for everyone via Firestore
-                        const spotBtn = document.createElement('button');
-                        spotBtn.id = 'cohost-spotlight-btn-' + cohostUid;
-                        spotBtn.textContent = '⛶ Spotlight';
-                        spotBtn.title = 'Give co-host full screen for everyone (click again to restore)';
-                        spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
-
-                        let _spotlightActive = false;
-                        function _applyHostSpotlight(on) {
-                            _spotlightActive = on;
-                            if (on) {
-                                spotBtn.textContent = '⊠ Restore';
-                                cohostPip.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:none;z-index:18;background:#000;overflow:hidden;';
-                                spotBtn.style.cssText = 'position:absolute;bottom:8px;left:8px;background:rgba(124,92,191,0.9);border:none;color:#fff;border-radius:4px;padding:3px 10px;font-size:0.75rem;cursor:pointer;z-index:22;white-space:nowrap;';
-                                showToast('⛶ Co-host spotlighted for all viewers');
-                            } else {
-                                spotBtn.textContent = '⛶ Spotlight';
-                                var _pipSideR = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
-                                cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSideR + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
-                                spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
-                                showToast('⊠ Co-host restored to PiP');
-                            }
-                        }
-
-                        spotBtn.onclick = function() {
-                            const newState = !_spotlightActive;
-                            _applyHostSpotlight(newState);
-                            const _sid = currentStreamId || window._currentStreamId;
-                            if (_sid && window.db && window.fs) {
-                                window.fs.updateDoc(
-                                    window.fs.doc(window.db, LIVE_COL, _sid),
-                                    { cohostSpotlight: newState, cohostSpotlightUid: newState ? String(cohostUid) : '' }
-                                ).catch(function(e){ console.warn('[Spotlight] Firestore write failed:', e); });
-                            } else {
-                                console.warn('[Spotlight] No streamId available:', currentStreamId, window._currentStreamId);
-                            }
-                        };
-                        cohostPip.appendChild(spotBtn);
-
-                        // Gift button — host can gift the co-host directly
-                        const giftBtn = document.createElement('button');
-                        giftBtn.style.cssText = 'position:absolute;bottom:2px;right:4px;background:rgba(240,180,41,0.85);border:none;color:#111;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;font-weight:700;';
-                        giftBtn.textContent = '🎁 Gift';
-                        giftBtn.onclick = function() {
-                            var addr = cohostPip.dataset.walletAddr || '';
-                            var handle = cohostPip.dataset.handle || 'Co-host';
-                            if (!addr) { showToast('Co-host wallet not found yet — try again in a moment.'); return; }
-                            window.openGiftPickerDirect && window.openGiftPickerDirect(addr, handle);
-                        };
-                        cohostPip.appendChild(giftBtn);
-
-                        const videoDiv = document.createElement('div');
-                        videoDiv.id = 'cohost-pip-video';
-                        videoDiv.style.cssText = 'width:100%;height:100%;';
-                        cohostPip.appendChild(videoDiv);
-
-                        // Append to broadcaster container (works in normal and cinema mode)
-                        const lsBox = document.getElementById('live-broadcaster-video-container') || document.getElementById('cinema-video-col');
-                        if (lsBox) lsBox.appendChild(cohostPip);
-
-                        // Re-apply current layout so new pip slots into whatever layout host chose
-                        if (typeof window.setStreamLayout === 'function' && typeof _currentLayout !== 'undefined') {
-                            setTimeout(function(){ window.setStreamLayout(_currentLayout); }, 100);
-                        }
-
-                        // Retry until the pip container has dimensions — Agora silently
-                        // fails to render if the element has zero width/height at play time.
-                        var _hostPipRetry = 0;
-                        (function _playHostPip() {
-                            var pipVid = document.getElementById('cohost-pip-video');
-                            if (pipVid && (pipVid.offsetWidth > 0 || pipVid.offsetHeight > 0 || _hostPipRetry > 15)) {
-                                try {
-                                    remoteUser.videoTrack.play(pipVid);
-                                    console.log('[Host] Co-host video playing after', _hostPipRetry, 'retries');
-                                } catch(e) {
-                                    // Last resort — play directly into the pip wrapper
-                                    try { remoteUser.videoTrack.play(document.getElementById('cohost-pip-host')); } catch(_) {}
+                        // Slot grid is rendered by the stream-doc listener when coSlots
+                        // changes (co-host writes their slot 'active' on promotion).
+                        // Just find this co-host's slot by UID and play the track into it,
+                        // retrying while the slot write and grid render land.
+                        var _slotRetry = 0;
+                        (function _trySlotPlay() {
+                            var _slots = window._currentCoSlots || [];
+                            var _matched = false;
+                            for (var _si = 0; _si < _slots.length; _si++) {
+                                if (_slots[_si] && String(_slots[_si].uid) === String(remoteUser.uid) && _slots[_si].status === 'active') {
+                                    var _slotDiv = document.getElementById('live-slot-' + _si);
+                                    if (_slotDiv) { try { remoteUser.videoTrack.play(_slotDiv, { fit: 'cover' }); _matched = true; console.log('[Host] co-host video in slot', _si); } catch(e) {} }
                                 }
-                            } else if (_hostPipRetry < 25) {
-                                _hostPipRetry++;
-                                setTimeout(_playHostPip, 150);
                             }
+                            if (!_matched && _slotRetry < 20) { _slotRetry++; setTimeout(_trySlotPlay, 200); }
                         })();
                     }
                     if (mediaType === 'audio') remoteUser.audioTrack.play();
@@ -29807,20 +29969,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 // If the co-host is deliberately toggling mic/cam, ignore this event entirely.
                 if (_cohostToggling) return;
                 // A mic/cam toggle fires user-unpublished for that mediaType only.
-                // Only remove the pip and reset layout when the VIDEO track is gone
-                // AND the user has no active video track remaining (i.e. they truly left).
                 if (mediaType === 'audio') return; // audio toggle — ignore completely
-                // Video unpublished: check if the user still has a video track alive.
-                // Agora sets videoTrack to null on the remoteUser object when fully gone.
-                if (remoteUser.videoTrack) return; // still has video — just a renegotiation
-                // Co-host truly left — remove PiP and reset layout
-                const pip = document.getElementById('cohost-pip-host');
-                if (pip) pip.remove();
+                // hasAudio means user is still on stage — they just toggled camera, not left
+                if (remoteUser.hasAudio) return;
+                // Co-host truly left — clear their slot so it shows "+ Request" again
                 if (currentStreamId && window.db && window.fs) {
-                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { cohostSpotlight: false, streamLayout: 'solo' }).catch(function(){});
+                    var _uSlots = (window._currentCoSlots || []).slice();
+                    var _uIdx = _uSlots.findIndex(function(s){ return s && String(s.uid) === String(remoteUser.uid); });
+                    if (_uIdx !== -1) {
+                        _uSlots[_uIdx] = {status:'empty',address:null,name:null,uid:null};
+                        window._currentCoSlots = _uSlots;
+                        window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { coSlots: _uSlots }).catch(function(){});
+                    }
                 }
-                // Revert host layout to solo now that co-host has left
-                if (typeof window.setStreamLayout === 'function') window.setStreamLayout('solo');
+                showToast('Co-host left the stage.');
             });
 
             // Show ALL panels in the hierarchy before playing video
@@ -30192,6 +30354,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                                     if (typeof _applyViewerLayout === 'function') _applyViewerLayout('solo');
                                                 });
                                         }
+                                    } else if (window._viewerLayoutMode && window._viewerLayoutMode !== 'solo') {
+                                        // Host re-published (cam toggle / screen share) — re-apply the
+                                        // slot layout so the host block returns to its box instead of
+                                        // keeping the fullscreen pixel sizing set above.
+                                        setTimeout(function(){ _applyViewerLayout(window._viewerLayoutMode); }, 200);
                                     }
                                 } else {
                                     setTimeout(playRemoteWhenReady, 100);
@@ -30209,8 +30376,29 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         }
                     }
                 } else {
-                    // Co-host joined the stage — show their video as a PiP on the viewer's screen
+                    // Co-host joined the stage — play them into their slot box.
+                    // The legacy floating PiP is only a fallback when no slot entry
+                    // ever appears (e.g. host is in solo layout).
                     if (mediaType === 'video') {
+                        var _vSlotRetry = 0;
+                        var _tryViewerSlotPlay = function() {
+                            var _slots = window._currentCoSlots || [];
+                            for (var _si = 0; _si < _slots.length; _si++) {
+                                if (_slots[_si] && String(_slots[_si].uid) === String(remoteUser.uid) && _slots[_si].status === 'active') {
+                                    var _slotDiv = document.getElementById('live-slot-' + _si);
+                                    if (_slotDiv) {
+                                        try { remoteUser.videoTrack.play(_slotDiv, { fit: 'cover' }); console.log('[Viewer] co-host video in slot', _si); } catch(e) {}
+                                        // Drop any legacy pip so it doesn't linger as a black box
+                                        var _stale = document.getElementById('cohost-pip-viewer');
+                                        if (_stale && _stale.parentNode) _stale.parentNode.removeChild(_stale);
+                                        return;
+                                    }
+                                }
+                            }
+                            if (_vSlotRetry < 20) { _vSlotRetry++; setTimeout(_tryViewerSlotPlay, 200); return; }
+                            _buildViewerPipFallback();
+                        };
+                        var _buildViewerPipFallback = function() {
                         // Remove any stale pip first
                         var stalePip = document.getElementById('cohost-pip-viewer');
                         if (stalePip && stalePip.parentNode) stalePip.parentNode.removeChild(stalePip);
@@ -30300,15 +30488,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         (function _playPip() {
                             var rt = document.getElementById('cohost-pip-viewer-video');
                             if (rt && (rt.offsetWidth > 0 || rt.offsetHeight > 0 || _pipRetry > 10)) {
-                                try { remoteUser.videoTrack.play(rt); } catch(_pipErr) {
-                                    try { remoteUser.videoTrack.play(cohostPip); } catch(_) {}
+                                try { remoteUser.videoTrack.play(rt, { fit: 'cover' }); } catch(_pipErr) {
+                                    try { remoteUser.videoTrack.play(cohostPip, { fit: 'cover' }); } catch(_) {}
                                 }
                             } else if (_pipRetry < 20) {
                                 _pipRetry++;
                                 setTimeout(_playPip, 150);
                             }
                         })();
+                        }; // end _buildViewerPipFallback
 
+                        _tryViewerSlotPlay();
                         showToast('🎤 Someone joined the stage!');
                     }
                     if (mediaType === 'audio') {
@@ -30346,10 +30536,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } else {
                     // Another user (co-host) unpublished something.
                     // IMPORTANT: mic/cam toggle fires user-unpublished for that mediaType only.
-                    // Only remove the PiP when their VIDEO is truly gone (not just muted/toggled).
-                    if (mediaType === 'audio') return; // audio toggle — ignore, pip stays
-                    if (remoteUser.videoTrack) return; // video renegotiation — pip stays
-                    // Co-host truly left — remove their PiP and restore normal view
+                    if (mediaType === 'audio') return; // audio toggle — ignore, slot stays
+                    if (remoteUser.hasAudio) return;  // cam toggle only — still on stage
+                    // Co-host truly left — the host clears their coSlots entry, which
+                    // re-renders the grid; just drop any legacy pip here.
                     const pip = document.getElementById('cohost-pip-viewer');
                     if (pip) pip.remove();
                     window._applyViewerSpotlight = null;
@@ -30416,7 +30606,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     _chatFeed.style.setProperty('justify-content', 'flex-end',   'important');
                 }
                 var _rv = document.getElementById('live-remote-video');
-                function _applyRvHeight(){if(_rv){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
+                function _applyRvHeight(){var _lm=window._viewerLayoutMode;if(_rv&&(!_lm||_lm==='solo'||_lm==='presentation')){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
                 _applyRvHeight();
                 function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit','cover','important');}});}
                 setTimeout(_fixAgoraChildren,500);setTimeout(_fixAgoraChildren,1500);
@@ -32180,151 +32370,28 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── Apply the host's chosen layout to the viewer's video container ──
     var _pendingViewerLayout = null; // set if layout arrives before cohost pip exists
 
+    // ── Apply the host's chosen layout to the viewer's video container ──
+    // Delegates to the slot grid: renders the boxes (with per-slot "+ Request"
+    // buttons for viewers) then pulls Agora tracks into the slot divs.
+    // Replaces the old split2/pip-bottom/grid4 CSS-class system.
     function _applyViewerLayout(mode) {
+        window._viewerLayoutMode = mode;
         var container = document.getElementById('live-remote-video-container');
         if (!container) { console.warn('[Layout] container not found'); return; }
-        var hostVid   = document.getElementById('live-remote-video');
-        var cohostPip = document.getElementById('cohost-pip-viewer');
-        var selfPip   = document.getElementById('cohost-self-pip');
-
-        // When the viewer IS the co-host, selfPip is their own camera.
-        // The layout CSS uses cohost-pip-viewer as the second panel — but for
-        // the co-host themselves, selfPip fills that role. We treat selfPip as
-        // the second panel by giving it the cohost-pip-viewer id temporarily
-        // so the CSS grid/flex rules apply correctly.
-        // More reliably: we use selfPip as a proxy — if selfPip exists but
-        // cohostPip doesn't, we know we ARE the co-host and need to use selfPip
-        // as the second video panel.
-        var secondPanel = cohostPip || selfPip;
-
-        console.log('[Layout] _applyViewerLayout:', mode, '| hostVid:', !!hostVid, '| cohostPip:', !!cohostPip, '| selfPip:', !!selfPip);
-
-        // 1. Remove ALL layout classes from container
+        // Clear legacy layout classes so slot positioning owns the container
         container.classList.remove('layout-split2', 'layout-pip-bottom', 'layout-grid4');
-        // 2. Clear any inline overrides that might fight the CSS classes
-        container.style.cssText = '';
-        // 3. Clear inline styles on the children so CSS classes win.
-        // NOTE: do NOT clear selfPip here — solo mode must restore its inline positioning
-        // (160×100px corner box). Clearing it unconditionally and not restoring was the
-        // bug that caused the co-host to see their own video fullscreen.
-        if (hostVid)    hostVid.style.cssText    = '';
-        if (cohostPip)  cohostPip.style.cssText   = '';
-        // selfPip: only clear for non-solo modes; solo branch below restores it explicitly.
-        if (selfPip && mode !== 'solo') selfPip.style.cssText = '';
-
-        if (mode === 'solo') {
-            _pendingViewerLayout = null;
-            if (hostVid) {
-                hostVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-            }
-            if (selfPip) {
-                // Restore selfPip to floating corner pip — undo any flex/grid parenting
-                selfPip.style.cssText = [
-                    'position:absolute',
-                    'bottom:60px',
-                    'right:10px',
-                    'width:160px',
-                    'height:100px',
-                    'border-radius:8px',
-                    'overflow:hidden',
-                    'border:2px solid #e03e3e',
-                    'z-index:30',
-                    'background:#000'
-                ].join(';');
-                // Re-parent back into container if it was moved during split/grid
-                if (selfPip.parentElement !== container) container.appendChild(selfPip);
-                var svd = document.getElementById('cohost-self-video');
-                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;';
-            }
-            if (cohostPip) {
-                // Restore cohostPip to floating corner pip
-                cohostPip.style.cssText = [
-                    'position:absolute',
-                    'bottom:60px',
-                    'right:10px',
-                    'width:160px',
-                    'height:100px',
-                    'border-radius:8px',
-                    'overflow:hidden',
-                    'border:2px solid var(--purple)',
-                    'z-index:22',
-                    'background:#000'
-                ].join(';');
-                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
-            }
-        } else if (mode === 'split2') {
-            if (!secondPanel) {
-                _pendingViewerLayout = mode;
-                setTimeout(function(){ if (_pendingViewerLayout === 'split2') _applyViewerLayout('split2'); }, 300);
-                return;
-            }
-            _pendingViewerLayout = null;
-            container.classList.add('layout-split2');
-            if (!cohostPip && selfPip) {
-                // selfPip was built as position:absolute (corner pip).
-                // For split2 it must be a flex child — force it into flow.
-                container.style.cssText = 'display:flex;flex-direction:row;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText    = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;';
-                selfPip.style.cssText                 = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;border-radius:0;border:none;';
-                // Ensure selfPip is a direct flex child of container, not floating inside hostVid
-                if (selfPip.parentElement !== container) container.appendChild(selfPip);
-                // selfVideoDiv must fill the pip cell
-                var svd = document.getElementById('cohost-self-video');
-                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-            } else if (cohostPip) {
-                // Regular viewer with co-host pip — also ensure pip is in flow
-                container.style.cssText = 'display:flex;flex-direction:row;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText  = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;';
-                cohostPip.style.cssText             = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;border-radius:0;border:none;';
-                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
-            }
-        } else if (mode === 'pip-bottom') {
-            if (!secondPanel) {
-                _pendingViewerLayout = mode;
-                setTimeout(function(){ if (_pendingViewerLayout === 'pip-bottom') _applyViewerLayout('pip-bottom'); }, 300);
-                return;
-            }
-            _pendingViewerLayout = null;
-            container.classList.add('layout-pip-bottom');
-            if (!cohostPip && selfPip) {
-                container.style.cssText = 'display:flex;flex-direction:column;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText = 'flex:1;width:100%;position:relative;min-height:0;overflow:hidden;';
-                selfPip.style.cssText = 'width:100%;height:50%;position:relative;border-radius:0;border:none;flex-shrink:0;overflow:hidden;';
-                if (selfPip.parentElement !== container) container.appendChild(selfPip);
-                var svd = document.getElementById('cohost-self-video');
-                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-            } else if (cohostPip) {
-                container.style.cssText = 'display:flex;flex-direction:column;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText = 'flex:1;width:100%;position:relative;min-height:0;overflow:hidden;';
-                cohostPip.style.cssText = 'width:100%;height:50%;position:relative;border-radius:0;border:none;flex-shrink:0;overflow:hidden;';
-                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
-            }
-        } else if (mode === 'grid4') {
-            if (!secondPanel) {
-                _pendingViewerLayout = mode;
-                setTimeout(function(){ if (_pendingViewerLayout === 'grid4') _applyViewerLayout('grid4'); }, 300);
-                return;
-            }
-            _pendingViewerLayout = null;
-            container.classList.add('layout-grid4');
-            if (!cohostPip && selfPip) {
-                container.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText = 'grid-column:1/2;grid-row:1/3;position:relative;min-height:0;overflow:hidden;';
-                selfPip.style.cssText = 'grid-column:2/3;grid-row:1/2;position:relative;border-radius:0;border:none;min-height:0;overflow:hidden;';
-                if (selfPip.parentElement !== container) container.appendChild(selfPip);
-                var svd = document.getElementById('cohost-self-video');
-                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-            } else if (cohostPip) {
-                container.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;overflow:hidden;';
-                if (hostVid) hostVid.style.cssText = 'grid-column:1/2;grid-row:1/3;position:relative;min-height:0;overflow:hidden;';
-                cohostPip.style.cssText = 'grid-column:2/3;grid-row:1/2;position:relative;border-radius:0;border:none;min-height:0;overflow:hidden;';
-                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
-            }
-        } else if (mode === 'presentation') {
-            // Presentation layout is driven by the pres-mode CSS class on #live-player-wrap.
-            // Just ensure the video div fills its grid cell normally.
-            _pendingViewerLayout = null;
-            if (hostVid) hostVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+        if (window._renderSlotGrid) {
+            window._renderSlotGrid(container, 'live-remote-video', mode, window._currentCoSlots || [], false);
+            // Re-play the host track AFTER repositioning so Agora initialises at the
+            // correct final size — prevents Agora's internal resize observer resetting
+            // object-fit — then sync co-host tracks into their slot divs.
+            setTimeout(function() {
+                var _remEl = document.getElementById('live-remote-video');
+                if (_remEl && window._liveHostVideoTrack) {
+                    try { window._liveHostVideoTrack.play(_remEl, { fit: 'cover' }); } catch(_) {}
+                }
+                window._syncAgoraToSlots && window._syncAgoraToSlots(window._currentCoSlots || [], false);
+            }, 250);
         }
     }
 
@@ -32918,25 +32985,36 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch(e) {}
     };
 
-    // VIEWER SIDE — request to join stage
-    window.requestCoHost = async function() {
+    // VIEWER SIDE — request to join stage (slotIndex passed from slot click or auto-pick)
+    window.requestCoHost = async function(slotIndex) {
         if (!_watchingStreamId || !window.db || !window.fs) return;
         const userAddress = window._liveUserAddress || '';
         const userHandle  = window._liveUserHandle  || 'Viewer';
         if (!userAddress) { showToast('Connect wallet first.'); return; }
+        if (isCoHost) { await window.leaveCoHost(); return; }
 
-        const btn = $('viewer-cohost-btn');
-        if (isCoHost) { await leaveCoHost(); return; }
+        // Find target slot — the specific box the viewer tapped, else first empty
+        var slots = window._currentCoSlots || [];
+        var targetSlot = (typeof slotIndex === 'number' && slots[slotIndex] && slots[slotIndex].status === 'empty')
+            ? slotIndex
+            : slots.findIndex(function(s){ return !s || s.status === 'empty'; });
+        if (targetSlot === -1) { showToast('No empty slots available.'); return; }
 
         try {
-            const { doc, setDoc, onSnapshot, serverTimestamp } = window.fs;
+            const { doc, setDoc, updateDoc, onSnapshot, serverTimestamp } = window.fs;
             const reqRef = doc(window.db, 'live_streams', _watchingStreamId, 'cohost_requests', userAddress);
-            await setDoc(reqRef, {
-                uid:    String(_myViewerUid || userAddress),
-                handle: userHandle,
-                status: 'pending',
-                ts:     serverTimestamp()
-            });
+
+            // Optimistically mark our slot as pending so the box shows ⏳ immediately
+            var newSlots = slots.slice();
+            newSlots[targetSlot] = { status:'pending', address: userAddress, name: userHandle, uid: String(_myViewerUid || userAddress) };
+            window._currentCoSlots = newSlots;
+            var _vc = document.getElementById('live-remote-video-container');
+            if (_vc && window._renderSlotGrid) window._renderSlotGrid(_vc, 'live-remote-video', window._viewerLayoutMode||'solo', newSlots, false);
+
+            await setDoc(reqRef, { uid: String(_myViewerUid||userAddress), handle: userHandle, status:'pending', slotIndex: targetSlot, ts: serverTimestamp() });
+            updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: newSlots }).catch(function(){});
+
+            var btn = $('viewer-cohost-btn');
             if (btn) { btn.innerHTML = '<span class="studio-btn-icon">⏳</span><span>Waiting…</span>'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
             showToast('✋ Stage request sent — waiting for host approval.');
 
@@ -32946,18 +33024,35 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const data = snap.data();
                 if (data.status === 'approved') {
                     unsub();
-                    await _promoteToCoHost();
+                    // Ask for camera/mic permission explicitly (user gesture) before joining
+                    openCohostPermissionModal(targetSlot);
                 } else if (data.status === 'rejected') {
                     unsub();
-                    if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.classList.remove('active'); }
+                    // Clear our pending slot so the box frees up again
+                    var sl2 = (window._currentCoSlots || []).slice();
+                    if (sl2[targetSlot] && (sl2[targetSlot].address||'') === userAddress) {
+                        sl2[targetSlot] = {status:'empty',address:null,name:null,uid:null};
+                    }
+                    window._currentCoSlots = sl2;
+                    updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: sl2 }).catch(function(){});
+                    var btn2 = $('viewer-cohost-btn');
+                    if (btn2) { btn2.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; btn2.style.opacity = ''; btn2.style.pointerEvents = ''; btn2.classList.remove('active'); }
                     showToast('Host declined your stage request.');
                 }
             });
         } catch(e) { showToast('Request error: ' + e.message); }
     };
 
-    async function _promoteToCoHost() {
+    async function _promoteToCoHost(targetSlot) {
         if (!agoraClient || !window.AgoraRTC) return;
+
+        // Require tracks to already exist (verified by enableCohostMedia)
+        if (!cohostVideoTrack || !cohostAudioTrack) {
+            console.error('[CoHost] Cannot promote - tracks not verified. Call enableCohostMedia first.');
+            showToast('Please enable camera & microphone first.');
+            return;
+        }
+
         try {
             // Promote viewer to host role so they can publish
             await agoraClient.setClientRole('host');
@@ -32972,7 +33067,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Also keep _myViewerUid in sync with the new host UID so both guards match.
             _myViewerUid = agoraClient.uid;
 
-            [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
+            // Publish pre-verified tracks (created in enableCohostMedia)
             await agoraClient.publish([cohostAudioTrack, cohostVideoTrack]);
 
             // ── After setClientRole('host'), Agora internally unsubscribes all remote
@@ -33048,80 +33143,34 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 console.warn('[CoHost] No remote video found after promotion — will render via user-published event');
             }
 
-            // ── Self-view PiP (YOU label, bottom-left of the stream container) ──────
-            var selfPip = document.getElementById('cohost-self-pip');
-            if (!selfPip) {
-                selfPip = document.createElement('div');
-                selfPip.id = 'cohost-self-pip';
-                selfPip.style.cssText = [
-                    'position:absolute',
-                    'bottom:60px',
-                    'right:10px',
-                    'width:160px',
-                    'height:100px',
-                    'border-radius:8px',
-                    'overflow:hidden',
-                    'border:2px solid #e03e3e',
-                    'z-index:30',
-                    'background:#000'
-                ].join(';');
-
-                var selfLabel = document.createElement('div');
-                selfLabel.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;font-weight:700;color:#fff;background:rgba(224,62,62,0.85);padding:1px 6px;border-radius:4px;z-index:3;pointer-events:none;letter-spacing:0.5px;';
-                selfLabel.textContent = '🎤 YOU';
-                selfPip.appendChild(selfLabel);
-
-                var selfVideoDiv = document.createElement('div');
-                selfVideoDiv.id = 'cohost-self-video';
-                selfVideoDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;';
-                selfPip.appendChild(selfVideoDiv);
-
-                var selfControls = document.createElement('div');
-                selfControls.style.cssText = 'position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10;';
-
-                var pipMicBtn = document.createElement('button');
-                pipMicBtn.id = 'cohost-btn-mic';
-                pipMicBtn.textContent = '🔇 Mute';
-                pipMicBtn.onclick = function() { window.toggleCoHostMic && window.toggleCoHostMic(); };
-                pipMicBtn.style.cssText = 'background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
-
-                var pipCamBtn = document.createElement('button');
-                pipCamBtn.id = 'cohost-btn-cam';
-                pipCamBtn.textContent = '📷 Cam Off';
-                pipCamBtn.onclick = function() { window.toggleCoHostCam && window.toggleCoHostCam(); };
-                pipCamBtn.style.cssText = 'background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
-
-                var pipLeaveBtn = document.createElement('button');
-                pipLeaveBtn.textContent = '✕ Leave';
-                pipLeaveBtn.onclick = function() { window.leaveCoHost && window.leaveCoHost(); };
-                pipLeaveBtn.style.cssText = 'background:rgba(220,38,38,0.75);border:1px solid rgba(220,38,38,0.8);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
-
-                selfControls.appendChild(pipMicBtn);
-                selfControls.appendChild(pipCamBtn);
-                selfControls.appendChild(pipLeaveBtn);
-                selfPip.appendChild(selfControls);
+            // ── Write our Agora UID to the assigned slot so all clients see us ──────
+            var _myAgoraUid = String(agoraClient.uid);
+            var _myAddr     = (window._liveUserAddress || '').toLowerCase();
+            var _myHandle   = window._liveUserHandle || 'Co-host';
+            var _slotIdx    = (typeof targetSlot === 'number') ? targetSlot : -1;
+            if (_watchingStreamId && window.db && window.fs) {
+                var _slotSnap = (window._currentCoSlots || []).slice();
+                // If targetSlot not given, find our pending slot by address
+                if (_slotIdx === -1) {
+                    _slotIdx = _slotSnap.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myAddr; });
+                }
+                if (_slotIdx !== -1) {
+                    _slotSnap[_slotIdx] = { status:'active', address: _myAddr, name: _myHandle, uid: _myAgoraUid };
+                    window._currentCoSlots = _slotSnap;
+                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: _slotSnap }).catch(function(){});
+                }
             }
 
-            // Append self-pip to the video container — search cinema-video-col too
-            // because enterCinema moves live-remote-video-container into cinema-video-col
-            var targetContainer = document.getElementById('live-remote-video-container') ||
-                                  document.getElementById('cinema-video-col') ||
-                                  document.getElementById('live-broadcaster-video-container');
-            if (targetContainer) targetContainer.appendChild(selfPip);
-
-            // Play local cam into self-pip with retry.
-            // cohost-self-video is position:absolute so offsetWidth is always 0 —
-            // we cannot use size as the ready signal. Instead just retry until the
-            // div exists in DOM (which it always will after appendChild above).
-            var _selfRetry = 0;
-            (function _playSelf() {
-                var svDiv = document.getElementById('cohost-self-video');
-                if (svDiv) {
-                    try { cohostVideoTrack.play(svDiv); console.log('[CoHost] self-view playing'); }
-                    catch(e) { console.warn('[CoHost] self-view play err:', e); }
-                } else if (_selfRetry < 25) {
-                    _selfRetry++;
-                    setTimeout(_playSelf, 150);
+            // ── Play self-view into our slot div (grid renders via stream-doc update) ──
+            var _selfPlayRetry = 0;
+            (function _playSelfInSlot() {
+                var slotDiv = _slotIdx !== -1 ? document.getElementById('live-slot-' + _slotIdx) : null;
+                if (slotDiv) {
+                    try { cohostVideoTrack.play(slotDiv, { fit: 'cover' }); console.log('[CoHost] self-view playing in slot', _slotIdx); }
+                    catch(e) { console.warn('[CoHost] self-view slot play err:', e); }
+                } else if (_selfPlayRetry < 30) {
+                    _selfPlayRetry++;
+                    setTimeout(_playSelfInSlot, 150);
                 }
             })();
 
@@ -33242,6 +33291,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 btn.style.pointerEvents = '';
                 btn.classList.remove('active');
             }
+            // Free our slot in coSlots so the box shows "+ Request" again
+            if (_watchingStreamId && window.db && window.fs) {
+                var _myLvAddr = (window._liveUserAddress || '').toLowerCase();
+                var _lvSlots = (window._currentCoSlots || []).slice();
+                var _lvIdx = _lvSlots.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myLvAddr; });
+                if (_lvIdx !== -1) {
+                    _lvSlots[_lvIdx] = {status:'empty',address:null,name:null,uid:null};
+                    window._currentCoSlots = _lvSlots;
+                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: _lvSlots }).catch(function(){});
+                }
+            }
             // Clean up cohost request doc so host sees slot freed
             if (_watchingStreamId && window.db && window.fs) {
                 var userAddress = window._liveUserAddress || '';
@@ -33259,6 +33319,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── Co-host mic/cam state flags (mirrors isMicMuted / isCamOff on host side) ──
     let _cohostMicMuted = false;
     let _cohostCamOff   = false;
+    // Exposes current mic/cam state to the slot tap-menu (self-controls branch)
+    window._coHostStateGet = function() { return { micMuted: _cohostMicMuted, camOff: _cohostCamOff }; };
 
     // ── Co-host mic toggle (viewer on stage) ─────────────────────
     // Flag set to true for the duration of a deliberate mic/cam toggle.
@@ -33293,26 +33355,47 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(function(){ _cohostToggling = false; }, 2000);
             const btn = $('cohost-btn-cam');
             if (btn) btn.textContent = _cohostCamOff ? '📷 Cam On' : '📷 Cam Off';
-            // Show/hide a cam-off overlay inside selfPip so the pip stays visible
-            // even when camera is disabled — it just shows black with a label
-            var selfPip = document.getElementById('cohost-self-pip');
-            if (selfPip) {
-                var camOffOverlay = document.getElementById('cohost-cam-off-overlay');
-                if (_cohostCamOff) {
-                    if (!camOffOverlay) {
-                        camOffOverlay = document.createElement('div');
-                        camOffOverlay.id = 'cohost-cam-off-overlay';
-                        camOffOverlay.style.cssText = 'position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:5;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:600;';
-                        camOffOverlay.textContent = '📷 Cam Off';
-                        selfPip.appendChild(camOffOverlay);
-                    } else {
-                        camOffOverlay.style.display = 'flex';
+            showToast(_cohostCamOff ? '📷 Camera off' : '📷 Camera live');
+
+            // Write camOff state to Firestore so all viewers see profile pic or live video
+            var _myTgAddr = (window._liveUserAddress || '').toLowerCase();
+            var _myAvatar = window._liveUserAvatar || '';
+            var _sid = _watchingStreamId || currentStreamId;
+            if (_sid && window.db && window.fs && _myTgAddr) {
+                var _cs = (window._currentCoSlots || []).slice();
+                var _ci = _cs.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myTgAddr; });
+                if (_ci !== -1) {
+                    _cs[_ci] = Object.assign({}, _cs[_ci], {
+                        camOff: _cohostCamOff,
+                        avatar: _cohostCamOff ? _myAvatar : ''
+                    });
+                    window._currentCoSlots = _cs;
+                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _sid), { coSlots: _cs }).catch(function(){});
+
+                    // Immediately update own slot DOM without waiting for Firestore round-trip
+                    var _slotEl = document.getElementById('live-slot-' + _ci);
+                    if (_slotEl) {
+                        var _existing = _slotEl.querySelector('.slot-cam-off');
+                        if (_cohostCamOff) {
+                            if (!_existing) {
+                                _existing = document.createElement('div');
+                                _existing.className = 'slot-cam-off';
+                                _existing.style.cssText = 'position:absolute;inset:0;background:#0a0810;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:4;gap:6px;';
+                                _existing.innerHTML = _myAvatar
+                                    ? '<img src="'+_myAvatar+'" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid rgba(124,92,191,0.5);" /><div style="font-size:0.55rem;color:rgba(255,255,255,0.38);font-weight:600;letter-spacing:0.5px;">CAM OFF</div>'
+                                    : '<div style="font-size:2.2rem;line-height:1;">👤</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.38);font-weight:600;letter-spacing:0.5px;">CAM OFF</div>';
+                                _slotEl.appendChild(_existing);
+                            } else {
+                                _existing.style.display = 'flex';
+                            }
+                        } else {
+                            if (_existing) _existing.style.display = 'none';
+                            // Resume playing cam in slot
+                            try { cohostVideoTrack.play(_slotEl.querySelector('.slot-vid') || _slotEl, { fit: 'cover' }); } catch(_e) {}
+                        }
                     }
-                } else {
-                    if (camOffOverlay) camOffOverlay.style.display = 'none';
                 }
             }
-            showToast(_cohostCamOff ? '📷 Camera off' : '📷 Camera live');
         } catch(e) {
             _cohostCamOff = !_cohostCamOff; // roll back
             _cohostToggling = false;
@@ -35370,6 +35453,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
             }
         }
+    };
+
+    // Locally mutes a co-host's audio by their Agora UID (host-side only)
+    window._muteSlotUid = function(uid) {
+        if (!agoraClient || !uid) return;
+        var remotes = agoraClient.remoteUsers || [];
+        for (var i = 0; i < remotes.length; i++) {
+            if (String(remotes[i].uid) === String(uid)) {
+                if (remotes[i].audioTrack) {
+                    try { remotes[i].audioTrack.stop(); showToast('Co-host muted locally.'); } catch(e) {}
+                }
+                return;
+            }
+        }
+        showToast('Could not find that user\'s audio track.');
     };
 
     // Kick a co-host out of their slot
@@ -39228,6 +39326,35 @@ window._renderSlotGrid = function(container, hostVidId, mode, coSlots, isHost) {
         hostEl.style.setProperty('max-height',  'none',     'important');
         hostEl.style.setProperty('min-width',   '0',        'important');
         hostEl.style.setProperty('max-width',   'none',     'important');
+    }
+
+    // ── Defend the host cell geometry ──────────────────────────────────────
+    // Mobile height-fixers, Agora resize handling and cinema observers rewrite
+    // this element's inline style with !important at unpredictable times, and
+    // inline writes are last-write-wins — which left the host video fullscreen
+    // instead of shrinking into its slot. Re-assert the cell geometry whenever
+    // anything else touches the style attribute while a multi-slot layout is on.
+    if (window._hostCellObs) { try { window._hostCellObs.disconnect(); } catch(_) {} window._hostCellObs = null; }
+    if (hostEl && def.slots.length > 0) {
+        var _cell = def.host;
+        var _assertHostCell = function() {
+            if (hostEl.style.getPropertyValue('width') === _cell.w + '%' &&
+                hostEl.style.getPropertyValue('left')  === _cell.l + '%') return;
+            hostEl.style.setProperty('position', 'absolute',  'important');
+            hostEl.style.setProperty('left',      _cell.l+'%', 'important');
+            hostEl.style.setProperty('top',       _cell.t+'%', 'important');
+            hostEl.style.setProperty('right',     'auto',      'important');
+            hostEl.style.setProperty('bottom',    'auto',      'important');
+            hostEl.style.setProperty('width',     _cell.w+'%', 'important');
+            hostEl.style.setProperty('height',    _cell.h+'%', 'important');
+        };
+        _assertHostCell();
+        window._hostCellObs = new MutationObserver(_assertHostCell);
+        window._hostCellObs.observe(hostEl, { attributes: true, attributeFilter: ['style'] });
+        // Timed re-asserts beat late async writers (Agora replay, cinema move, etc.)
+        setTimeout(_assertHostCell, 300);
+        setTimeout(_assertHostCell, 900);
+        setTimeout(_assertHostCell, 2000);
     }
     // Store coSlots globally so _updateSlotStarBadges can read them
     window._currentCoSlots = coSlots || [];
