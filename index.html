@@ -14077,6 +14077,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
+    // ── Wallet connecting indicator helpers ───────────────────────────────────
+    function showConnecting(message) {
+        var el = document.getElementById('wallet-connecting');
+        var txt = document.getElementById('wallet-connecting-text');
+        if (el) {
+            if (txt) txt.textContent = message || 'Connecting to wallet...';
+            el.classList.add('show');
+        }
+    }
+
+    function hideConnecting() {
+        var el = document.getElementById('wallet-connecting');
+        if (el) el.classList.remove('show');
+    }
+
     async function _connectWithProvider(walletType) {
         var dd = document.getElementById('wallet-dropdown');
         if (dd) dd.style.display = 'none';
@@ -16795,22 +16810,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     function showToast(m) {
         const t = document.getElementById('toast');
         if (t) { t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800); }
-    }
-
-    // Show persistent connecting indicator
-    function showConnecting(message) {
-        var el = document.getElementById('wallet-connecting');
-        var txt = document.getElementById('wallet-connecting-text');
-        if (el) {
-            if (txt) txt.textContent = message || 'Connecting to wallet...';
-            el.classList.add('show');
-        }
-    }
-
-    // Hide connecting indicator
-    function hideConnecting() {
-        var el = document.getElementById('wallet-connecting');
-        if (el) el.classList.remove('show');
     }
 
     // ── Styled alert / confirm ────────────────────────────────────────────────
