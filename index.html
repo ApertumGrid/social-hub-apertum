@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -14220,7 +14219,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId: WC_PROJECT_ID,
-                    showQrModal: !_wcIsMobile,
+                    showQrModal: true,
                     optionalChains: [APTM_CHAIN_ID, 1],
                     methods: [
                         'eth_sendTransaction',
@@ -14248,15 +14247,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 debugLog('WC: Provider initialized');
 
-                if (_wcIsMobile) {
-                    wcProv.on('display_uri', function(uri) {
-                        debugLog('WC: display_uri event');
-                        var enc = encodeURIComponent(uri);
-                        var mmLink = 'https://metamask.app.link/wc?uri=' + enc;
-                        debugLog('WC: Opening MetaMask via universal link');
-                        window.location.href = mmLink;
-                    });
-                }
+                // Let WalletConnect SDK handle mobile deep linking automatically
+                // The SDK detects mobile and uses proper deep links without breaking session state
 
                 showConnecting('Connecting to wallet...');
                 debugLog('WC: Calling enable()...');
