@@ -14188,181 +14188,86 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 debugLog('XOVA: ensureApertumChain returned ' + _xovaOnAptm);
                 if (!_xovaOnAptm) { hideConnecting(); return; }
             } else if (walletType === 'walletconnect') {
-                debugLog('Path: WalletConnect (Reown AppKit)');
-                // ── Reown AppKit (Modern WalletConnect) ─────────────────────────────
-                // Replaces old @walletconnect/ethereum-provider with Reown AppKit
-                // which has better mobile deep link handling and reliability.
+                debugLog('Path: WalletConnect');
+                // ── WalletConnect v2 ─────────────────────────────────────
                 const WC_PROJECT_ID = (window.APP_CONFIG && window.APP_CONFIG.wcProjectId) || '422b74ec70be253bbdc47a7479725899';
 
-                // Disconnect any existing session
-                if (window._activeReownModal) {
-                    try {
-                        await window._activeReownModal.disconnect();
-                        debugLog('Reown: Disconnected previous session');
-                    } catch(_) {}
+                if (!window._WCEthProviderClass) {
+                    debugLog('WC: Loading provider...');
+                    showToast('Loading WalletConnect…');
+                    const mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
+                    window._WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
+                    debugLog('WC: Provider loaded');
                 }
 
-                // Clear stale session data
+                if (window._activeWCProvider) {
+                    try { await window._activeWCProvider.disconnect(); } catch(_) {}
+                    window._activeWCProvider = null;
+                }
+
+                // Clear stale sessions
                 try {
                     Object.keys(localStorage).forEach(function(k) {
-                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect') || k.includes('reown')) {
+                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) {
                             localStorage.removeItem(k);
                         }
                     });
-                    debugLog('Reown: Cleared localStorage');
                 } catch(_) {}
 
-                // Lazy-load Web3Modal v2
-                if (!window._Web3Modal) {
-                    debugLog('WC: Loading Web3Modal...');
-                    showToast('Loading wallet connection...');
+                var _wcIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+                debugLog('WC: Initializing (isMobile=' + _wcIsMobile + ')...');
 
-                    // Load Web3Modal v2 and WalletConnect Universal Provider from CDN
-                    const [modalMod, providerMod] = await Promise.all([
-                        import('https://esm.sh/@web3modal/standalone@2.6.2'),
-                        import('https://esm.sh/@walletconnect/universal-provider@2.11.0')
-                    ]);
-
-                    window._Web3Modal = modalMod.Web3Modal || modalMod.default;
-                    window._UniversalProvider = providerMod.UniversalProvider || providerMod.default;
-
-                    debugLog('WC: Web3Modal loaded');
-                }
-
-                debugLog('WC: Creating Web3Modal...');
-
-                // Create Web3Modal instance
-                const web3Modal = new window._Web3Modal({
+                const wcProv = await window._WCEthProviderClass.init({
                     projectId: WC_PROJECT_ID,
-                    standaloneChains: ['eip155:' + APTM_CHAIN_ID, 'eip155:1'],
-                    themeMode: 'dark',
-                    themeVariables: {
-                        '--w3m-accent-color': '#7c5cbf',
-                        '--w3m-background-color': '#7c5cbf'
-                    }
-                });
-
-                debugLog('WC: Creating Universal Provider...');
-
-                // Create Universal Provider
-                const provider = await window._UniversalProvider.init({
-                    projectId: WC_PROJECT_ID,
+                    showQrModal: !_wcIsMobile,
+                    chains: [1],
+                    optionalChains: [APTM_CHAIN_ID],
+                    rpcMap: {
+                        [APTM_CHAIN_ID]: APTM_RPC,
+                        1: 'https://cloudflare-eth.com'
+                    },
                     metadata: {
                         name: 'SocialHub',
                         description: 'Web3 Social Platform on Apertum',
                         url: 'https://www.socialhubapertum.com',
-                        icons: ['https://socialhubapertum.com/favicon.ico']
-                    },
-                    client: undefined
+                        icons: ['https://socialhubapertum.com/favicon.ico'],
+                        redirect: {
+                            universal: 'https://socialhubapertum.com',
+                            native: 'socialhub://'
+                        }
+                    }
                 });
 
                 debugLog('WC: Provider initialized');
-                window._activeWeb3Modal = web3Modal;
-                window._activeUniversalProvider = provider;
 
-                // Connection promise
+                if (_wcIsMobile) {
+                    wcProv.on('display_uri', function(uri) {
+                        debugLog('WC: display_uri event');
+                        var enc = encodeURIComponent(uri);
+                        var mmLink = 'https://metamask.app.link/wc?uri=' + enc;
+                        debugLog('WC: Opening MetaMask via universal link');
+                        window.location.href = mmLink;
+                    });
+                }
+
                 showConnecting('Connecting to wallet...');
-                debugLog('WC: Connecting to Apertum chain...');
+                debugLog('WC: Calling enable()...');
 
-                await new Promise(function(resolve, reject) {
-                    var _done = false;
-                    var _timeout;
+                await wcProv.enable();
 
-                    function _success() {
-                        if (_done) return;
-                        _done = true;
-                        clearTimeout(_timeout);
-                        debugLog('WC: Connection successful');
-                        web3Modal.closeModal();
-                        resolve();
-                    }
+                debugLog('WC: enable() completed');
+                window._activeWCProvider = wcProv;
+                eth = wcProv;
 
-                    function _fail(err) {
-                        if (_done) return;
-                        _done = true;
-                        clearTimeout(_timeout);
-                        debugLog('WC: Connection failed - ' + (err.message || String(err)));
-                        web3Modal.closeModal();
-                        reject(err);
-                    }
-
-                    // Listen for connection events
-                    provider.on('display_uri', function(uri) {
-                        debugLog('WC: display_uri event - opening modal');
-                        web3Modal.openModal({ uri: uri });
-                    });
-
-                    provider.on('connect', function() {
-                        debugLog('WC: connect event');
-                        _success();
-                    });
-
-                    // Timeout after 5 minutes
-                    _timeout = setTimeout(function() {
-                        debugLog('WC: Timeout reached (5min)');
-                        _fail(new Error('Connection timed out. Please try again.'));
-                    }, 300000);
-
-                    // Connect to Apertum chain
-                    debugLog('WC: Calling provider.connect()...');
-                    provider.connect({
-                        namespaces: {
-                            eip155: {
-                                methods: [
-                                    'eth_sendTransaction',
-                                    'eth_signTransaction',
-                                    'eth_sign',
-                                    'personal_sign',
-                                    'eth_signTypedData'
-                                ],
-                                chains: ['eip155:' + APTM_CHAIN_ID, 'eip155:1'],
-                                events: ['chainChanged', 'accountsChanged'],
-                                rpcMap: {
-                                    [APTM_CHAIN_ID]: APTM_RPC,
-                                    1: 'https://cloudflare-eth.com'
-                                }
-                            }
-                        }
-                    }).then(function() {
-                        debugLog('WC: provider.connect() resolved');
-                        // Don't resolve yet - wait for 'connect' event
-                    }).catch(_fail);
-                });
-
-                debugLog('WC: Connection promise resolved');
-
-                // Use the provider
-                eth = provider;
-                window._activeWCProvider = provider;
-
-                debugLog('WC: Ensuring Apertum chain...');
                 await _ensureApertumChain(eth);
 
-                // Setup disconnect handlers
-                provider.on('disconnect', function() {
-                    debugLog('WC: Wallet disconnected');
-                    window._activeWCProvider = null;
-                    window._shLastWalletType = '';
-                    showToast('Wallet disconnected');
-                });
-
-                provider.on('accountsChanged', function(accounts) {
-                    debugLog('WC: Accounts changed - ' + (accounts && accounts.length > 0 ? accounts[0] : 'none'));
-                    if (!accounts || accounts.length === 0) {
-                        window._activeWCProvider = null;
-                        window._shLastWalletType = '';
-                    }
-                });
-
-                provider.on('session_delete', function() {
-                    debugLog('WC: Session deleted');
+                wcProv.on('disconnect', function() {
+                    debugLog('WC: Disconnected');
                     window._activeWCProvider = null;
                     window._shLastWalletType = '';
                 });
 
-                // Set session alive flag
                 window._wcSessionAlive = true;
-
                 debugLog('WC: Setup complete');
             } else {
                 debugLog('Path: MetaMask direct');
