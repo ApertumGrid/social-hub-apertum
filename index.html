@@ -4758,6 +4758,28 @@
         }
         #toast.show { opacity: 1; transform: translateY(0); }
 
+        /* Wallet connecting indicator — persistent until connection succeeds/fails */
+        #wallet-connecting {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 10000;
+            background: linear-gradient(135deg, #1c1e21, #252830);
+            border: 1px solid rgba(124,92,191,0.5);
+            color: #ffffff;
+            font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700;
+            padding: 12px 24px; border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(124,92,191,0.3), 0 0 60px rgba(124,92,191,0.15);
+            display: none; /* Hidden by default */
+            align-items: center; gap: 10px;
+            letter-spacing: 0.5px;
+        }
+        #wallet-connecting.show { display: flex; animation: fadeInUp 0.3s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        #wallet-connecting .spinner {
+            width: 16px; height: 16px; border: 2px solid rgba(124,92,191,0.3);
+            border-top-color: var(--purple); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         /* â”€â”€ INDEX 28: Global Activity Pulse â€” bottom-left, teal, distinct from local toast â”€â”€ */
         #global-pulse {
             position: fixed; bottom: 22px; left: 22px; z-index: 9998;
@@ -13231,6 +13253,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 </div>
 
 <div id="toast"></div>
+
+<!-- Wallet connection status indicator (persistent, not auto-dismiss) -->
+<div id="wallet-connecting">
+    <div class="spinner"></div>
+    <span id="wallet-connecting-text">Connecting to wallet...</span>
+</div>
+
 <!-- INDEX 28: Global Activity Pulse — fires for ALL visitors on hype/signal events -->
 <div id="global-pulse"></div>
 
@@ -14041,6 +14070,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
+    // ── Wallet connecting indicator helpers ───────────────────────────────────
+    function showConnecting(message) {
+        var el = document.getElementById('wallet-connecting');
+        var txt = document.getElementById('wallet-connecting-text');
+        if (el) {
+            if (txt) txt.textContent = message || 'Connecting to wallet...';
+            el.classList.add('show');
+        }
+    }
+
+    function hideConnecting() {
+        var el = document.getElementById('wallet-connecting');
+        if (el) el.classList.remove('show');
+    }
+
     async function _connectWithProvider(walletType) {
         var dd = document.getElementById('wallet-dropdown');
         if (dd) dd.style.display = 'none';
@@ -14070,8 +14114,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('XOVA Wallet not found. Open this page inside the XOVA app, or ensure the XOVA extension is active.');
                     return;
                 }
+                showConnecting('Connecting to XOVA Wallet...');
                 const _xovaOnAptm = await _ensureApertumChain(eth);
-                if (!_xovaOnAptm) return;
+                if (!_xovaOnAptm) { hideConnecting(); return; }
             } else if (walletType === 'walletconnect') {
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
@@ -14184,6 +14229,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } else {
                     showToast('Scan the QR code with your wallet app to connect');
                 }
+                showConnecting('Connecting via WalletConnect...');
                 await new Promise(function(resolve, reject) {
                     var _wcDone = false;
                     function _ok() { if (!_wcDone) { _wcDone = true; resolve(); } }
@@ -14260,6 +14306,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 if (!eth) { showToast('No wallet detected. Please install MetaMask.'); return; }
             }
 
+            showConnecting('Connecting to MetaMask...');
             provider    = new ethers.providers.Web3Provider(eth);
             const accts = await provider.send("eth_requestAccounts", []);
             userAddress = accts[0];
@@ -14405,11 +14452,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Allow WC session drop listeners to fire now (handshake complete)
             if (walletType === 'walletconnect') window._wcConnecting = false;
+            hideConnecting();
             showToast('Connected via ' + (walletType === 'xova' ? 'XOVA Wallet' : walletType === 'walletconnect' ? 'WalletConnect' : 'MetaMask') + ' ✓');
             // Prompt for push notifications (delayed slightly so connect toast shows first)
             setTimeout(function() { initPushNotifications(userAddress); }, 2500);
         } catch(err) {
             console.error(err);
+            hideConnecting();
             showToast('Connection Failed — ' + (err.message || String(err)));
         }
     }
