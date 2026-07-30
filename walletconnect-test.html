@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalletConnect Mobile Test</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #0a0e1a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.container {
+    max-width: 480px;
+    width: 100%;
+}
+h1 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.status {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+.status.success { border-color: #22c55e; background: rgba(34,197,94,0.1); }
+.status.error { border-color: #ef4444; background: rgba(239,68,68,0.1); }
+button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #a78bfa 0%, #7c5cbf 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.wallet-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+}
+.wallet-sheet.show { display: flex; }
+.wallet-card {
+    width: 100%;
+    max-width: 480px;
+    background: #17141f;
+    border-radius: 22px 22px 0 0;
+    padding: 14px 16px 30px;
+    transform: translateY(100%);
+    transition: transform 0.3s;
+}
+.wallet-sheet.show .wallet-card { transform: translateY(0); }
+.wallet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.wallet-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+.wallet-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+.wallet-subtitle {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 16px;
+}
+.wallet-option {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 11px 13px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    text-decoration: none;
+    margin-bottom: 9px;
+    color: #fff;
+}
+.wallet-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.wallet-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+.wallet-sub {
+    display: block;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.68rem;
+    margin-top: 1px;
+}
+.log {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.log-entry {
+    margin-bottom: 4px;
+    opacity: 0.8;
+}
+.log-entry.error { color: #ef4444; }
+.log-entry.success { color: #22c55e; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔗 WalletConnect Mobile Test</h1>
+    <div class="status" id="status">
+        <strong>Test Status:</strong> Ready to test<br>
+        <small>Project ID: 422b74ec70be253bbdc47a7479725899</small>
+    </div>
+
+    <button id="connectBtn" onclick="testConnect()">Connect Wallet (Mobile Test)</button>
+
+    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); text-align: center;">
+        <strong>Fix Applied:</strong> Universal links with proper encoding<br>
+        metamask.app.link, link.trustwallet.com, go.cb-w.com
+    </div>
+
+    <div class="log" id="log"></div>
+</div>
+
+<div class="wallet-sheet" id="walletSheet">
+    <div class="wallet-card">
+        <div class="wallet-header">
+            <div class="wallet-title">Connect a wallet</div>
+            <button class="wallet-close" onclick="closeSheet()">✕</button>
+        </div>
+        <div class="wallet-subtitle">Choose the app to approve the connection in.</div>
+        <div id="walletList"></div>
+    </div>
+</div>
+
+<script type="module">
+const PROJECT_ID = '422b74ec70be253bbdc47a7479725899';
+const APTM_CHAIN_ID = 2786;
+const APTM_RPC = 'https://rpc.apertum.io/ext/bc/YDJ1r9RMkewATmA7B35q1bdV18aywzmdiXwd9zGBq3uQjsCnn/rpc';
+
+let wcProvider = null;
+let WCEthProviderClass = null;
+
+function log(msg, type = 'info') {
+    const logEl = document.getElementById('log');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry ' + type;
+    const time = new Date().toLocaleTimeString();
+    entry.textContent = `[${time}] ${msg}`;
+    logEl.appendChild(entry);
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log(`[WC Test] ${msg}`);
+}
+
+function setStatus(msg, className = '') {
+    const status = document.getElementById('status');
+    status.innerHTML = `<strong>Test Status:</strong> ${msg}`;
+    status.className = 'status ' + className;
+}
+
+function closeSheet() {
+    document.getElementById('walletSheet').classList.remove('show');
+}
+
+function openWalletSheet(wcUri) {
+    log('Received display_uri event');
+    log(`URI length: ${wcUri.length} chars`);
+
+    const svgMM = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#fff"/><path d="M9 9 L16.5 14.5 L12 18 Z" fill="#E17726"/><path d="M33 9 L25.5 14.5 L30 18 Z" fill="#E17726"/><path d="M15 14.5 L27 14.5 L30 24 L25.5 30 L21 27 L16.5 30 L12 24 Z" fill="#E27625"/><circle cx="17.6" cy="21" r="1.7" fill="#233447"/><circle cx="24.4" cy="21" r="1.7" fill="#233447"/><path d="M17.5 26 L21 27 L24.5 26 L21 29.5 Z" fill="#fff"/></svg>';
+    const svgTrust = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#fff"/><path d="M21 7 L32 11 V21 C32 28 27 32 21 35 C15 32 10 28 10 21 V11 Z" fill="#0500FF"/><path d="M21 7 L32 11 V21 C32 28 27 32 21 35 Z" fill="#3375BB"/></svg>';
+    const svgCoin = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#0052FF"/><circle cx="21" cy="21" r="11" fill="none" stroke="#fff" stroke-width="4.2"/></svg>';
+
+    // THE FIX: Proper universal links with encoding
+    const wallets = [
+        {
+            name: 'MetaMask',
+            link: 'https://metamask.app.link/wc?uri=' + encodeURIComponent(wcUri),
+            svg: svgMM,
+            bg: '#fff'
+        },
+        {
+            name: 'Trust Wallet',
+            link: 'https://link.trustwallet.com/wc?uri=' + encodeURIComponent(wcUri),
+            svg: svgTrust,
+            bg: '#fff'
+        },
+        {
+            name: 'Coinbase Wallet',
+            link: 'https://go.cb-w.com/wc?uri=' + encodeURIComponent(wcUri),
+            svg: svgCoin,
+            bg: '#0052FF'
+        }
+    ];
+
+    log('Generated universal links with encoding ✓', 'success');
+
+    const listEl = document.getElementById('walletList');
+    listEl.innerHTML = '';
+
+    wallets.forEach(w => {
+        const a = document.createElement('a');
+        a.href = w.link;
+        a.className = 'wallet-option';
+        a.innerHTML = `
+            <span class="wallet-icon" style="background: ${w.bg}">${w.svg}</span>
+            <span style="flex: 1;">
+                <span class="wallet-name">${w.name}</span>
+            </span>
+        `;
+        a.onclick = () => {
+            log(`Opening ${w.name}...`, 'info');
+            setTimeout(() => {
+                log(`Tapped ${w.name} button - wallet app should open`, 'success');
+            }, 100);
+        };
+        listEl.appendChild(a);
+    });
+
+    document.getElementById('walletSheet').classList.add('show');
+}
+
+window.testConnect = async function() {
+    const btn = document.getElementById('connectBtn');
+    btn.disabled = true;
+    btn.textContent = 'Connecting...';
+
+    try {
+        log('Starting WalletConnect test...');
+        setStatus('Loading WalletConnect library...', '');
+
+        if (!WCEthProviderClass) {
+            log('Loading @walletconnect/ethereum-provider...');
+            const mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
+            WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
+            log('WalletConnect library loaded ✓', 'success');
+        }
+
+        if (wcProvider) {
+            log('Disconnecting old session...');
+            await wcProvider.disconnect();
+        }
+
+        // Clear stale sessions
+        log('Clearing stale WC sessions from localStorage...');
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) {
+                localStorage.removeItem(k);
+            }
+        });
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        log(`Device: ${isMobile ? 'MOBILE' : 'DESKTOP'}`);
+
+        setStatus('Initializing WalletConnect provider...', '');
+        log('Calling WCEthProviderClass.init()...');
+
+        wcProvider = await WCEthProviderClass.init({
+            projectId: PROJECT_ID,
+            showQrModal: !isMobile,
+            chains: [1],
+            optionalChains: [APTM_CHAIN_ID],
+            rpcMap: {
+                [APTM_CHAIN_ID]: APTM_RPC,
+                1: 'https://cloudflare-eth.com'
+            },
+            metadata: {
+                name: 'WalletConnect Test',
+                description: 'Mobile connection test',
+                url: 'https://socialhubapertum.com',
+                icons: ['https://socialhubapertum.com/favicon.ico']
+            }
+        });
+
+        log('Provider initialized ✓', 'success');
+
+        if (isMobile) {
+            log('Mobile detected - setting up display_uri handler');
+            wcProvider.on('display_uri', (uri) => {
+                log('display_uri event fired!', 'success');
+                openWalletSheet(uri);
+            });
+        }
+
+        setStatus('Calling enable() to trigger connection...', '');
+        log('Calling wcProvider.enable()...');
+
+        await wcProvider.enable();
+
+        log('✓ CONNECTION SUCCESS!', 'success');
+        setStatus('✅ Connected successfully! Check accounts below.', 'success');
+
+        const accounts = wcProvider.accounts || [];
+        log(`Connected accounts: ${accounts.join(', ')}`, 'success');
+
+        btn.textContent = 'Connected ✓';
+        closeSheet();
+
+    } catch (err) {
+        log(`❌ ERROR: ${err.message}`, 'error');
+        setStatus(`❌ Connection failed: ${err.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Connect Wallet (Try Again)';
+        console.error(err);
+    }
+};
+
+log('Test page loaded. Ready to test.', 'success');
+</script>
+
+</body>
+</html>
