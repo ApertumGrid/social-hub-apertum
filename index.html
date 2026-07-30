@@ -14284,12 +14284,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     ov.appendChild(card);
                     document.body.appendChild(ov);
 
-                    // Add click logging to wallet options for debugging
+                    // Add click handlers to wallet options - force navigation with window.location
                     var walletOpts = card.querySelectorAll('.wc-wallet-opt');
                     walletOpts.forEach(function(opt, idx) {
                         opt.addEventListener('click', function(e) {
                             var href = opt.getAttribute('href');
                             debugLog('WC: Wallet option #' + idx + ' clicked, href=' + href.substring(0, 60) + '...');
+
+                            // Prevent default <a> navigation and force open with window.location
+                            e.preventDefault();
+                            debugLog('WC: Opening link with window.location.href...');
+                            try {
+                                window.location.href = href;
+                                debugLog('WC: window.location.href set successfully');
+                            } catch(err) {
+                                debugLog('WC: window.location.href failed: ' + err.message);
+                            }
                         });
                     });
 
