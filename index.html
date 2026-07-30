@@ -4409,18 +4409,7 @@
         .inbox-compose .inbox-send-btn { flex-shrink: 0; width: auto; min-width: 64px; padding: 8px 16px; height: auto; align-self: flex-end; }
         .inbox-msg-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
         .inbox-msg-head-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
-        @media (max-width: 600px) {
-            .inbox-pane { display: flex; flex-direction: column; }
-            .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
-            .inbox-sidebar.hide-mobile { display: none; }
-            .inbox-main { display: flex; flex-direction: column; min-height: 420px; }
-            .inbox-main.hide-mobile { display: none; }
-            .inbox-compose { padding: 10px; gap: 10px; }
-            .inbox-compose textarea { font-size: 0.85rem; }
-            .inbox-compose .inbox-send-btn { padding: 10px 16px; font-size: 0.8rem; }
-            .inbox-msg-head { position: relative; }
-            .inbox-back-btn { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-primary); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; }
-        }
+        @media (max-width: 600px) { .inbox-pane { grid-template-columns: 1fr; } .inbox-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 180px; } }
         .mcd-stream-val {
             font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800;
             color: var(--text-primary);
@@ -4757,48 +4746,6 @@
             transform: translateY(8px); letter-spacing: 0.4px;
         }
         #toast.show { opacity: 1; transform: translateY(0); }
-
-        /* Wallet connecting indicator — persistent until connection succeeds/fails */
-        #wallet-connecting {
-            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 10000;
-            background: linear-gradient(135deg, #1c1e21, #252830);
-            border: 1px solid rgba(124,92,191,0.5);
-            color: #ffffff;
-            font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700;
-            padding: 12px 24px; border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(124,92,191,0.3), 0 0 60px rgba(124,92,191,0.15);
-            display: none; /* Hidden by default */
-            align-items: center; gap: 10px;
-            letter-spacing: 0.5px;
-        }
-        #wallet-connecting.show { display: flex; animation: fadeInUp 0.3s ease; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        #wallet-connecting .spinner {
-            width: 16px; height: 16px; border: 2px solid rgba(124,92,191,0.3);
-            border-top-color: var(--purple); border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Mobile debug panel - shows connection flow progress */
-        #mobile-debug {
-            position: fixed;
-            top: 60px;
-            left: 10px;
-            right: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.9);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 10px;
-            padding: 8px;
-            border: 1px solid #0f0;
-            z-index: 99999;
-            display: none;
-            line-height: 1.3;
-        }
-        #mobile-debug.active { display: block; }
 
         /* â”€â”€ INDEX 28: Global Activity Pulse â€” bottom-left, teal, distinct from local toast â”€â”€ */
         #global-pulse {
@@ -6533,6 +6480,49 @@
             background:rgba(240,180,41,0.12); border:1px solid rgba(240,180,41,0.3);
             color:var(--gold);
         }
+
+        /* Feed toggle help icon + tooltip */
+        .feed-toggle-help {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .feed-toggle-help-icon {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: default;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .feed-toggle-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 0;
+            width: 220px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            z-index: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .feed-toggle-tooltip strong { color: var(--purple-lt); }
+        .feed-toggle-help:hover .feed-toggle-tooltip,
+        .feed-toggle-help:focus-within .feed-toggle-tooltip { display: block; }
 
         /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            HERO ACTION BUTTONS â€” Like, Tip, Follow
@@ -10374,6 +10364,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     <button class="feed-toggle-btn active" id="feed-toggle-global"    onclick="setFeedMode('global')">⊞ Global Feed</button>
                     <button class="feed-toggle-btn"        id="feed-toggle-following" onclick="setFeedMode('following')">♥ Following</button>
                     <button class="feed-toggle-btn"        id="feed-toggle-flicks"    onclick="setFeedMode('flicks')">▶ Flicks</button>
+                    <div class="feed-toggle-help" tabindex="0" aria-label="Following Feed info">
+                        <span class="feed-toggle-help-icon">?</span>
+                        <div class="feed-toggle-tooltip" role="tooltip">
+                            <strong>Following Feed</strong> shows only the Creators and Hubs you've supported.<br><br>
+                            Follow a creator on their Profile Wall, or tap <strong>+ Follow Hub</strong> inside any Community — their posts appear here instantly.
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Slim Flick header — replaces the full tab row when in Flicks mode -->
@@ -10533,40 +10530,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             Connect Wallet →
                         </button>
                         <div style="margin-top:10px;text-align:center;font-size:0.7rem;color:var(--text-muted);">Or tap Connect in the top navigation bar.</div>
-                    </div>
-                </div>
-
-                <!-- Co-host camera/mic permission modal -->
-                <div id="cohost-permission-modal" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;">
-                    <div style="background:var(--bg-card);border:1.5px solid rgba(224,62,62,0.4);border-radius:20px;max-width:420px;width:100%;padding:28px 22px;text-align:center;">
-                        <div style="font-size:2.2rem;margin-bottom:12px;">🎙️</div>
-                        <div style="font-size:1.05rem;font-weight:800;color:var(--text-primary);margin-bottom:14px;">Join as Co-Host</div>
-                        <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;margin-bottom:20px;text-align:left;">
-                            To join the stream as a co-host, you need to grant camera and microphone access.<br><br>
-                            <strong style="color:#e03e3e;">Tap the button below</strong> to enable your camera and microphone, then you'll join the stage.
-                        </div>
-
-                        <!-- Mic test feedback banner (shown during verification) -->
-                        <div id="mic-test-banner" style="display:none;background:rgba(224,62,62,0.1);border:1px solid rgba(224,62,62,0.3);border-radius:8px;padding:12px 16px;margin-bottom:12px;flex-direction:column;gap:8px;">
-                            <div style="color:#e03e3e; font-size:0.85rem; font-weight:600;">
-                                🎙 Testing microphone - say something...
-                            </div>
-                            <div style="background:rgba(255,255,255,0.1); height:6px; border-radius:3px; overflow:hidden;">
-                                <div id="mic-test-indicator" style="background:linear-gradient(90deg,#4ade80,#22c55e);height:100%;width:0%;transition:width 0.1s;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Permission error (shown if verification fails) -->
-                        <div id="cohost-permission-error" style="display:none;"></div>
-
-                        <div style="display:flex;gap:10px;">
-                            <button onclick="closeCohostPermissionModal()" style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);font-size:0.85rem;font-weight:600;cursor:pointer;">
-                                Cancel
-                            </button>
-                            <button id="cohost-enable-btn" onclick="enableCohostMedia()" style="flex:2;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#e03e3e,#b02020);color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(224,62,62,0.3);">
-                                📹 Enable Camera &amp; Mic
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -11882,13 +11845,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <!-- INBOX UI: mailbox active — shown by JS -->
                 <div id="inbox-active-view" style="display:none;">
                     <div class="inbox-pane">
-                        <div class="inbox-sidebar" id="inbox-sidebar">
+                        <div class="inbox-sidebar">
                             <div class="inbox-sidebar-head">Conversations</div>
                             <div class="inbox-thread-list" id="inbox-thread-list">
                                 <div style="padding:20px 14px; font-size:0.72rem; color:var(--text-muted); text-align:center;">No messages yet.<br>Start a conversation from any profile.</div>
                             </div>
                         </div>
-                        <div class="inbox-main hide-mobile" id="inbox-main">
+                        <div class="inbox-main" id="inbox-main">
                             <div class="inbox-empty-state">Select a conversation or start a new one.</div>
                         </div>
                     </div>
@@ -13273,16 +13236,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 </div>
 
 <div id="toast"></div>
-
-<!-- Wallet connection status indicator (persistent, not auto-dismiss) -->
-<div id="wallet-connecting">
-    <div class="spinner"></div>
-    <span id="wallet-connecting-text">Connecting to wallet...</span>
-</div>
-
-<!-- Mobile debug panel -->
-<div id="mobile-debug"></div>
-
 <!-- INDEX 28: Global Activity Pulse — fires for ALL visitors on hype/signal events -->
 <div id="global-pulse"></div>
 
@@ -13393,7 +13346,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         "function userWithdraw(uint256 amount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
         "function creatorWithdraw(uint256 amount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
         "function withdrawAll(uint256 depositAmount, uint256 earnedAmount, uint256 nonce, uint256 expiry, bytes calldata signature) external",
-        "function adminWithdrawToTreasury() external",
         "function depositedAPTM(address user) view returns (uint256)",
         "function withdrawableAPTM(address user) view returns (uint256)",
         "function getBalance(address user) view returns (uint256 deposited, uint256 withdrawable, uint256 total)",
@@ -14060,53 +14012,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     async function _ensureApertumChain(eth) {
         if (!eth || !eth.request) return true;
         try {
-            // Check current chain with 10s timeout
-            const chainIdHex = await Promise.race([
-                eth.request({ method: 'eth_chainId' }),
-                new Promise((_, rej) => setTimeout(() => rej(new Error('chain_check_timeout')), 10000))
-            ]);
+            const chainIdHex = await eth.request({ method: 'eth_chainId' });
             if (parseInt(chainIdHex, 16) === APTM_CHAIN_ID) return true;
-
             showToast('Wrong network — switching to Apertum…');
             try {
-                // Switch chain with 45s timeout (mobile is slower)
-                await Promise.race([
-                    eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAE2' }] }),
-                    new Promise((_, rej) => setTimeout(() => rej(new Error('chain_switch_timeout')), 45000))
-                ]);
+                await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAE2' }] });
                 return true;
             } catch (switchErr) {
-                // If timeout, check if chain is now correct (user manually switched)
-                if (switchErr.message === 'chain_switch_timeout') {
-                    try {
-                        const nowChainHex = await Promise.race([
-                            eth.request({ method: 'eth_chainId' }),
-                            new Promise((_, rej) => setTimeout(() => rej(new Error('recheck_timeout')), 5000))
-                        ]);
-                        if (parseInt(nowChainHex, 16) === APTM_CHAIN_ID) {
-                            console.log('[Chain] Switch timed out, but chain is now correct — proceeding');
-                            return true;
-                        }
-                    } catch (_) {}
-                    showToast('Chain switch timed out. Please switch to Apertum network manually.');
-                    return false;
-                }
-
                 if (switchErr.code === 4902 || (switchErr.message || '').includes('Unrecognized chain')) {
-                    // Add chain with 45s timeout
-                    await Promise.race([
-                        eth.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId:              '0xAE2',
-                                chainName:            'Apertum',
-                                nativeCurrency:       { name: 'APTM', symbol: 'APTM', decimals: 18 },
-                                rpcUrls:              [APTM_RPC],
-                                blockExplorerUrls:    ['https://explorer.apertum.io/']
-                            }]
-                        }),
-                        new Promise((_, rej) => setTimeout(() => rej(new Error('chain_add_timeout')), 45000))
-                    ]);
+                    await eth.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId:              '0xAE2',
+                            chainName:            'Apertum',
+                            nativeCurrency:       { name: 'APTM', symbol: 'APTM', decimals: 18 },
+                            rpcUrls:              [APTM_RPC],
+                            blockExplorerUrls:    ['https://explorer.apertum.io/']
+                        }]
+                    });
                     return true;
                 }
                 if (switchErr.code === 4001) {
@@ -14122,44 +14045,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
-    // ── Mobile debug logger - shows on screen ─────────────────────────────────
-    var _debugLogs = [];
-    function debugLog(msg) {
-        console.log('[DEBUG]', msg);
-        _debugLogs.push(new Date().toISOString().substr(11, 8) + ' ' + msg);
-        if (_debugLogs.length > 20) _debugLogs.shift();
-        var el = document.getElementById('mobile-debug');
-        if (el) {
-            el.classList.add('active');
-            el.innerHTML = _debugLogs.join('<br>');
-            el.scrollTop = el.scrollHeight;
-        }
-    }
-
-    // ── Wallet connecting indicator helpers ───────────────────────────────────
-    function showConnecting(message) {
-        var el = document.getElementById('wallet-connecting');
-        var txt = document.getElementById('wallet-connecting-text');
-        if (el) {
-            if (txt) txt.textContent = message || 'Connecting to wallet...';
-            el.classList.add('show');
-        }
-    }
-
-    function hideConnecting() {
-        var el = document.getElementById('wallet-connecting');
-        if (el) el.classList.remove('show');
-    }
-
     async function _connectWithProvider(walletType) {
-        debugLog('START: walletType=' + walletType);
         var dd = document.getElementById('wallet-dropdown');
         if (dd) dd.style.display = 'none';
 
         try {
             let eth;
             if (walletType === 'xova') {
-                debugLog('Path: XOVA');
                 // Priority order for XOVA provider resolution:
                 // 1. window.xova.ethereum  — standard XOVA injection
                 // 2. window.xova itself    — some versions inject the provider directly on window.xova
@@ -14182,30 +14074,31 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('XOVA Wallet not found. Open this page inside the XOVA app, or ensure the XOVA extension is active.');
                     return;
                 }
-                debugLog('XOVA: calling ensureApertumChain...');
-                showConnecting('Connecting to XOVA Wallet...');
                 const _xovaOnAptm = await _ensureApertumChain(eth);
-                debugLog('XOVA: ensureApertumChain returned ' + _xovaOnAptm);
-                if (!_xovaOnAptm) { hideConnecting(); return; }
+                if (!_xovaOnAptm) return;
             } else if (walletType === 'walletconnect') {
-                debugLog('Path: WalletConnect');
                 // ── WalletConnect v2 ─────────────────────────────────────
+                // Lazily import WalletConnect EthereumProvider from CDN
                 const WC_PROJECT_ID = (window.APP_CONFIG && window.APP_CONFIG.wcProjectId) || '422b74ec70be253bbdc47a7479725899';
-
+                var _wcIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
                 if (!window._WCEthProviderClass) {
-                    debugLog('WC: Loading provider...');
                     showToast('Loading WalletConnect…');
-                    const mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.23.10');
+                    const mod = await Promise.race([
+                        import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3'),
+                        new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('WalletConnect library failed to load. Check your internet connection and try again.')); }, 20000); })
+                    ]);
                     window._WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
-                    debugLog('WC: Provider loaded');
+                    if (!window._WCEthProviderClass || typeof window._WCEthProviderClass.init !== 'function') {
+                        throw new Error('WalletConnect library did not load correctly. Try refreshing the page.');
+                    }
                 }
-
                 if (window._activeWCProvider) {
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
                     window._activeWCProvider = null;
                 }
-
-                // Clear stale sessions
+                // Clear stale WC session/pairing keys from localStorage before every
+                // connect. Stale keys cause WC to resume a dead session — MetaMask
+                // opens but shows nothing because the pairing is expired on its end.
                 try {
                     Object.keys(localStorage).forEach(function(k) {
                         if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) {
@@ -14213,106 +14106,171 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         }
                     });
                 } catch(_) {}
-
-                var _wcIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-                debugLog('WC: Initializing (isMobile=' + _wcIsMobile + ')...');
-
                 const wcProv = await window._WCEthProviderClass.init({
-                    projectId: WC_PROJECT_ID,
-                    showQrModal: true,
-                    optionalChains: [APTM_CHAIN_ID, 1],
-                    methods: [
-                        'eth_sendTransaction',
-                        'eth_signTransaction',
-                        'eth_sign',
-                        'personal_sign',
-                        'eth_signTypedData'
-                    ],
-                    events: ['chainChanged', 'accountsChanged'],
+                    projectId:      WC_PROJECT_ID,
+                    showQrModal:    !_wcIsMobile,
+                    chains:         [1],
+                    optionalChains: [APTM_CHAIN_ID],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
-                        1: 'https://cloudflare-eth.com'
+                        1:               'https://cloudflare-eth.com'
                     },
                     metadata: {
-                        name: 'SocialHub',
+                        name:        'SocialHub',
                         description: 'Web3 Social Platform on Apertum',
-                        url: 'https://www.socialhubapertum.com',
-                        icons: ['https://socialhubapertum.com/favicon.ico'],
-                        redirect: {
-                            universal: 'https://socialhubapertum.com',
-                            native: 'socialhub://'
-                        }
+                        url:         'https://www.socialhubapertum.com',
+                        icons:       ['https://socialhubapertum.com/favicon.ico']
                     }
                 });
-
-                debugLog('WC: Provider initialized');
-
-                // Let WalletConnect SDK handle mobile deep linking automatically
-                // The SDK detects mobile and uses proper deep links without breaking session state
-
-                showConnecting('Connecting to wallet...');
-                debugLog('WC: Calling enable()...');
-
-                await wcProv.enable();
-
-                debugLog('WC: enable() completed');
-                window._activeWCProvider = wcProv;
-                eth = wcProv;
-
-                await _ensureApertumChain(eth);
-
-                wcProv.on('disconnect', function() {
-                    debugLog('WC: Disconnected');
+                // Mobile wallet chooser with universal links for proper deep linking
+                window._wcOpenWalletSheet = function(wcUri) {
+                    var old = document.getElementById('wc-wallet-sheet');
+                    if (old) old.remove();
+                    // Encode the WalletConnect URI once for use in universal links
+                    var encodedUri = encodeURIComponent(wcUri);
+                    var svgMM = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#fff"/><path d="M9 9 L16.5 14.5 L12 18 Z" fill="#E17726"/><path d="M33 9 L25.5 14.5 L30 18 Z" fill="#E17726"/><path d="M15 14.5 L27 14.5 L30 24 L25.5 30 L21 27 L16.5 30 L12 24 Z" fill="#E27625"/><path d="M16.5 14.5 L21 20 L25.5 14.5 L24 24 L18 24 Z" fill="#F6851B"/><circle cx="17.6" cy="21" r="1.7" fill="#233447"/><circle cx="24.4" cy="21" r="1.7" fill="#233447"/><path d="M17.5 26 L21 27 L24.5 26 L21 29.5 Z" fill="#fff"/></svg>';
+                    var svgTrust = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#fff"/><path d="M21 7 L32 11 V21 C32 28 27 32 21 35 C15 32 10 28 10 21 V11 Z" fill="#0500FF"/><path d="M21 7 L32 11 V21 C32 28 27 32 21 35 Z" fill="#3375BB"/></svg>';
+                    var svgCoin = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#0052FF"/><circle cx="21" cy="21" r="11" fill="none" stroke="#fff" stroke-width="4.2"/><rect x="17" y="17" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
+                    var svgLink = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+                    var wallets = [
+                        { name: 'MetaMask', link: 'https://metamask.app.link/wc?uri=' + encodedUri, svg: svgMM, bg: '#fff' },
+                        { name: 'Trust Wallet', link: 'https://link.trustwallet.com/wc?uri=' + encodedUri, svg: svgTrust, bg: '#fff' },
+                        { name: 'Coinbase Wallet', link: 'https://go.cb-w.com/wc?uri=' + encodedUri, svg: svgCoin, bg: '#0052FF' },
+                        { name: 'Other wallet', link: wcUri, svg: svgLink, bg: '#4b5563', sub: 'Open your default WalletConnect wallet' }
+                    ];
+                    var ov = document.createElement('div');
+                    ov.id = 'wc-wallet-sheet';
+                    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity 0.2s ease;';
+                    var card = document.createElement('div');
+                    card.style.cssText = 'width:100%;max-width:480px;background:#17141f;border-top:1px solid rgba(255,255,255,0.08);border-radius:22px 22px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 50px rgba(0,0,0,0.6);transform:translateY(100%);transition:transform 0.28s cubic-bezier(0.22,1,0.36,1);';
+                    var html = '<div style="width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,0.18);margin:2px auto 16px;"></div>';
+                    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">';
+                    html += '<div style="font-size:1.05rem;font-weight:800;color:#fff;">Connect a wallet</div>';
+                    html += '<div id="wc-sheet-cancel" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.55);font-size:0.85rem;cursor:pointer;">✕</div>';
+                    html += '</div>';
+                    html += '<div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-bottom:16px;">Choose the app you will approve the connection in.</div>';
+                    wallets.forEach(function(w) {
+                        html += '<a href="' + w.link + '" class="wc-wallet-opt" style="display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);text-decoration:none;margin-bottom:9px;">';
+                        html += '<span style="width:42px;height:42px;border-radius:12px;overflow:hidden;background:' + w.bg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + w.svg + '</span>';
+                        html += '<span style="flex:1;min-width:0;">';
+                        html += '<span style="display:block;color:#fff;font-weight:700;font-size:0.92rem;">' + w.name + '</span>';
+                        if (w.sub) {
+                            html += '<span style="display:block;color:rgba(255,255,255,0.4);font-size:0.68rem;margin-top:1px;">' + w.sub + '</span>';
+                        }
+                        html += '</span>';
+                        html += '<span style="color:rgba(255,255,255,0.28);font-size:1.3rem;flex-shrink:0;">›</span>';
+                        html += '</a>';
+                    });
+                    html += '<button id="wc-sheet-copy" style="width:100%;background:transparent;border:none;color:rgba(168,85,247,0.85);font-size:0.72rem;font-weight:600;padding:13px 0 3px;cursor:pointer;">Copy connection link instead</button>';
+                    card.innerHTML = html;
+                    ov.appendChild(card);
+                    document.body.appendChild(ov);
+                    requestAnimationFrame(function() {
+                        ov.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    });
+                    var closeSheet = function() {
+                        ov.style.opacity = '0';
+                        card.style.transform = 'translateY(100%)';
+                        setTimeout(function() { if (ov && ov.parentNode) ov.remove(); }, 280);
+                    };
+                    ov.addEventListener('click', function(e) { if (e.target === ov) closeSheet(); });
+                    var copyBtn = document.getElementById('wc-sheet-copy');
+                    if (copyBtn) copyBtn.onclick = function() {
+                        try { navigator.clipboard.writeText(wcUri); showToast('Connection link copied!'); } catch(_) {}
+                    };
+                    var cancelBtn = document.getElementById('wc-sheet-cancel');
+                    if (cancelBtn) cancelBtn.onclick = function() { closeSheet(); };
+                };
+                if (_wcIsMobile) {
+                    wcProv.on('display_uri', function(_wcUri) {
+                        try { window._wcOpenWalletSheet(_wcUri); }
+                        catch (_e) { console.error('[WC] wallet sheet failed:', _e); }
+                    });
+                }
+                await new Promise(function(resolve, reject) {
+                    var _wcDone = false;
+                    function _ok() {
+                        if (!_wcDone) {
+                            _wcDone = true;
+                            var wcSheet = document.getElementById('wc-wallet-sheet');
+                            if (wcSheet) wcSheet.remove();
+                            resolve();
+                        }
+                    }
+                    function _fail(e) { if (!_wcDone) { _wcDone = true; reject(e); } }
+                    wcProv.once('connect', _ok);
+                    wcProv.once('accountsChanged', function(accs) { if (accs && accs.length > 0) _ok(); });
+                    function _onVisible() {
+                        if (document.visibilityState === 'visible' && wcProv.accounts && wcProv.accounts.length > 0) {
+                            document.removeEventListener('visibilitychange', _onVisible);
+                            _ok();
+                        }
+                    }
+                    document.addEventListener('visibilitychange', _onVisible);
+                    wcProv.enable().then(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _ok();
+                    }).catch(function(e) {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(e);
+                    });
+                    setTimeout(function() {
+                        document.removeEventListener('visibilitychange', _onVisible);
+                        _fail(new Error('WalletConnect timed out. Select MetaMask in the popup, approve the request, then return to SocialHub.'));
+                    }, 300000);
+                });
+                await _ensureApertumChain(wcProv); // switch/add Apertum after session established
+                // Extract wallet name + deep link from WC session metadata
+                try {
+                    var _wcMeta = wcProv.session && wcProv.session.peer && wcProv.session.peer.metadata;
+                    if (_wcMeta) {
+                        window._wcWalletName     = _wcMeta.name || '';
+                        var _wcRedir             = _wcMeta.redirect || {};
+                        window._wcWalletDeepLink = _wcRedir.native || _wcRedir.universal || '';
+                    }
+                } catch(_) {}
+                // ── WC relay event listeners — detect drops + session expiry ──
+                window._wcConnecting = true;
+                var _wcSessionDead = function(reason) {
+                    if (window._wcConnecting) {
+                        console.warn('[WC] Ignoring transient', reason, 'during handshake');
+                        return;
+                    }
+                    console.warn('[WC] Session ended:', reason);
                     window._activeWCProvider = null;
                     window._shLastWalletType = '';
-                });
-
+                    window._wcSessionAlive = false;
+                    try {
+                        Object.keys(localStorage).forEach(function(k) {
+                            if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) localStorage.removeItem(k);
+                        });
+                    } catch(_) {}
+                    showToast('WalletConnect session dropped — tap Reconnect to resume.');
+                    var _wcBanner = document.getElementById('wc-reconnect-banner');
+                    if (_wcBanner) _wcBanner.style.display = 'block';
+                };
+                window._wcSessionDeadFn = _wcSessionDead;
+                wcProv.on('disconnect', function() { _wcSessionDead('relay disconnect'); });
+                wcProv.on('session_delete', function() { _wcSessionDead('session deleted by wallet'); });
+                wcProv.on('session_expire', function() { _wcSessionDead('session expired'); });
                 window._wcSessionAlive = true;
-                debugLog('WC: Setup complete');
+                window._activeWCProvider = wcProv;
+                eth = wcProv;
             } else {
-                debugLog('Path: MetaMask direct');
                 // When multiple wallets are installed (e.g. XOVA + MetaMask), one of them
                 // takes over window.ethereum. Look for MetaMask specifically in the
                 // EIP-5749 providers array first, then fall back to window.ethereum.
                 if (window.ethereum && Array.isArray(window.ethereum.providers)) {
-                    debugLog('MM: Checking providers array...');
                     eth = window.ethereum.providers.find(p => p.isMetaMask) || null;
-                    debugLog('MM: Found in providers: ' + (eth ? 'YES' : 'NO'));
                 }
-                if (!eth) {
-                    debugLog('MM: Waiting for ethereum (4s)...');
-                    eth = await _waitForEthereum(4000);
-                    debugLog('MM: _waitForEthereum result: ' + (eth ? 'SUCCESS' : 'FAILED'));
-                }
-                if (!eth) {
-                    debugLog('ERROR: No wallet detected');
-                    showToast('No wallet detected. Please install MetaMask.');
-                    return;
-                }
+                if (!eth) eth = await _waitForEthereum(4000);
+                if (!eth) { showToast('No wallet detected. Please install MetaMask.'); return; }
             }
 
-            debugLog('Showing connecting UI...');
-            showConnecting('Connecting to MetaMask...');
-
-            debugLog('Creating Web3Provider...');
-            provider = new ethers.providers.Web3Provider(eth);
-            debugLog('Web3Provider created');
-
-            debugLog('Calling eth_requestAccounts (60s timeout)...');
-            // Wrap eth_requestAccounts with 60s timeout — mobile MetaMask can hang indefinitely
-            const accts = await Promise.race([
-                provider.send("eth_requestAccounts", []),
-                new Promise((_, reject) =>
-                    setTimeout(() => {
-                        debugLog('TIMEOUT: eth_requestAccounts after 60s');
-                        reject(new Error('Connection timeout — wallet did not respond'));
-                    }, 60000)
-                )
-            ]);
-
-            debugLog('eth_requestAccounts returned: ' + accts.length + ' accounts');
+            provider    = new ethers.providers.Web3Provider(eth);
+            const accts = await provider.send("eth_requestAccounts", []);
             userAddress = accts[0];
-            debugLog('Connected: ' + userAddress.substr(0, 10) + '...');
             window.userAddress = userAddress;
             signer      = provider.getSigner();
             hubContract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer);
@@ -14455,14 +14413,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Allow WC session drop listeners to fire now (handshake complete)
             if (walletType === 'walletconnect') window._wcConnecting = false;
-            hideConnecting();
             showToast('Connected via ' + (walletType === 'xova' ? 'XOVA Wallet' : walletType === 'walletconnect' ? 'WalletConnect' : 'MetaMask') + ' ✓');
             // Prompt for push notifications (delayed slightly so connect toast shows first)
             setTimeout(function() { initPushNotifications(userAddress); }, 2500);
         } catch(err) {
-            debugLog('CATCH: ' + (err.message || String(err)));
             console.error(err);
-            hideConnecting();
             showToast('Connection Failed — ' + (err.message || String(err)));
         }
     }
@@ -15007,32 +14962,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
         inputEl.value = '';
     }
-    window._uploadBannerFile = _uploadBannerFile;
-
-    async function _uploadAvatarFile(inputEl) {
-        const file = inputEl && inputEl.files && inputEl.files[0];
-        if (!file) return;
-        if (!window.storage || !window.fsStorage) {
-            return alert('Firebase Storage not ready. Try again in a moment.');
-        }
-        const statusEl = document.getElementById('avatar-upload-status');
-        if (statusEl) { statusEl.style.display = ''; statusEl.textContent = 'Uploading…'; }
-        try {
-            const path      = 'media/' + Date.now() + '_avatar_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-            const storRef   = window.fsStorage.ref(window.storage, path);
-            const task      = window.fsStorage.uploadBytesResumable(storRef, file);
-            await new Promise((resolve, reject) => task.on('state_changed', null, reject, resolve));
-            const downloadURL = await window.fsStorage.getDownloadURL(task.snapshot.ref);
-            const ai = document.getElementById('avatar-input');
-            if (ai) ai.value = downloadURL;
-            if (statusEl) { statusEl.textContent = '✓ Uploaded'; setTimeout(() => { statusEl.style.display = 'none'; }, 2500); }
-        } catch(e) {
-            if (statusEl) statusEl.textContent = 'Upload failed — paste a URL instead';
-            console.warn('Avatar upload:', e);
-        }
-        inputEl.value = '';
-    }
-    window._uploadAvatarFile = _uploadAvatarFile;
 
     async function saveProfile() {
         const nameVal   = document.getElementById('handle-input').value.trim();
@@ -15052,13 +14981,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         // Always save to localStorage / window for immediate use
         localStorage.setItem('hub_userName', nameVal);
-        if (picVal) {
-            localStorage.setItem('hub_userPic', picVal);
-        } else {
-            localStorage.removeItem('hub_userPic');
-        }
+        if (picVal) localStorage.setItem('hub_userPic', picVal);
         userHandle = nameVal;
-        userAvatar = picVal || '';
+        if (picVal) userAvatar = picVal;
         window.userBannerUrl      = bannerUrl;
         window.userBannerPosition = bannerPos;
         window.userBio            = bio;
@@ -15074,7 +14999,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const userRef = window.fs.doc(window.db, "users", userAddress.toLowerCase());
                 await window.fs.setDoc(userRef, {
                     displayName:   nameVal,
-                    avatarUrl:     picVal || '',
+                    avatarUrl:     picVal || userAvatar,
                     bannerUrl:      bannerUrl,
                     bannerPosition: bannerPos,
                     bannerStyle:    _pendingBannerStyle,
@@ -16141,18 +16066,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     // Fall back per-user to their net stars value when initial_deposit
                     // is missing or zero — catches users who deposited before that
                     // field was added, preventing silent under-counting of liability.
-                    // APTM model: liability = depositedAptm - (spentStarsTotal × $0.01 / aptmPrice)
-                    let totalDepositedAptm = 0;
+                    // USDT model: liability = depositedUsdt - (spentStarsTotal × $0.01)
+                    let totalDepositedUsdt = 0;
                     snap.forEach(function(d) {
                         const data      = d.data();
-                        const depAptm   = parseFloat(data.depositedAptm) || 0;
+                        const depUsdt   = parseFloat(data.depositedUsdt) || 0;
                         const userSpent = parseFloat(data.spentStarsTotal) || 0;
                         totalPurchased     += parseFloat(data.stars)        || 0;
                         totalEarned        += parseFloat(data.creatorStars) || 0;
                         totalSpentStars    += userSpent;
-                        totalDepositedAptm += depAptm;
+                        totalDepositedUsdt += depUsdt;
                     });
-                    window._mcdTotalDepositedAptm = totalDepositedAptm;
+                    window._mcdTotalDepositedUsdt = totalDepositedUsdt;
                     const totalCirculating = totalPurchased + totalEarned;
                     const s2 = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
                     s2('mcd-circulating', totalCirculating.toFixed(2) + ' ★');
@@ -16215,18 +16140,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return;
             }
 
-            // Get APTM price first (needed for liability calculations)
-            const _mcPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
-
-            // User liability: total APTM deposited minus APTM value of stars spent
-            const totalDepositedAptm = window._mcdTotalDepositedAptm || 0;
+            // User liability: total USDT deposited minus USDT value of stars spent
+            const totalDepositedUsdt = window._mcdTotalDepositedUsdt || 0;
             const totalSpentStars    = window._mcdSpentStars          || 0;
-            const totalCreatorStars  = window._mcdEarned              || 0;
-            // Convert stars to APTM at current price
-            const spentAptm   = (totalSpentStars * CONFIG.STAR_USD) / _mcPrice;
-            const creatorAptm = (totalCreatorStars * CONFIG.STAR_USD) / _mcPrice;
-            const userLiabilityAptm  = Math.max(0, totalDepositedAptm - spentAptm + creatorAptm);
-            const userLiabilityUsdt  = userLiabilityAptm * _mcPrice;
+            const userLiabilityUsdt  = Math.max(0, totalDepositedUsdt - (totalSpentStars * CONFIG.STAR_USD));
             const adminRevUsdt       = adminRevStars * CONFIG.STAR_USD;
 
             const isSolvent      = contractBalUsdt >= userLiabilityUsdt;
@@ -16236,6 +16153,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 : '∞';
 
             // Convert USD values → APTM for display
+            const _mcPrice        = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
             const contractAptm    = (contractBalUsdt   / _mcPrice).toFixed(4);
             const liabilityAptm   = (userLiabilityUsdt / _mcPrice).toFixed(4);
             const adminRevAptm    = (adminRevUsdt       / _mcPrice).toFixed(4);
@@ -16359,7 +16277,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             console.log(`[AdminWithdraw] ── Complete. adminWithdraw() confirmed on block ${receipt.blockNumber} ──`);
             showToast(`✓ Platform revenue withdrawn via adminWithdraw() — block ${receipt.blockNumber}`);
-            if (typeof window._checkFirstEarnings === 'function') window._checkFirstEarnings(userAddress, poolUsdt.toFixed(2) + ' APTM');
+            if (typeof window._checkFirstEarnings === 'function') window._checkFirstEarnings(userAddress, '$' + poolUsdt.toFixed(2) + ' APTM');
             updateUI();
             updateDrawerUI();
             syncData();
@@ -17031,9 +16949,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (categoryBarEl) { categoryBarEl.classList.remove('signals-hidden'); categoryBarEl.style.display = ''; }
             const _tcHome = document.getElementById('trending-hubs-card');
             if (_tcHome) _tcHome.style.display = '';
-            // Show lottery card on home
-            const _lotteryCard = document.getElementById('lottery-card');
-            if (_lotteryCard && _lotteryRound && _lotteryRound.status !== 'complete') _lotteryCard.style.display = 'block';
             // Restore feed-col scroll in case Flicks mode left it locked
             const _fcHome = document.getElementById('feed-col');
             if (_fcHome) _fcHome.style.overflowY = '';
@@ -17067,9 +16982,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // FIX 1: Hide signals bar and category bar on all non-home tabs
             if (signalsBarEl)  signalsBarEl.classList.add('signals-hidden');
             if (categoryBarEl) categoryBarEl.classList.add('signals-hidden');
-            // Hide lottery card on non-home tabs
-            const _lotteryCard = document.getElementById('lottery-card');
-            if (_lotteryCard) _lotteryCard.style.display = 'none';
 
             // Clean up Flicks mode if active — restores feed-col scroll and clears inline styles
             if (_followMode === 'flicks') {
@@ -18299,9 +18211,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const depBN  = ethers.BigNumber.from(String(depositAmount  || '0'));
             const earnBN = ethers.BigNumber.from(String(earnedAmount   || '0'));
 
-            // Calculate ACTUAL withdrawal amount (post-settlement, from CF)
-            const actualWithdrawnAptm = parseFloat(ethers.utils.formatEther(depBN.add(earnBN))).toFixed(4);
-
             showToast('Submitting withdrawal to blockchain…');
             const tx = await hubContract.withdrawAll(depBN, earnBN, nonce, expiry, signature, { gasLimit: 300000 });
             const receipt = await tx.wait();
@@ -18328,10 +18237,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[Withdraw] Firebase zero failed:', e); }
             }
 
-            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
+            logTransaction('settle', totalAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + totalAptm + ' APTM to wallet' });
             updateUI(); updateDrawerUI();
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
-            alert('Withdrawal Successful! ' + actualWithdrawnAptm + ' APTM sent to your wallet.');
+            alert('Withdrawal Successful! ' + totalAptm + ' APTM sent to your wallet.');
             syncData();
 
         } catch (err) {
@@ -22811,13 +22720,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var card = document.getElementById('lottery-card');
         if (!card) return;
         if (round.status === 'complete') { card.style.display = 'none'; return; }
-        // Show lottery card if we're on home feed (not on another tab, and not in flicks mode)
-        var pageHome = document.getElementById('page-home');
-        var isFlicksActive = document.body.classList.contains('flicks-active');
-        var isHomeVisible = pageHome && (pageHome.style.display === 'contents' || pageHome.style.display === '');
-        if (isHomeVisible && !isFlicksActive) {
-            card.style.display = 'block';
-        }
+        card.style.display = 'block';
         var pot = round.pot || 0;
         var el  = document.getElementById('lottery-pot');
         if (el) el.textContent = pot.toLocaleString() + '★ (≈ $' + (pot * 0.01).toFixed(2) + ' USD)';
@@ -23449,7 +23352,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const signalsBar   = document.getElementById('signals-bar');
         const categoryBar  = document.getElementById('category-bar');
         const trendingCard = document.getElementById('trending-hubs-card');
-        const lotteryCard  = document.getElementById('lottery-card');
 
         if (isFlicks) {
             // Immersive full-screen Flicks (CSS targets body.flicks-active on mobile)
@@ -23457,7 +23359,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (signalsBar)   signalsBar.style.display   = 'none';
             if (categoryBar)  categoryBar.style.display  = 'none';
             if (trendingCard) trendingCard.style.display = 'none';
-            if (lotteryCard)  lotteryCard.style.display  = 'none';
             if (feedCol) feedCol.style.overflowY = 'hidden';
             setTimeout(() => {
                 if (!feedCol || !flicksFeed) return;
@@ -23479,7 +23380,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (signalsBar)   signalsBar.style.display   = '';
         if (categoryBar)  categoryBar.style.display  = '';
         if (trendingCard) trendingCard.style.display = '';
-        if (lotteryCard && _lotteryRound && _lotteryRound.status !== 'complete') lotteryCard.style.display = 'block';
         closeFlickComposer();
 
         if (mode === 'following') {
@@ -25611,26 +25511,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
-    function _closeThread() {
-        const main = document.getElementById('inbox-main');
-        const sidebar = document.getElementById('inbox-sidebar');
-        if (window.innerWidth <= 600) {
-            if (sidebar) sidebar.classList.remove('hide-mobile');
-            if (main) main.classList.add('hide-mobile');
-        }
-    }
-    window._closeThread = _closeThread;
-
     function _openThread(threadId, otherAddr, otherName) {
         const main = document.getElementById('inbox-main');
-        const sidebar = document.getElementById('inbox-sidebar');
         if (!main || !window.db) return;
-
-        // Mobile: hide sidebar, show main
-        if (window.innerWidth <= 600) {
-            if (sidebar) sidebar.classList.add('hide-mobile');
-            main.classList.remove('hide-mobile');
-        }
 
         // Feature 3: clear unread flag for current user when they open the thread
         if (userAddress) {
@@ -25644,7 +25527,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         main.innerHTML = `
             <div class="inbox-msg-head">
-                <button class="inbox-back-btn" onclick="_closeThread()" style="display:none;">←</button>
                 <div class="inbox-msg-head-name">${_escNet(otherName)}</div>
             </div>
             <div class="inbox-messages" id="msg-list-${threadId}"><div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.72rem;">Loading…</div></div>
@@ -25656,12 +25538,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage('${threadId}','${otherAddr}','${_escNet(otherName)}');}"></textarea>
                 <button class="btn btn-purple btn-sm inbox-send-btn" onclick="sendMessage('${threadId}','${otherAddr}','${_escNet(otherName)}')">Send</button>
             </div>`;
-
-        // Show back button on mobile
-        if (window.innerWidth <= 600) {
-            const backBtn = main.querySelector('.inbox-back-btn');
-            if (backBtn) backBtn.style.display = 'block';
-        }
         // Load messages
         const addr = userAddress ? userAddress.toLowerCase() : '';
         window.fs.getDocs(window.fs.query(
@@ -28021,8 +27897,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 <!-- ════════════════════════════════════════════════════════════════
      EDIT IDENTITY MODAL — triggered from hero ✎ Edit Identity button
 ════════════════════════════════════════════════════════════════ -->
-<div id="edit-identity-overlay" style="display:none; position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; padding:20px;" onclick="if(event.target===this) closeHeroEditForm()">
-    <div style="background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; width:min(440px,92vw); max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 8px 32px rgba(0,0,0,0.25); position:relative;">
+<div id="edit-identity-overlay" style="display:none; position:fixed; inset:0; z-index:6000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; overflow-y:auto; padding:16px 0;" onclick="if(event.target===this) closeHeroEditForm()">
+    <div style="background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; width:min(440px,92vw); box-shadow:0 8px 32px rgba(0,0,0,0.25); position:relative;">
         <button onclick="closeHeroEditForm()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:1rem;color:var(--text-muted);cursor:pointer;" title="Close">✕</button>
         <div style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;">✎ Edit Identity</div>
         <div id="edit-identity-gate-hint" style="display:none; font-size:0.72rem; color:var(--teal); background:var(--teal-dim); border:1px solid rgba(45,212,191,0.3); border-radius:8px; padding:8px 10px; margin-bottom:10px;">⚡ Set your display name &amp; avatar to start broadcasting.</div>
@@ -28033,14 +27909,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         <input type="text" id="handle-input" class="field" placeholder="@Username" style="margin-top:0;margin-bottom:14px;">
 
         <!-- Avatar -->
-        <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Profile Picture</div>
-        <div style="font-size:0.67rem;color:var(--text-muted);opacity:0.7;margin-bottom:8px;">Recommended size: 400 × 400 px — square images work best.</div>
-        <input type="file" id="avatar-file-input" accept="image/jpeg,image/jpg,image/png" style="display:none;" onchange="_uploadAvatarFile(this)">
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <button type="button" onclick="document.getElementById('avatar-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
-        </div>
-        <input type="text" id="avatar-input" class="field" placeholder="Or paste an image URL" style="margin-top:0;margin-bottom:0;">
-        <div id="avatar-upload-status" style="font-size:0.7rem;color:var(--teal);margin-top:6px;margin-bottom:14px;display:none;"></div>
+        <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Profile Picture</div>
+        <input type="text" id="avatar-input" class="field" placeholder="Paste image URL" style="margin-top:0;margin-bottom:14px;">
 
         <!-- Banner -->
         <div style="font-size:0.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Cover Banner <span style="font-weight:400;text-transform:none;color:var(--text-muted);letter-spacing:0;">(optional — shows behind your avatar)</span></div>
@@ -28057,7 +27927,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         <!-- Banner upload button -->
         <input type="file" id="banner-file-input" accept="image/*" style="display:none;" onchange="_uploadBannerFile(this)">
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-            <button type="button" onclick="document.getElementById('banner-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
+            <button onclick="document.getElementById('banner-file-input').click()" style="flex:1;padding:8px 0;border-radius:8px;border:1px dashed rgba(124,92,191,0.4);background:rgba(124,92,191,0.06);color:var(--purple-lt);font-size:0.75rem;font-weight:600;cursor:pointer;">📷 Upload Photo</button>
             <button onclick="_clearBanner()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text-muted);font-size:0.75rem;cursor:pointer;" title="Remove banner">✕ Remove</button>
         </div>
         <input type="text" id="banner-input" class="field" placeholder="Or paste a banner image URL" style="margin-top:0;margin-bottom:0;" oninput="_previewBannerUrl(this.value)">
@@ -29543,249 +29413,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     };
 
-    // ── Detect in-app WebView (for mic permission troubleshooting) ────
-    function detectInAppBrowser() {
-        const ua = navigator.userAgent || '';
-        // Telegram WebView
-        if (ua.includes('Telegram')) return true;
-        // Instagram/Facebook in-app
-        if (ua.includes('Instagram') || ua.includes('FBAN') || ua.includes('FBAV')) return true;
-        // Twitter/X in-app
-        if (ua.includes('Twitter')) return true;
-        // Generic WebView markers
-        if (ua.includes('wv') || ua.includes('WebView')) return true;
-        return false;
-    }
-
-    // ── Verify microphone track is actually live (with user feedback) ──
-    async function verifyMicTrack(audioTrack) {
-        // Check 1: Track exists
-        if (!audioTrack) {
-            return { ok: false, reason: 'no_track', message: 'Microphone track missing' };
-        }
-
-        // Check 2: MediaStreamTrack is live
-        const mediaTrack = audioTrack.getMediaStreamTrack();
-        if (!mediaTrack || mediaTrack.readyState !== 'live') {
-            return { ok: false, reason: 'not_live', message: 'Microphone track not active' };
-        }
-
-        // Check 3: Volume level verification with visible UI prompt
-        // Show "Say something to test your mic" banner
-        const banner = document.getElementById('mic-test-banner');
-        if (banner) {
-            banner.style.display = 'flex';
-            const indicator = document.getElementById('mic-test-indicator');
-            if (indicator) indicator.style.width = '0%';
-        }
-
-        const bannerShowTime = Date.now();
-        const minDisplayMs = 1500; // Minimum 1.5 seconds so user can see it
-
-        let maxVolume = 0;
-        const samples = 10;
-        const sampleInterval = 50; // ms
-
-        for (let i = 0; i < samples; i++) {
-            try {
-                const volume = audioTrack.getVolumeLevel();
-                if (volume > maxVolume) maxVolume = volume;
-
-                // Update visual indicator
-                const indicator = document.getElementById('mic-test-indicator');
-                if (indicator) {
-                    const percent = Math.min(100, volume * 200); // Scale 0-0.5 volume to 0-100%
-                    indicator.style.width = percent + '%';
-                }
-
-                if (maxVolume > 0.01) break; // Early exit if we detect sound
-            } catch (e) {
-                console.warn('[verifyMic] getVolumeLevel failed:', e);
-            }
-            await new Promise(r => setTimeout(r, sampleInterval));
-        }
-
-        // Keep banner visible for minimum display time
-        const elapsed = Date.now() - bannerShowTime;
-        if (elapsed < minDisplayMs) {
-            await new Promise(r => setTimeout(r, minDisplayMs - elapsed));
-        }
-
-        // Hide the banner again — verification is done
-        if (banner) banner.style.display = 'none';
-
-        // Check 4: Detect in-app WebView (additional context)
-        const isWebView = detectInAppBrowser();
-
-        if (maxVolume === 0) {
-            return {
-                ok: false,
-                reason: 'silent',
-                message: isWebView
-                    ? 'Microphone blocked by app. Please open this page in your system browser (Safari/Chrome).'
-                    : 'No sound detected. Please speak or make noise when testing your microphone, then try again.',
-                isWebView
-            };
-        }
-
-        return { ok: true, maxVolume };
-    }
-
-    // ── Co-host permission modal controls ─────────────────────────────
-    var _cohostTargetSlot = null; // Store target slot for promotion
-
-    window.openCohostPermissionModal = function(targetSlot) {
-        _cohostTargetSlot = targetSlot;
-        const modal = document.getElementById('cohost-permission-modal');
-        if (modal) modal.style.display = 'flex';
-    };
-
-    window.closeCohostPermissionModal = function() {
-        const modal = document.getElementById('cohost-permission-modal');
-        if (modal) modal.style.display = 'none';
-        _cohostTargetSlot = null;
-
-        // Clear any error state
-        const errorDiv = document.getElementById('cohost-permission-error');
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-            errorDiv.innerHTML = '';
-        }
-
-        // Reset button
-        const enableBtn = document.getElementById('cohost-enable-btn');
-        if (enableBtn) {
-            enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
-            enableBtn.style.pointerEvents = '';
-            enableBtn.style.opacity = '';
-        }
-    };
-
-    // ── Enable Co-host Media (permission + verification flow) ────────
-    window.enableCohostMedia = async function() {
-        const enableBtn = document.getElementById('cohost-enable-btn');
-        const errorDiv = document.getElementById('cohost-permission-error');
-
-        // Show loading state
-        if (enableBtn) {
-            enableBtn.innerHTML = '<span style="font-size:1rem;">⏳</span> Requesting permissions...';
-            enableBtn.style.pointerEvents = 'none';
-            enableBtn.style.opacity = '0.6';
-        }
-
-        // Clear previous errors
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-            errorDiv.innerHTML = '';
-        }
-
-        try {
-            if (!window.AgoraRTC) {
-                throw new Error('Agora SDK not loaded yet — please wait a moment and try again.');
-            }
-
-            // Close any existing co-host tracks first
-            if (cohostVideoTrack) {
-                try { cohostVideoTrack.close(); } catch(_) {}
-                cohostVideoTrack = null;
-            }
-            if (cohostAudioTrack) {
-                try { cohostAudioTrack.close(); } catch(_) {}
-                cohostAudioTrack = null;
-            }
-
-            // Acquire tracks (synchronously in this click handler)
-            [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
-
-            // Verify microphone is actually working
-            const verification = await verifyMicTrack(cohostAudioTrack);
-
-            if (!verification.ok) {
-                // Verification failed - close tracks and show error in modal
-                if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
-                if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
-
-                if (errorDiv) {
-                    errorDiv.innerHTML = `
-                        <div style="
-                            background:rgba(224,62,62,0.15);
-                            border:1px solid rgba(224,62,62,0.4);
-                            border-radius:8px;
-                            padding:12px;
-                            margin-bottom:16px;
-                            text-align:left;
-                        ">
-                            <div style="color:#e03e3e; font-size:0.85rem; font-weight:600; margin-bottom:6px;">
-                                ⚠️ Microphone Error
-                            </div>
-                            <div style="color:rgba(255,255,255,0.8); font-size:0.8rem; line-height:1.5;">
-                                ${verification.message}
-                            </div>
-                        </div>
-                    `;
-                    errorDiv.style.display = 'block';
-                }
-
-                // Reset button
-                if (enableBtn) {
-                    enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
-                    enableBtn.style.pointerEvents = '';
-                    enableBtn.style.opacity = '';
-                }
-                return;
-            }
-
-            // Success - close modal and proceed with promotion
-            const _slotForPromo = _cohostTargetSlot;
-            closeCohostPermissionModal();
-
-            if (_slotForPromo !== null) {
-                await _promoteToCoHost(_slotForPromo);
-            }
-
-            console.log('[CoHost] Media verified - mic max volume:', verification.maxVolume);
-
-        } catch (e) {
-            console.error('[CoHost] Permission error:', e);
-
-            // Close tracks on error
-            if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
-            if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
-
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
-                : e.message || 'Failed to access camera/microphone. Please try again.';
-
-            if (errorDiv) {
-                errorDiv.innerHTML = `
-                    <div style="
-                        background:rgba(224,62,62,0.15);
-                        border:1px solid rgba(224,62,62,0.4);
-                        border-radius:8px;
-                        padding:12px;
-                        margin-bottom:16px;
-                        text-align:left;
-                    ">
-                        <div style="color:#e03e3e; font-size:0.85rem; font-weight:600; margin-bottom:6px;">
-                            ⚠️ Permission Error
-                        </div>
-                        <div style="color:rgba(255,255,255,0.8); font-size:0.8rem; line-height:1.5;">
-                            ${msg}
-                        </div>
-                    </div>
-                `;
-                errorDiv.style.display = 'block';
-            }
-
-            // Reset button
-            if (enableBtn) {
-                enableBtn.innerHTML = '📹 Enable Camera &amp; Mic';
-                enableBtn.style.pointerEvents = '';
-                enableBtn.style.opacity = '';
-            }
-        }
-    };
-
     // ── Go Live ───────────────────────────────────────────────────
     var _isStartingLive = false; // mutex — prevents re-entrant / double-join
     window.startLiveStream = async function() {
@@ -29947,21 +29574,132 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 try {
                     await agoraClient.subscribe(remoteUser, mediaType);
                     if (mediaType === 'video') {
-                        // Slot grid is rendered by the stream-doc listener when coSlots
-                        // changes (co-host writes their slot 'active' on promotion).
-                        // Just find this co-host's slot by UID and play the track into it,
-                        // retrying while the slot write and grid render land.
-                        var _slotRetry = 0;
-                        (function _trySlotPlay() {
-                            var _slots = window._currentCoSlots || [];
-                            var _matched = false;
-                            for (var _si = 0; _si < _slots.length; _si++) {
-                                if (_slots[_si] && String(_slots[_si].uid) === String(remoteUser.uid) && _slots[_si].status === 'active') {
-                                    var _slotDiv = document.getElementById('live-slot-' + _si);
-                                    if (_slotDiv) { try { remoteUser.videoTrack.play(_slotDiv, { fit: 'cover' }); _matched = true; console.log('[Host] co-host video in slot', _si); } catch(e) {} }
-                                }
+                        // Always remove any stale pip and rebuild fresh.
+                        // This is critical: _applyHostSpotlight and spotBtn live inside this
+                        // closure. If the pip already exists from a previous co-host session
+                        // the old closure is gone and the spotlight button becomes dead.
+                        // Rebuilding every time guarantees the closure is always live.
+                        const stalePip = document.getElementById('cohost-pip-host');
+                        if (stalePip) stalePip.remove();
+
+                        const cohostPip = document.createElement('div');
+                        cohostPip.id = 'cohost-pip-host';
+                        var _pipSide = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
+                        cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSide + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+
+                        const label = document.createElement('div');
+                        label.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;color:#fff;background:rgba(124,92,191,0.8);padding:1px 5px;border-radius:4px;z-index:1;';
+                        label.textContent = '🎤 Co-host';
+                        cohostPip.appendChild(label);
+
+                        const closeBtn = document.createElement('button');
+                        closeBtn.textContent = '✕';
+                        closeBtn.style.cssText = 'position:absolute;top:2px;right:4px;background:rgba(0,0,0,0.5);border:none;color:#fff;border-radius:50%;width:16px;height:16px;font-size:0.55rem;cursor:pointer;z-index:2;line-height:1;';
+                        closeBtn.onclick = function(){ cohostPip.style.display='none'; };
+                        cohostPip.appendChild(closeBtn);
+
+                        const cohostUid = remoteUser.uid; // capture uid for this pip
+
+                        // Look up wallet address from cohost_requests NOW while we have context
+                        // Store it on the pip element so gift button can use it without a lookup
+                        var _cohostWalletAddr = '';
+                        if (currentStreamId && window.db && window.fs) {
+                            window.fs.getDocs(window.fs.collection(window.db, 'live_streams', currentStreamId, 'cohost_requests')).then(function(snap) {
+                                snap.forEach(function(d) {
+                                    var r = d.data() || {};
+                                    var reqUid = (r.uid == null ? '' : String(r.uid));
+                                    if (r.status === 'approved' && reqUid === String(cohostUid)) {
+                                        _cohostWalletAddr = d.id; // docId IS the wallet address
+                                        cohostPip.dataset.walletAddr = d.id;
+                                        cohostPip.dataset.handle = r.handle || 'Co-host';
+                                        label.textContent = '🎤 ' + (r.handle || 'Co-host');
+                                    }
+                                });
+                            }).catch(function(){});
+                        }
+
+                        // Spotlight button — fullscreen co-host for everyone via Firestore
+                        const spotBtn = document.createElement('button');
+                        spotBtn.id = 'cohost-spotlight-btn-' + cohostUid;
+                        spotBtn.textContent = '⛶ Spotlight';
+                        spotBtn.title = 'Give co-host full screen for everyone (click again to restore)';
+                        spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
+
+                        let _spotlightActive = false;
+                        function _applyHostSpotlight(on) {
+                            _spotlightActive = on;
+                            if (on) {
+                                spotBtn.textContent = '⊠ Restore';
+                                cohostPip.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:none;z-index:18;background:#000;overflow:hidden;';
+                                spotBtn.style.cssText = 'position:absolute;bottom:8px;left:8px;background:rgba(124,92,191,0.9);border:none;color:#fff;border-radius:4px;padding:3px 10px;font-size:0.75rem;cursor:pointer;z-index:22;white-space:nowrap;';
+                                showToast('⛶ Co-host spotlighted for all viewers');
+                            } else {
+                                spotBtn.textContent = '⛶ Spotlight';
+                                var _pipSideR = (window.innerWidth <= 700) ? 'left:10px;right:auto;' : 'right:10px;left:auto;';
+                                cohostPip.style.cssText = 'position:absolute;bottom:90px;' + _pipSideR + 'width:140px;height:90px;border-radius:8px;overflow:hidden;border:2px solid var(--purple);z-index:20;background:#000;';
+                                spotBtn.style.cssText = 'position:absolute;bottom:2px;left:4px;background:rgba(124,92,191,0.85);border:none;color:#fff;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;';
+                                showToast('⊠ Co-host restored to PiP');
                             }
-                            if (!_matched && _slotRetry < 20) { _slotRetry++; setTimeout(_trySlotPlay, 200); }
+                        }
+
+                        spotBtn.onclick = function() {
+                            const newState = !_spotlightActive;
+                            _applyHostSpotlight(newState);
+                            const _sid = currentStreamId || window._currentStreamId;
+                            if (_sid && window.db && window.fs) {
+                                window.fs.updateDoc(
+                                    window.fs.doc(window.db, LIVE_COL, _sid),
+                                    { cohostSpotlight: newState, cohostSpotlightUid: newState ? String(cohostUid) : '' }
+                                ).catch(function(e){ console.warn('[Spotlight] Firestore write failed:', e); });
+                            } else {
+                                console.warn('[Spotlight] No streamId available:', currentStreamId, window._currentStreamId);
+                            }
+                        };
+                        cohostPip.appendChild(spotBtn);
+
+                        // Gift button — host can gift the co-host directly
+                        const giftBtn = document.createElement('button');
+                        giftBtn.style.cssText = 'position:absolute;bottom:2px;right:4px;background:rgba(240,180,41,0.85);border:none;color:#111;border-radius:4px;padding:2px 7px;font-size:0.55rem;cursor:pointer;z-index:2;white-space:nowrap;font-weight:700;';
+                        giftBtn.textContent = '🎁 Gift';
+                        giftBtn.onclick = function() {
+                            var addr = cohostPip.dataset.walletAddr || '';
+                            var handle = cohostPip.dataset.handle || 'Co-host';
+                            if (!addr) { showToast('Co-host wallet not found yet — try again in a moment.'); return; }
+                            window.openGiftPickerDirect && window.openGiftPickerDirect(addr, handle);
+                        };
+                        cohostPip.appendChild(giftBtn);
+
+                        const videoDiv = document.createElement('div');
+                        videoDiv.id = 'cohost-pip-video';
+                        videoDiv.style.cssText = 'width:100%;height:100%;';
+                        cohostPip.appendChild(videoDiv);
+
+                        // Append to broadcaster container (works in normal and cinema mode)
+                        const lsBox = document.getElementById('live-broadcaster-video-container') || document.getElementById('cinema-video-col');
+                        if (lsBox) lsBox.appendChild(cohostPip);
+
+                        // Re-apply current layout so new pip slots into whatever layout host chose
+                        if (typeof window.setStreamLayout === 'function' && typeof _currentLayout !== 'undefined') {
+                            setTimeout(function(){ window.setStreamLayout(_currentLayout); }, 100);
+                        }
+
+                        // Retry until the pip container has dimensions — Agora silently
+                        // fails to render if the element has zero width/height at play time.
+                        var _hostPipRetry = 0;
+                        (function _playHostPip() {
+                            var pipVid = document.getElementById('cohost-pip-video');
+                            if (pipVid && (pipVid.offsetWidth > 0 || pipVid.offsetHeight > 0 || _hostPipRetry > 15)) {
+                                try {
+                                    remoteUser.videoTrack.play(pipVid);
+                                    console.log('[Host] Co-host video playing after', _hostPipRetry, 'retries');
+                                } catch(e) {
+                                    // Last resort — play directly into the pip wrapper
+                                    try { remoteUser.videoTrack.play(document.getElementById('cohost-pip-host')); } catch(_) {}
+                                }
+                            } else if (_hostPipRetry < 25) {
+                                _hostPipRetry++;
+                                setTimeout(_playHostPip, 150);
+                            }
                         })();
                     }
                     if (mediaType === 'audio') remoteUser.audioTrack.play();
@@ -29972,20 +29710,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 // If the co-host is deliberately toggling mic/cam, ignore this event entirely.
                 if (_cohostToggling) return;
                 // A mic/cam toggle fires user-unpublished for that mediaType only.
+                // Only remove the pip and reset layout when the VIDEO track is gone
+                // AND the user has no active video track remaining (i.e. they truly left).
                 if (mediaType === 'audio') return; // audio toggle — ignore completely
-                // hasAudio means user is still on stage — they just toggled camera, not left
-                if (remoteUser.hasAudio) return;
-                // Co-host truly left — clear their slot so it shows "+ Request" again
+                // Video unpublished: check if the user still has a video track alive.
+                // Agora sets videoTrack to null on the remoteUser object when fully gone.
+                if (remoteUser.videoTrack) return; // still has video — just a renegotiation
+                // Co-host truly left — remove PiP and reset layout
+                const pip = document.getElementById('cohost-pip-host');
+                if (pip) pip.remove();
                 if (currentStreamId && window.db && window.fs) {
-                    var _uSlots = (window._currentCoSlots || []).slice();
-                    var _uIdx = _uSlots.findIndex(function(s){ return s && String(s.uid) === String(remoteUser.uid); });
-                    if (_uIdx !== -1) {
-                        _uSlots[_uIdx] = {status:'empty',address:null,name:null,uid:null};
-                        window._currentCoSlots = _uSlots;
-                        window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { coSlots: _uSlots }).catch(function(){});
-                    }
+                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { cohostSpotlight: false, streamLayout: 'solo' }).catch(function(){});
                 }
-                showToast('Co-host left the stage.');
+                // Revert host layout to solo now that co-host has left
+                if (typeof window.setStreamLayout === 'function') window.setStreamLayout('solo');
             });
 
             // Show ALL panels in the hierarchy before playing video
@@ -30357,11 +30095,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                                     if (typeof _applyViewerLayout === 'function') _applyViewerLayout('solo');
                                                 });
                                         }
-                                    } else if (window._viewerLayoutMode && window._viewerLayoutMode !== 'solo') {
-                                        // Host re-published (cam toggle / screen share) — re-apply the
-                                        // slot layout so the host block returns to its box instead of
-                                        // keeping the fullscreen pixel sizing set above.
-                                        setTimeout(function(){ _applyViewerLayout(window._viewerLayoutMode); }, 200);
                                     }
                                 } else {
                                     setTimeout(playRemoteWhenReady, 100);
@@ -30379,29 +30112,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         }
                     }
                 } else {
-                    // Co-host joined the stage — play them into their slot box.
-                    // The legacy floating PiP is only a fallback when no slot entry
-                    // ever appears (e.g. host is in solo layout).
+                    // Co-host joined the stage — show their video as a PiP on the viewer's screen
                     if (mediaType === 'video') {
-                        var _vSlotRetry = 0;
-                        var _tryViewerSlotPlay = function() {
-                            var _slots = window._currentCoSlots || [];
-                            for (var _si = 0; _si < _slots.length; _si++) {
-                                if (_slots[_si] && String(_slots[_si].uid) === String(remoteUser.uid) && _slots[_si].status === 'active') {
-                                    var _slotDiv = document.getElementById('live-slot-' + _si);
-                                    if (_slotDiv) {
-                                        try { remoteUser.videoTrack.play(_slotDiv, { fit: 'cover' }); console.log('[Viewer] co-host video in slot', _si); } catch(e) {}
-                                        // Drop any legacy pip so it doesn't linger as a black box
-                                        var _stale = document.getElementById('cohost-pip-viewer');
-                                        if (_stale && _stale.parentNode) _stale.parentNode.removeChild(_stale);
-                                        return;
-                                    }
-                                }
-                            }
-                            if (_vSlotRetry < 20) { _vSlotRetry++; setTimeout(_tryViewerSlotPlay, 200); return; }
-                            _buildViewerPipFallback();
-                        };
-                        var _buildViewerPipFallback = function() {
                         // Remove any stale pip first
                         var stalePip = document.getElementById('cohost-pip-viewer');
                         if (stalePip && stalePip.parentNode) stalePip.parentNode.removeChild(stalePip);
@@ -30491,17 +30203,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         (function _playPip() {
                             var rt = document.getElementById('cohost-pip-viewer-video');
                             if (rt && (rt.offsetWidth > 0 || rt.offsetHeight > 0 || _pipRetry > 10)) {
-                                try { remoteUser.videoTrack.play(rt, { fit: 'cover' }); } catch(_pipErr) {
-                                    try { remoteUser.videoTrack.play(cohostPip, { fit: 'cover' }); } catch(_) {}
+                                try { remoteUser.videoTrack.play(rt); } catch(_pipErr) {
+                                    try { remoteUser.videoTrack.play(cohostPip); } catch(_) {}
                                 }
                             } else if (_pipRetry < 20) {
                                 _pipRetry++;
                                 setTimeout(_playPip, 150);
                             }
                         })();
-                        }; // end _buildViewerPipFallback
 
-                        _tryViewerSlotPlay();
                         showToast('🎤 Someone joined the stage!');
                     }
                     if (mediaType === 'audio') {
@@ -30539,10 +30249,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } else {
                     // Another user (co-host) unpublished something.
                     // IMPORTANT: mic/cam toggle fires user-unpublished for that mediaType only.
-                    if (mediaType === 'audio') return; // audio toggle — ignore, slot stays
-                    if (remoteUser.hasAudio) return;  // cam toggle only — still on stage
-                    // Co-host truly left — the host clears their coSlots entry, which
-                    // re-renders the grid; just drop any legacy pip here.
+                    // Only remove the PiP when their VIDEO is truly gone (not just muted/toggled).
+                    if (mediaType === 'audio') return; // audio toggle — ignore, pip stays
+                    if (remoteUser.videoTrack) return; // video renegotiation — pip stays
+                    // Co-host truly left — remove their PiP and restore normal view
                     const pip = document.getElementById('cohost-pip-viewer');
                     if (pip) pip.remove();
                     window._applyViewerSpotlight = null;
@@ -30609,7 +30319,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     _chatFeed.style.setProperty('justify-content', 'flex-end',   'important');
                 }
                 var _rv = document.getElementById('live-remote-video');
-                function _applyRvHeight(){var _lm=window._viewerLayoutMode;if(_rv&&(!_lm||_lm==='solo'||_lm==='presentation')){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
+                function _applyRvHeight(){if(_rv){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
                 _applyRvHeight();
                 function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit','cover','important');}});}
                 setTimeout(_fixAgoraChildren,500);setTimeout(_fixAgoraChildren,1500);
@@ -32373,28 +32083,151 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── Apply the host's chosen layout to the viewer's video container ──
     var _pendingViewerLayout = null; // set if layout arrives before cohost pip exists
 
-    // ── Apply the host's chosen layout to the viewer's video container ──
-    // Delegates to the slot grid: renders the boxes (with per-slot "+ Request"
-    // buttons for viewers) then pulls Agora tracks into the slot divs.
-    // Replaces the old split2/pip-bottom/grid4 CSS-class system.
     function _applyViewerLayout(mode) {
-        window._viewerLayoutMode = mode;
         var container = document.getElementById('live-remote-video-container');
         if (!container) { console.warn('[Layout] container not found'); return; }
-        // Clear legacy layout classes so slot positioning owns the container
+        var hostVid   = document.getElementById('live-remote-video');
+        var cohostPip = document.getElementById('cohost-pip-viewer');
+        var selfPip   = document.getElementById('cohost-self-pip');
+
+        // When the viewer IS the co-host, selfPip is their own camera.
+        // The layout CSS uses cohost-pip-viewer as the second panel — but for
+        // the co-host themselves, selfPip fills that role. We treat selfPip as
+        // the second panel by giving it the cohost-pip-viewer id temporarily
+        // so the CSS grid/flex rules apply correctly.
+        // More reliably: we use selfPip as a proxy — if selfPip exists but
+        // cohostPip doesn't, we know we ARE the co-host and need to use selfPip
+        // as the second video panel.
+        var secondPanel = cohostPip || selfPip;
+
+        console.log('[Layout] _applyViewerLayout:', mode, '| hostVid:', !!hostVid, '| cohostPip:', !!cohostPip, '| selfPip:', !!selfPip);
+
+        // 1. Remove ALL layout classes from container
         container.classList.remove('layout-split2', 'layout-pip-bottom', 'layout-grid4');
-        if (window._renderSlotGrid) {
-            window._renderSlotGrid(container, 'live-remote-video', mode, window._currentCoSlots || [], false);
-            // Re-play the host track AFTER repositioning so Agora initialises at the
-            // correct final size — prevents Agora's internal resize observer resetting
-            // object-fit — then sync co-host tracks into their slot divs.
-            setTimeout(function() {
-                var _remEl = document.getElementById('live-remote-video');
-                if (_remEl && window._liveHostVideoTrack) {
-                    try { window._liveHostVideoTrack.play(_remEl, { fit: 'cover' }); } catch(_) {}
-                }
-                window._syncAgoraToSlots && window._syncAgoraToSlots(window._currentCoSlots || [], false);
-            }, 250);
+        // 2. Clear any inline overrides that might fight the CSS classes
+        container.style.cssText = '';
+        // 3. Clear inline styles on the children so CSS classes win.
+        // NOTE: do NOT clear selfPip here — solo mode must restore its inline positioning
+        // (160×100px corner box). Clearing it unconditionally and not restoring was the
+        // bug that caused the co-host to see their own video fullscreen.
+        if (hostVid)    hostVid.style.cssText    = '';
+        if (cohostPip)  cohostPip.style.cssText   = '';
+        // selfPip: only clear for non-solo modes; solo branch below restores it explicitly.
+        if (selfPip && mode !== 'solo') selfPip.style.cssText = '';
+
+        if (mode === 'solo') {
+            _pendingViewerLayout = null;
+            if (hostVid) {
+                hostVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+            }
+            if (selfPip) {
+                // Restore selfPip to floating corner pip — undo any flex/grid parenting
+                selfPip.style.cssText = [
+                    'position:absolute',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
+                    'border-radius:8px',
+                    'overflow:hidden',
+                    'border:2px solid #e03e3e',
+                    'z-index:30',
+                    'background:#000'
+                ].join(';');
+                // Re-parent back into container if it was moved during split/grid
+                if (selfPip.parentElement !== container) container.appendChild(selfPip);
+                var svd = document.getElementById('cohost-self-video');
+                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;';
+            }
+            if (cohostPip) {
+                // Restore cohostPip to floating corner pip
+                cohostPip.style.cssText = [
+                    'position:absolute',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
+                    'border-radius:8px',
+                    'overflow:hidden',
+                    'border:2px solid var(--purple)',
+                    'z-index:22',
+                    'background:#000'
+                ].join(';');
+                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
+            }
+        } else if (mode === 'split2') {
+            if (!secondPanel) {
+                _pendingViewerLayout = mode;
+                setTimeout(function(){ if (_pendingViewerLayout === 'split2') _applyViewerLayout('split2'); }, 300);
+                return;
+            }
+            _pendingViewerLayout = null;
+            container.classList.add('layout-split2');
+            if (!cohostPip && selfPip) {
+                // selfPip was built as position:absolute (corner pip).
+                // For split2 it must be a flex child — force it into flow.
+                container.style.cssText = 'display:flex;flex-direction:row;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText    = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;';
+                selfPip.style.cssText                 = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;border-radius:0;border:none;';
+                // Ensure selfPip is a direct flex child of container, not floating inside hostVid
+                if (selfPip.parentElement !== container) container.appendChild(selfPip);
+                // selfVideoDiv must fill the pip cell
+                var svd = document.getElementById('cohost-self-video');
+                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+            } else if (cohostPip) {
+                // Regular viewer with co-host pip — also ensure pip is in flow
+                container.style.cssText = 'display:flex;flex-direction:row;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText  = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;';
+                cohostPip.style.cssText             = 'flex:1;height:100%;position:relative;min-width:0;overflow:hidden;border-radius:0;border:none;';
+                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
+            }
+        } else if (mode === 'pip-bottom') {
+            if (!secondPanel) {
+                _pendingViewerLayout = mode;
+                setTimeout(function(){ if (_pendingViewerLayout === 'pip-bottom') _applyViewerLayout('pip-bottom'); }, 300);
+                return;
+            }
+            _pendingViewerLayout = null;
+            container.classList.add('layout-pip-bottom');
+            if (!cohostPip && selfPip) {
+                container.style.cssText = 'display:flex;flex-direction:column;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText = 'flex:1;width:100%;position:relative;min-height:0;overflow:hidden;';
+                selfPip.style.cssText = 'width:100%;height:50%;position:relative;border-radius:0;border:none;flex-shrink:0;overflow:hidden;';
+                if (selfPip.parentElement !== container) container.appendChild(selfPip);
+                var svd = document.getElementById('cohost-self-video');
+                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+            } else if (cohostPip) {
+                container.style.cssText = 'display:flex;flex-direction:column;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText = 'flex:1;width:100%;position:relative;min-height:0;overflow:hidden;';
+                cohostPip.style.cssText = 'width:100%;height:50%;position:relative;border-radius:0;border:none;flex-shrink:0;overflow:hidden;';
+                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
+            }
+        } else if (mode === 'grid4') {
+            if (!secondPanel) {
+                _pendingViewerLayout = mode;
+                setTimeout(function(){ if (_pendingViewerLayout === 'grid4') _applyViewerLayout('grid4'); }, 300);
+                return;
+            }
+            _pendingViewerLayout = null;
+            container.classList.add('layout-grid4');
+            if (!cohostPip && selfPip) {
+                container.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText = 'grid-column:1/2;grid-row:1/3;position:relative;min-height:0;overflow:hidden;';
+                selfPip.style.cssText = 'grid-column:2/3;grid-row:1/2;position:relative;border-radius:0;border:none;min-height:0;overflow:hidden;';
+                if (selfPip.parentElement !== container) container.appendChild(selfPip);
+                var svd = document.getElementById('cohost-self-video');
+                if (svd) svd.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+            } else if (cohostPip) {
+                container.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;overflow:hidden;';
+                if (hostVid) hostVid.style.cssText = 'grid-column:1/2;grid-row:1/3;position:relative;min-height:0;overflow:hidden;';
+                cohostPip.style.cssText = 'grid-column:2/3;grid-row:1/2;position:relative;border-radius:0;border:none;min-height:0;overflow:hidden;';
+                if (cohostPip.parentElement !== container) container.appendChild(cohostPip);
+            }
+        } else if (mode === 'presentation') {
+            // Presentation layout is driven by the pres-mode CSS class on #live-player-wrap.
+            // Just ensure the video div fills its grid cell normally.
+            _pendingViewerLayout = null;
+            if (hostVid) hostVid.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
         }
     }
 
@@ -32988,36 +32821,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch(e) {}
     };
 
-    // VIEWER SIDE — request to join stage (slotIndex passed from slot click or auto-pick)
-    window.requestCoHost = async function(slotIndex) {
+    // VIEWER SIDE — request to join stage
+    window.requestCoHost = async function() {
         if (!_watchingStreamId || !window.db || !window.fs) return;
         const userAddress = window._liveUserAddress || '';
         const userHandle  = window._liveUserHandle  || 'Viewer';
         if (!userAddress) { showToast('Connect wallet first.'); return; }
-        if (isCoHost) { await window.leaveCoHost(); return; }
 
-        // Find target slot — the specific box the viewer tapped, else first empty
-        var slots = window._currentCoSlots || [];
-        var targetSlot = (typeof slotIndex === 'number' && slots[slotIndex] && slots[slotIndex].status === 'empty')
-            ? slotIndex
-            : slots.findIndex(function(s){ return !s || s.status === 'empty'; });
-        if (targetSlot === -1) { showToast('No empty slots available.'); return; }
+        const btn = $('viewer-cohost-btn');
+        if (isCoHost) { await leaveCoHost(); return; }
 
         try {
-            const { doc, setDoc, updateDoc, onSnapshot, serverTimestamp } = window.fs;
+            const { doc, setDoc, onSnapshot, serverTimestamp } = window.fs;
             const reqRef = doc(window.db, 'live_streams', _watchingStreamId, 'cohost_requests', userAddress);
-
-            // Optimistically mark our slot as pending so the box shows ⏳ immediately
-            var newSlots = slots.slice();
-            newSlots[targetSlot] = { status:'pending', address: userAddress, name: userHandle, uid: String(_myViewerUid || userAddress) };
-            window._currentCoSlots = newSlots;
-            var _vc = document.getElementById('live-remote-video-container');
-            if (_vc && window._renderSlotGrid) window._renderSlotGrid(_vc, 'live-remote-video', window._viewerLayoutMode||'solo', newSlots, false);
-
-            await setDoc(reqRef, { uid: String(_myViewerUid||userAddress), handle: userHandle, status:'pending', slotIndex: targetSlot, ts: serverTimestamp() });
-            updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: newSlots }).catch(function(){});
-
-            var btn = $('viewer-cohost-btn');
+            await setDoc(reqRef, {
+                uid:    String(_myViewerUid || userAddress),
+                handle: userHandle,
+                status: 'pending',
+                ts:     serverTimestamp()
+            });
             if (btn) { btn.innerHTML = '<span class="studio-btn-icon">⏳</span><span>Waiting…</span>'; btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
             showToast('✋ Stage request sent — waiting for host approval.');
 
@@ -33027,35 +32849,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const data = snap.data();
                 if (data.status === 'approved') {
                     unsub();
-                    // Ask for camera/mic permission explicitly (user gesture) before joining
-                    openCohostPermissionModal(targetSlot);
+                    await _promoteToCoHost();
                 } else if (data.status === 'rejected') {
                     unsub();
-                    // Clear our pending slot so the box frees up again
-                    var sl2 = (window._currentCoSlots || []).slice();
-                    if (sl2[targetSlot] && (sl2[targetSlot].address||'') === userAddress) {
-                        sl2[targetSlot] = {status:'empty',address:null,name:null,uid:null};
-                    }
-                    window._currentCoSlots = sl2;
-                    updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: sl2 }).catch(function(){});
-                    var btn2 = $('viewer-cohost-btn');
-                    if (btn2) { btn2.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; btn2.style.opacity = ''; btn2.style.pointerEvents = ''; btn2.classList.remove('active'); }
+                    if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.classList.remove('active'); }
                     showToast('Host declined your stage request.');
                 }
             });
         } catch(e) { showToast('Request error: ' + e.message); }
     };
 
-    async function _promoteToCoHost(targetSlot) {
+    async function _promoteToCoHost() {
         if (!agoraClient || !window.AgoraRTC) return;
-
-        // Require tracks to already exist (verified by enableCohostMedia)
-        if (!cohostVideoTrack || !cohostAudioTrack) {
-            console.error('[CoHost] Cannot promote - tracks not verified. Call enableCohostMedia first.');
-            showToast('Please enable camera & microphone first.');
-            return;
-        }
-
         try {
             // Promote viewer to host role so they can publish
             await agoraClient.setClientRole('host');
@@ -33070,7 +32875,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Also keep _myViewerUid in sync with the new host UID so both guards match.
             _myViewerUid = agoraClient.uid;
 
-            // Publish pre-verified tracks (created in enableCohostMedia)
+            [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
             await agoraClient.publish([cohostAudioTrack, cohostVideoTrack]);
 
             // ── After setClientRole('host'), Agora internally unsubscribes all remote
@@ -33146,34 +32951,80 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 console.warn('[CoHost] No remote video found after promotion — will render via user-published event');
             }
 
-            // ── Write our Agora UID to the assigned slot so all clients see us ──────
-            var _myAgoraUid = String(agoraClient.uid);
-            var _myAddr     = (window._liveUserAddress || '').toLowerCase();
-            var _myHandle   = window._liveUserHandle || 'Co-host';
-            var _slotIdx    = (typeof targetSlot === 'number') ? targetSlot : -1;
-            if (_watchingStreamId && window.db && window.fs) {
-                var _slotSnap = (window._currentCoSlots || []).slice();
-                // If targetSlot not given, find our pending slot by address
-                if (_slotIdx === -1) {
-                    _slotIdx = _slotSnap.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myAddr; });
-                }
-                if (_slotIdx !== -1) {
-                    _slotSnap[_slotIdx] = { status:'active', address: _myAddr, name: _myHandle, uid: _myAgoraUid };
-                    window._currentCoSlots = _slotSnap;
-                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: _slotSnap }).catch(function(){});
-                }
+            // ── Self-view PiP (YOU label, bottom-left of the stream container) ──────
+            var selfPip = document.getElementById('cohost-self-pip');
+            if (!selfPip) {
+                selfPip = document.createElement('div');
+                selfPip.id = 'cohost-self-pip';
+                selfPip.style.cssText = [
+                    'position:absolute',
+                    'bottom:60px',
+                    'right:10px',
+                    'width:160px',
+                    'height:100px',
+                    'border-radius:8px',
+                    'overflow:hidden',
+                    'border:2px solid #e03e3e',
+                    'z-index:30',
+                    'background:#000'
+                ].join(';');
+
+                var selfLabel = document.createElement('div');
+                selfLabel.style.cssText = 'position:absolute;top:2px;left:4px;font-size:0.55rem;font-weight:700;color:#fff;background:rgba(224,62,62,0.85);padding:1px 6px;border-radius:4px;z-index:3;pointer-events:none;letter-spacing:0.5px;';
+                selfLabel.textContent = '🎤 YOU';
+                selfPip.appendChild(selfLabel);
+
+                var selfVideoDiv = document.createElement('div');
+                selfVideoDiv.id = 'cohost-self-video';
+                selfVideoDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;';
+                selfPip.appendChild(selfVideoDiv);
+
+                var selfControls = document.createElement('div');
+                selfControls.style.cssText = 'position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10;';
+
+                var pipMicBtn = document.createElement('button');
+                pipMicBtn.id = 'cohost-btn-mic';
+                pipMicBtn.textContent = '🔇 Mute';
+                pipMicBtn.onclick = function() { window.toggleCoHostMic && window.toggleCoHostMic(); };
+                pipMicBtn.style.cssText = 'background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+
+                var pipCamBtn = document.createElement('button');
+                pipCamBtn.id = 'cohost-btn-cam';
+                pipCamBtn.textContent = '📷 Cam Off';
+                pipCamBtn.onclick = function() { window.toggleCoHostCam && window.toggleCoHostCam(); };
+                pipCamBtn.style.cssText = 'background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+
+                var pipLeaveBtn = document.createElement('button');
+                pipLeaveBtn.textContent = '✕ Leave';
+                pipLeaveBtn.onclick = function() { window.leaveCoHost && window.leaveCoHost(); };
+                pipLeaveBtn.style.cssText = 'background:rgba(220,38,38,0.75);border:1px solid rgba(220,38,38,0.8);color:#fff;border-radius:20px;padding:2px 7px;font-size:0.58rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+
+                selfControls.appendChild(pipMicBtn);
+                selfControls.appendChild(pipCamBtn);
+                selfControls.appendChild(pipLeaveBtn);
+                selfPip.appendChild(selfControls);
             }
 
-            // ── Play self-view into our slot div (grid renders via stream-doc update) ──
-            var _selfPlayRetry = 0;
-            (function _playSelfInSlot() {
-                var slotDiv = _slotIdx !== -1 ? document.getElementById('live-slot-' + _slotIdx) : null;
-                if (slotDiv) {
-                    try { cohostVideoTrack.play(slotDiv, { fit: 'cover' }); console.log('[CoHost] self-view playing in slot', _slotIdx); }
-                    catch(e) { console.warn('[CoHost] self-view slot play err:', e); }
-                } else if (_selfPlayRetry < 30) {
-                    _selfPlayRetry++;
-                    setTimeout(_playSelfInSlot, 150);
+            // Append self-pip to the video container — search cinema-video-col too
+            // because enterCinema moves live-remote-video-container into cinema-video-col
+            var targetContainer = document.getElementById('live-remote-video-container') ||
+                                  document.getElementById('cinema-video-col') ||
+                                  document.getElementById('live-broadcaster-video-container');
+            if (targetContainer) targetContainer.appendChild(selfPip);
+
+            // Play local cam into self-pip with retry.
+            // cohost-self-video is position:absolute so offsetWidth is always 0 —
+            // we cannot use size as the ready signal. Instead just retry until the
+            // div exists in DOM (which it always will after appendChild above).
+            var _selfRetry = 0;
+            (function _playSelf() {
+                var svDiv = document.getElementById('cohost-self-video');
+                if (svDiv) {
+                    try { cohostVideoTrack.play(svDiv); console.log('[CoHost] self-view playing'); }
+                    catch(e) { console.warn('[CoHost] self-view play err:', e); }
+                } else if (_selfRetry < 25) {
+                    _selfRetry++;
+                    setTimeout(_playSelf, 150);
                 }
             })();
 
@@ -33294,17 +33145,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 btn.style.pointerEvents = '';
                 btn.classList.remove('active');
             }
-            // Free our slot in coSlots so the box shows "+ Request" again
-            if (_watchingStreamId && window.db && window.fs) {
-                var _myLvAddr = (window._liveUserAddress || '').toLowerCase();
-                var _lvSlots = (window._currentCoSlots || []).slice();
-                var _lvIdx = _lvSlots.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myLvAddr; });
-                if (_lvIdx !== -1) {
-                    _lvSlots[_lvIdx] = {status:'empty',address:null,name:null,uid:null};
-                    window._currentCoSlots = _lvSlots;
-                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _watchingStreamId), { coSlots: _lvSlots }).catch(function(){});
-                }
-            }
             // Clean up cohost request doc so host sees slot freed
             if (_watchingStreamId && window.db && window.fs) {
                 var userAddress = window._liveUserAddress || '';
@@ -33322,8 +33162,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── Co-host mic/cam state flags (mirrors isMicMuted / isCamOff on host side) ──
     let _cohostMicMuted = false;
     let _cohostCamOff   = false;
-    // Exposes current mic/cam state to the slot tap-menu (self-controls branch)
-    window._coHostStateGet = function() { return { micMuted: _cohostMicMuted, camOff: _cohostCamOff }; };
 
     // ── Co-host mic toggle (viewer on stage) ─────────────────────
     // Flag set to true for the duration of a deliberate mic/cam toggle.
@@ -33358,47 +33196,26 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(function(){ _cohostToggling = false; }, 2000);
             const btn = $('cohost-btn-cam');
             if (btn) btn.textContent = _cohostCamOff ? '📷 Cam On' : '📷 Cam Off';
-            showToast(_cohostCamOff ? '📷 Camera off' : '📷 Camera live');
-
-            // Write camOff state to Firestore so all viewers see profile pic or live video
-            var _myTgAddr = (window._liveUserAddress || '').toLowerCase();
-            var _myAvatar = window._liveUserAvatar || '';
-            var _sid = _watchingStreamId || currentStreamId;
-            if (_sid && window.db && window.fs && _myTgAddr) {
-                var _cs = (window._currentCoSlots || []).slice();
-                var _ci = _cs.findIndex(function(s){ return s && (s.address||'').toLowerCase() === _myTgAddr; });
-                if (_ci !== -1) {
-                    _cs[_ci] = Object.assign({}, _cs[_ci], {
-                        camOff: _cohostCamOff,
-                        avatar: _cohostCamOff ? _myAvatar : ''
-                    });
-                    window._currentCoSlots = _cs;
-                    window.fs.updateDoc(window.fs.doc(window.db, 'live_streams', _sid), { coSlots: _cs }).catch(function(){});
-
-                    // Immediately update own slot DOM without waiting for Firestore round-trip
-                    var _slotEl = document.getElementById('live-slot-' + _ci);
-                    if (_slotEl) {
-                        var _existing = _slotEl.querySelector('.slot-cam-off');
-                        if (_cohostCamOff) {
-                            if (!_existing) {
-                                _existing = document.createElement('div');
-                                _existing.className = 'slot-cam-off';
-                                _existing.style.cssText = 'position:absolute;inset:0;background:#0a0810;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:4;gap:6px;';
-                                _existing.innerHTML = _myAvatar
-                                    ? '<img src="'+_myAvatar+'" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid rgba(124,92,191,0.5);" /><div style="font-size:0.55rem;color:rgba(255,255,255,0.38);font-weight:600;letter-spacing:0.5px;">CAM OFF</div>'
-                                    : '<div style="font-size:2.2rem;line-height:1;">👤</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.38);font-weight:600;letter-spacing:0.5px;">CAM OFF</div>';
-                                _slotEl.appendChild(_existing);
-                            } else {
-                                _existing.style.display = 'flex';
-                            }
-                        } else {
-                            if (_existing) _existing.style.display = 'none';
-                            // Resume playing cam in slot
-                            try { cohostVideoTrack.play(_slotEl.querySelector('.slot-vid') || _slotEl, { fit: 'cover' }); } catch(_e) {}
-                        }
+            // Show/hide a cam-off overlay inside selfPip so the pip stays visible
+            // even when camera is disabled — it just shows black with a label
+            var selfPip = document.getElementById('cohost-self-pip');
+            if (selfPip) {
+                var camOffOverlay = document.getElementById('cohost-cam-off-overlay');
+                if (_cohostCamOff) {
+                    if (!camOffOverlay) {
+                        camOffOverlay = document.createElement('div');
+                        camOffOverlay.id = 'cohost-cam-off-overlay';
+                        camOffOverlay.style.cssText = 'position:absolute;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:5;font-size:0.7rem;color:rgba(255,255,255,0.6);font-weight:600;';
+                        camOffOverlay.textContent = '📷 Cam Off';
+                        selfPip.appendChild(camOffOverlay);
+                    } else {
+                        camOffOverlay.style.display = 'flex';
                     }
+                } else {
+                    if (camOffOverlay) camOffOverlay.style.display = 'none';
                 }
             }
+            showToast(_cohostCamOff ? '📷 Camera off' : '📷 Camera live');
         } catch(e) {
             _cohostCamOff = !_cohostCamOff; // roll back
             _cohostToggling = false;
@@ -35456,21 +35273,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
             }
         }
-    };
-
-    // Locally mutes a co-host's audio by their Agora UID (host-side only)
-    window._muteSlotUid = function(uid) {
-        if (!agoraClient || !uid) return;
-        var remotes = agoraClient.remoteUsers || [];
-        for (var i = 0; i < remotes.length; i++) {
-            if (String(remotes[i].uid) === String(uid)) {
-                if (remotes[i].audioTrack) {
-                    try { remotes[i].audioTrack.stop(); showToast('Co-host muted locally.'); } catch(e) {}
-                }
-                return;
-            }
-        }
-        showToast('Could not find that user\'s audio track.');
     };
 
     // Kick a co-host out of their slot
@@ -39330,35 +39132,6 @@ window._renderSlotGrid = function(container, hostVidId, mode, coSlots, isHost) {
         hostEl.style.setProperty('min-width',   '0',        'important');
         hostEl.style.setProperty('max-width',   'none',     'important');
     }
-
-    // ── Defend the host cell geometry ──────────────────────────────────────
-    // Mobile height-fixers, Agora resize handling and cinema observers rewrite
-    // this element's inline style with !important at unpredictable times, and
-    // inline writes are last-write-wins — which left the host video fullscreen
-    // instead of shrinking into its slot. Re-assert the cell geometry whenever
-    // anything else touches the style attribute while a multi-slot layout is on.
-    if (window._hostCellObs) { try { window._hostCellObs.disconnect(); } catch(_) {} window._hostCellObs = null; }
-    if (hostEl && def.slots.length > 0) {
-        var _cell = def.host;
-        var _assertHostCell = function() {
-            if (hostEl.style.getPropertyValue('width') === _cell.w + '%' &&
-                hostEl.style.getPropertyValue('left')  === _cell.l + '%') return;
-            hostEl.style.setProperty('position', 'absolute',  'important');
-            hostEl.style.setProperty('left',      _cell.l+'%', 'important');
-            hostEl.style.setProperty('top',       _cell.t+'%', 'important');
-            hostEl.style.setProperty('right',     'auto',      'important');
-            hostEl.style.setProperty('bottom',    'auto',      'important');
-            hostEl.style.setProperty('width',     _cell.w+'%', 'important');
-            hostEl.style.setProperty('height',    _cell.h+'%', 'important');
-        };
-        _assertHostCell();
-        window._hostCellObs = new MutationObserver(_assertHostCell);
-        window._hostCellObs.observe(hostEl, { attributes: true, attributeFilter: ['style'] });
-        // Timed re-asserts beat late async writers (Agora replay, cinema move, etc.)
-        setTimeout(_assertHostCell, 300);
-        setTimeout(_assertHostCell, 900);
-        setTimeout(_assertHostCell, 2000);
-    }
     // Store coSlots globally so _updateSlotStarBadges can read them
     window._currentCoSlots = coSlots || [];
 
@@ -40044,7 +39817,7 @@ window.toggleCreatorAnalytics = function() {
         <div class="fem-trophy">🏆</div>
         <div class="fem-title">First Creator Payout Complete</div>
         <div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:8px;">You withdrew</div>
-        <div class="fem-amount" id="fem-amount">0.00 APTM</div>
+        <div class="fem-amount" id="fem-amount">$0.00 APTM</div>
         <div class="fem-badge">✓ First Earnings Achieved</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.5;">This badge is permanently on your creator profile. You did it — welcome to the creator economy on SocialHub! 🎉</div>
         <button class="fem-close-btn" onclick="window._closeFEModal()">Awesome! Keep Creating →</button>
@@ -40180,21 +39953,14 @@ function dismissTgBanner() {
     if (b) b.style.display = 'none';
     try { localStorage.setItem('sh_tg_banner_dismissed', '1'); } catch(_) {}
 }
-// Hide banner if previously dismissed - wait for DOM
+// Hide banner immediately if previously dismissed
 (function() {
-    function hideTgBannerIfDismissed() {
-        try {
-            if (localStorage.getItem('sh_tg_banner_dismissed') === '1') {
-                var b = document.getElementById('tg-community-banner');
-                if (b) b.style.display = 'none';
-            }
-        } catch(_) {}
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideTgBannerIfDismissed);
-    } else {
-        hideTgBannerIfDismissed();
-    }
+    try {
+        if (localStorage.getItem('sh_tg_banner_dismissed') === '1') {
+            var b = document.getElementById('tg-community-banner');
+            if (b) b.style.display = 'none';
+        }
+    } catch(_) {}
 })();
 </script>
 </body>
