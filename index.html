@@ -4780,6 +4780,26 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Mobile debug panel - shows connection flow progress */
+        #mobile-debug {
+            position: fixed;
+            top: 60px;
+            left: 10px;
+            right: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            padding: 8px;
+            border: 1px solid #0f0;
+            z-index: 99999;
+            display: none;
+            line-height: 1.3;
+        }
+        #mobile-debug.active { display: block; }
+
         /* â”€â”€ INDEX 28: Global Activity Pulse â€” bottom-left, teal, distinct from local toast â”€â”€ */
         #global-pulse {
             position: fixed; bottom: 22px; left: 22px; z-index: 9998;
@@ -13260,6 +13280,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     <span id="wallet-connecting-text">Connecting to wallet...</span>
 </div>
 
+<!-- Mobile debug panel -->
+<div id="mobile-debug"></div>
+
 <!-- INDEX 28: Global Activity Pulse — fires for ALL visitors on hype/signal events -->
 <div id="global-pulse"></div>
 
@@ -14099,6 +14122,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
 
+    // ── Mobile debug logger - shows on screen ─────────────────────────────────
+    var _debugLogs = [];
+    function debugLog(msg) {
+        console.log('[DEBUG]', msg);
+        _debugLogs.push(new Date().toISOString().substr(11, 8) + ' ' + msg);
+        if (_debugLogs.length > 20) _debugLogs.shift();
+        var el = document.getElementById('mobile-debug');
+        if (el) {
+            el.classList.add('active');
+            el.innerHTML = _debugLogs.join('<br>');
+            el.scrollTop = el.scrollHeight;
+        }
+    }
+
     // ── Wallet connecting indicator helpers ───────────────────────────────────
     function showConnecting(message) {
         var el = document.getElementById('wallet-connecting');
@@ -14115,12 +14152,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
 
     async function _connectWithProvider(walletType) {
+        debugLog('START: walletType=' + walletType);
         var dd = document.getElementById('wallet-dropdown');
         if (dd) dd.style.display = 'none';
 
         try {
             let eth;
             if (walletType === 'xova') {
+                debugLog('Path: XOVA');
                 // Priority order for XOVA provider resolution:
                 // 1. window.xova.ethereum  — standard XOVA injection
                 // 2. window.xova itself    — some versions inject the provider directly on window.xova
@@ -14143,17 +14182,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('XOVA Wallet not found. Open this page inside the XOVA app, or ensure the XOVA extension is active.');
                     return;
                 }
+                debugLog('XOVA: calling ensureApertumChain...');
                 showConnecting('Connecting to XOVA Wallet...');
                 const _xovaOnAptm = await _ensureApertumChain(eth);
+                debugLog('XOVA: ensureApertumChain returned ' + _xovaOnAptm);
                 if (!_xovaOnAptm) { hideConnecting(); return; }
             } else if (walletType === 'walletconnect') {
+                debugLog('Path: WalletConnect');
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
                 const WC_PROJECT_ID = (window.APP_CONFIG && window.APP_CONFIG.wcProjectId) || '422b74ec70be253bbdc47a7479725899';
                 if (!window._WCEthProviderClass) {
+                    debugLog('WC: Loading provider...');
                     showToast('Loading WalletConnect…');
                     const mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
                     window._WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
+                    debugLog('WC: Provider loaded');
                 }
                 if (window._activeWCProvider) {
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
@@ -14325,28 +14369,49 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 window._activeWCProvider = wcProv;
                 eth = wcProv;
             } else {
+                debugLog('Path: MetaMask direct');
                 // When multiple wallets are installed (e.g. XOVA + MetaMask), one of them
                 // takes over window.ethereum. Look for MetaMask specifically in the
                 // EIP-5749 providers array first, then fall back to window.ethereum.
                 if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+                    debugLog('MM: Checking providers array...');
                     eth = window.ethereum.providers.find(p => p.isMetaMask) || null;
+                    debugLog('MM: Found in providers: ' + (eth ? 'YES' : 'NO'));
                 }
-                if (!eth) eth = await _waitForEthereum(4000);
-                if (!eth) { showToast('No wallet detected. Please install MetaMask.'); return; }
+                if (!eth) {
+                    debugLog('MM: Waiting for ethereum (4s)...');
+                    eth = await _waitForEthereum(4000);
+                    debugLog('MM: _waitForEthereum result: ' + (eth ? 'SUCCESS' : 'FAILED'));
+                }
+                if (!eth) {
+                    debugLog('ERROR: No wallet detected');
+                    showToast('No wallet detected. Please install MetaMask.');
+                    return;
+                }
             }
 
+            debugLog('Showing connecting UI...');
             showConnecting('Connecting to MetaMask...');
-            provider = new ethers.providers.Web3Provider(eth);
 
+            debugLog('Creating Web3Provider...');
+            provider = new ethers.providers.Web3Provider(eth);
+            debugLog('Web3Provider created');
+
+            debugLog('Calling eth_requestAccounts (60s timeout)...');
             // Wrap eth_requestAccounts with 60s timeout — mobile MetaMask can hang indefinitely
             const accts = await Promise.race([
                 provider.send("eth_requestAccounts", []),
                 new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Connection timeout — wallet did not respond')), 60000)
+                    setTimeout(() => {
+                        debugLog('TIMEOUT: eth_requestAccounts after 60s');
+                        reject(new Error('Connection timeout — wallet did not respond'));
+                    }, 60000)
                 )
             ]);
 
+            debugLog('eth_requestAccounts returned: ' + accts.length + ' accounts');
             userAddress = accts[0];
+            debugLog('Connected: ' + userAddress.substr(0, 10) + '...');
             window.userAddress = userAddress;
             signer      = provider.getSigner();
             hubContract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer);
@@ -14494,6 +14559,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Prompt for push notifications (delayed slightly so connect toast shows first)
             setTimeout(function() { initPushNotifications(userAddress); }, 2500);
         } catch(err) {
+            debugLog('CATCH: ' + (err.message || String(err)));
             console.error(err);
             hideConnecting();
             showToast('Connection Failed — ' + (err.message || String(err)));
