@@ -14037,24 +14037,53 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     async function _ensureApertumChain(eth) {
         if (!eth || !eth.request) return true;
         try {
-            const chainIdHex = await eth.request({ method: 'eth_chainId' });
+            // Check current chain with 10s timeout
+            const chainIdHex = await Promise.race([
+                eth.request({ method: 'eth_chainId' }),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('chain_check_timeout')), 10000))
+            ]);
             if (parseInt(chainIdHex, 16) === APTM_CHAIN_ID) return true;
+
             showToast('Wrong network — switching to Apertum…');
             try {
-                await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAE2' }] });
+                // Switch chain with 45s timeout (mobile is slower)
+                await Promise.race([
+                    eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xAE2' }] }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('chain_switch_timeout')), 45000))
+                ]);
                 return true;
             } catch (switchErr) {
+                // If timeout, check if chain is now correct (user manually switched)
+                if (switchErr.message === 'chain_switch_timeout') {
+                    try {
+                        const nowChainHex = await Promise.race([
+                            eth.request({ method: 'eth_chainId' }),
+                            new Promise((_, rej) => setTimeout(() => rej(new Error('recheck_timeout')), 5000))
+                        ]);
+                        if (parseInt(nowChainHex, 16) === APTM_CHAIN_ID) {
+                            console.log('[Chain] Switch timed out, but chain is now correct — proceeding');
+                            return true;
+                        }
+                    } catch (_) {}
+                    showToast('Chain switch timed out. Please switch to Apertum network manually.');
+                    return false;
+                }
+
                 if (switchErr.code === 4902 || (switchErr.message || '').includes('Unrecognized chain')) {
-                    await eth.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId:              '0xAE2',
-                            chainName:            'Apertum',
-                            nativeCurrency:       { name: 'APTM', symbol: 'APTM', decimals: 18 },
-                            rpcUrls:              [APTM_RPC],
-                            blockExplorerUrls:    ['https://explorer.apertum.io/']
-                        }]
-                    });
+                    // Add chain with 45s timeout
+                    await Promise.race([
+                        eth.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId:              '0xAE2',
+                                chainName:            'Apertum',
+                                nativeCurrency:       { name: 'APTM', symbol: 'APTM', decimals: 18 },
+                                rpcUrls:              [APTM_RPC],
+                                blockExplorerUrls:    ['https://explorer.apertum.io/']
+                            }]
+                        }),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('chain_add_timeout')), 45000))
+                    ]);
                     return true;
                 }
                 if (switchErr.code === 4001) {
