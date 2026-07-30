@@ -14307,8 +14307,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
 
             showConnecting('Connecting to MetaMask...');
-            provider    = new ethers.providers.Web3Provider(eth);
-            const accts = await provider.send("eth_requestAccounts", []);
+            provider = new ethers.providers.Web3Provider(eth);
+
+            // Wrap eth_requestAccounts with 60s timeout — mobile MetaMask can hang indefinitely
+            const accts = await Promise.race([
+                provider.send("eth_requestAccounts", []),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Connection timeout — wallet did not respond')), 60000)
+                )
+            ]);
+
             userAddress = accts[0];
             window.userAddress = userAddress;
             signer      = provider.getSigner();
