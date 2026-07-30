@@ -14126,9 +14126,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var svgCoin = '<svg viewBox="0 0 42 42" width="42" height="42"><rect width="42" height="42" fill="#0052FF"/><circle cx="21" cy="21" r="11" fill="none" stroke="#fff" stroke-width="4.2"/><rect x="17" y="17" width="8" height="8" rx="1.5" fill="#fff"/></svg>';
                     var svgLink = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
                     var wallets = [
-                        { name: 'MetaMask', link: 'https://metamask.app.link/wc?uri=' + encodeURIComponent(wcUri), svg: svgMM, bg: '#fff' },
-                        { name: 'Trust Wallet', link: 'https://link.trustwallet.com/wc?uri=' + encodeURIComponent(wcUri), svg: svgTrust, bg: '#fff' },
-                        { name: 'Coinbase Wallet', link: 'https://go.cb-w.com/wc?uri=' + encodeURIComponent(wcUri), svg: svgCoin, bg: '#0052FF' },
+                        { name: 'MetaMask', link: wcUri, svg: svgMM, bg: '#fff' },
+                        { name: 'Trust Wallet', link: wcUri, svg: svgTrust, bg: '#fff' },
+                        { name: 'Coinbase Wallet', link: wcUri, svg: svgCoin, bg: '#0052FF' },
                         { name: 'Other wallet', link: wcUri, svg: svgLink, bg: '#4b5563', sub: 'Open your default WalletConnect wallet' }
                     ];
                     var ov = document.createElement('div');
