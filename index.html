@@ -14283,6 +14283,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     card.innerHTML = html;
                     ov.appendChild(card);
                     document.body.appendChild(ov);
+
+                    // Add click logging to wallet options for debugging
+                    var walletOpts = card.querySelectorAll('.wc-wallet-opt');
+                    walletOpts.forEach(function(opt, idx) {
+                        opt.addEventListener('click', function(e) {
+                            var href = opt.getAttribute('href');
+                            debugLog('WC: Wallet option #' + idx + ' clicked, href=' + href.substring(0, 60) + '...');
+                        });
+                    });
+
                     requestAnimationFrame(function() {
                         ov.style.opacity = '1';
                         card.style.transform = 'translateY(0)';
