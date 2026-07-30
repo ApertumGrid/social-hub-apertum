@@ -14212,100 +14212,57 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     debugLog('Reown: Cleared localStorage');
                 } catch(_) {}
 
-                // Lazy-load Reown AppKit
-                if (!window._ReownAppKit) {
-                    debugLog('Reown: Loading SDK...');
+                // Lazy-load Web3Modal v2
+                if (!window._Web3Modal) {
+                    debugLog('WC: Loading Web3Modal...');
                     showToast('Loading wallet connection...');
 
-                    // Load Reown AppKit from CDN
-                    const [appKitCore, appKitAdapter] = await Promise.all([
-                        import('https://esm.sh/@reown/appkit@1.1.2'),
-                        import('https://esm.sh/@reown/appkit-adapter-ethers@1.1.2')
+                    // Load Web3Modal v2 and WalletConnect Universal Provider from CDN
+                    const [modalMod, providerMod] = await Promise.all([
+                        import('https://esm.sh/@web3modal/standalone@2.6.2'),
+                        import('https://esm.sh/@walletconnect/universal-provider@2.11.0')
                     ]);
 
-                    window._ReownAppKit = appKitCore.createAppKit || appKitCore.default;
-                    window._ReownEthersAdapter = appKitAdapter.EthersAdapter || appKitAdapter.default;
+                    window._Web3Modal = modalMod.Web3Modal || modalMod.default;
+                    window._UniversalProvider = providerMod.UniversalProvider || providerMod.default;
 
-                    debugLog('Reown: SDK loaded');
+                    debugLog('WC: Web3Modal loaded');
                 }
 
-                // Define Apertum network
-                const apertumNetwork = {
-                    id: APTM_CHAIN_ID,
-                    name: 'Apertum',
-                    nativeCurrency: {
-                        decimals: 18,
-                        name: 'APTM',
-                        symbol: 'APTM',
-                    },
-                    rpcUrls: {
-                        default: { http: [APTM_RPC] },
-                        public: { http: [APTM_RPC] }
-                    },
-                    blockExplorers: {
-                        default: {
-                            name: 'ApertumScan',
-                            url: 'https://aptm.apertum.io'
-                        }
-                    }
-                };
+                debugLog('WC: Creating Web3Modal...');
 
-                // Define Ethereum mainnet for fallback
-                const ethereumMainnet = {
-                    id: 1,
-                    name: 'Ethereum',
-                    nativeCurrency: {
-                        decimals: 18,
-                        name: 'Ether',
-                        symbol: 'ETH',
-                    },
-                    rpcUrls: {
-                        default: { http: ['https://cloudflare-eth.com'] },
-                        public: { http: ['https://cloudflare-eth.com'] }
-                    },
-                    blockExplorers: {
-                        default: {
-                            name: 'Etherscan',
-                            url: 'https://etherscan.io'
-                        }
-                    }
-                };
-
-                // Define networks array
-                const networks = [apertumNetwork, ethereumMainnet];
-
-                debugLog('Reown: Creating modal...');
-
-                // Create Reown AppKit modal
-                const modal = window._ReownAppKit({
-                    adapters: [new window._ReownEthersAdapter()],
-                    networks: networks,
-                    defaultNetwork: apertumNetwork,
+                // Create Web3Modal instance
+                const web3Modal = new window._Web3Modal({
                     projectId: WC_PROJECT_ID,
-                    features: {
-                        analytics: false,  // Disable telemetry
-                        email: false,      // Disable email login
-                        socials: false     // Disable social logins
-                    },
+                    standaloneChains: ['eip155:' + APTM_CHAIN_ID, 'eip155:1'],
+                    themeMode: 'dark',
+                    themeVariables: {
+                        '--w3m-accent-color': '#7c5cbf',
+                        '--w3m-background-color': '#7c5cbf'
+                    }
+                });
+
+                debugLog('WC: Creating Universal Provider...');
+
+                // Create Universal Provider
+                const provider = await window._UniversalProvider.init({
+                    projectId: WC_PROJECT_ID,
                     metadata: {
                         name: 'SocialHub',
                         description: 'Web3 Social Platform on Apertum',
                         url: 'https://www.socialhubapertum.com',
                         icons: ['https://socialhubapertum.com/favicon.ico']
                     },
-                    themeMode: 'dark',
-                    themeVariables: {
-                        '--w3m-accent': '#7c5cbf',
-                        '--w3m-border-radius-master': '14px'
-                    }
+                    client: undefined
                 });
 
-                debugLog('Reown: Modal created');
-                window._activeReownModal = modal;
+                debugLog('WC: Provider initialized');
+                window._activeWeb3Modal = web3Modal;
+                window._activeUniversalProvider = provider;
 
                 // Connection promise
-                showConnecting('Choose your wallet...');
-                debugLog('Reown: Opening modal...');
+                showConnecting('Connecting to wallet...');
+                debugLog('WC: Connecting to Apertum chain...');
 
                 await new Promise(function(resolve, reject) {
                     var _done = false;
@@ -14315,7 +14272,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         if (_done) return;
                         _done = true;
                         clearTimeout(_timeout);
-                        debugLog('Reown: Connection successful');
+                        debugLog('WC: Connection successful');
+                        web3Modal.closeModal();
                         resolve();
                     }
 
@@ -14323,78 +14281,89 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         if (_done) return;
                         _done = true;
                         clearTimeout(_timeout);
-                        debugLog('Reown: Connection failed - ' + (err.message || String(err)));
+                        debugLog('WC: Connection failed - ' + (err.message || String(err)));
+                        web3Modal.closeModal();
                         reject(err);
                     }
 
-                    // Listen for successful connection
-                    modal.subscribeState(function(state) {
-                        debugLog('Reown: State update - open=' + state.open + ', network=' + state.selectedNetworkId);
-                        if (state.open === false && state.selectedNetworkId) {
-                            // Modal closed AND network selected = likely connected
-                            setTimeout(_success, 500);  // Small delay to ensure provider is ready
-                        }
+                    // Listen for connection events
+                    provider.on('display_uri', function(uri) {
+                        debugLog('WC: display_uri event - opening modal');
+                        web3Modal.openModal({ uri: uri });
                     });
 
-                    // Subscribe to provider events (more reliable)
-                    modal.subscribeProvider(function(providerState) {
-                        debugLog('Reown: Provider update - address=' + (providerState.address || 'none'));
-                        if (providerState.provider && providerState.address) {
-                            // We have both provider and address = connection complete
-                            _success();
-                        }
+                    provider.on('connect', function() {
+                        debugLog('WC: connect event');
+                        _success();
                     });
 
                     // Timeout after 5 minutes
                     _timeout = setTimeout(function() {
-                        debugLog('Reown: Timeout reached (5min)');
+                        debugLog('WC: Timeout reached (5min)');
                         _fail(new Error('Connection timed out. Please try again.'));
                     }, 300000);
 
-                    // Open the modal
-                    modal.open();
+                    // Connect to Apertum chain
+                    debugLog('WC: Calling provider.connect()...');
+                    provider.connect({
+                        namespaces: {
+                            eip155: {
+                                methods: [
+                                    'eth_sendTransaction',
+                                    'eth_signTransaction',
+                                    'eth_sign',
+                                    'personal_sign',
+                                    'eth_signTypedData'
+                                ],
+                                chains: ['eip155:' + APTM_CHAIN_ID, 'eip155:1'],
+                                events: ['chainChanged', 'accountsChanged'],
+                                rpcMap: {
+                                    [APTM_CHAIN_ID]: APTM_RPC,
+                                    1: 'https://cloudflare-eth.com'
+                                }
+                            }
+                        }
+                    }).then(function() {
+                        debugLog('WC: provider.connect() resolved');
+                        // Don't resolve yet - wait for 'connect' event
+                    }).catch(_fail);
                 });
 
-                debugLog('Reown: Connection promise resolved');
-
-                // Get the provider from Reown
-                const walletProvider = modal.getWalletProvider();
-                if (!walletProvider) {
-                    throw new Error('Failed to get wallet provider from Reown');
-                }
-
-                debugLog('Reown: Got wallet provider');
+                debugLog('WC: Connection promise resolved');
 
                 // Use the provider
-                eth = walletProvider;
-                window._activeWCProvider = walletProvider;
+                eth = provider;
+                window._activeWCProvider = provider;
 
-                // Close the modal now that connection is established
-                try { modal.close(); } catch(_) {}
-
-                debugLog('Reown: Ensuring Apertum chain...');
+                debugLog('WC: Ensuring Apertum chain...');
                 await _ensureApertumChain(eth);
 
                 // Setup disconnect handlers
-                walletProvider.on('disconnect', function() {
-                    debugLog('Reown: Wallet disconnected');
+                provider.on('disconnect', function() {
+                    debugLog('WC: Wallet disconnected');
                     window._activeWCProvider = null;
                     window._shLastWalletType = '';
                     showToast('Wallet disconnected');
                 });
 
-                walletProvider.on('accountsChanged', function(accounts) {
-                    debugLog('Reown: Accounts changed - ' + (accounts && accounts.length > 0 ? accounts[0] : 'none'));
+                provider.on('accountsChanged', function(accounts) {
+                    debugLog('WC: Accounts changed - ' + (accounts && accounts.length > 0 ? accounts[0] : 'none'));
                     if (!accounts || accounts.length === 0) {
                         window._activeWCProvider = null;
                         window._shLastWalletType = '';
                     }
                 });
 
+                provider.on('session_delete', function() {
+                    debugLog('WC: Session deleted');
+                    window._activeWCProvider = null;
+                    window._shLastWalletType = '';
+                });
+
                 // Set session alive flag
                 window._wcSessionAlive = true;
 
-                debugLog('Reown: Setup complete');
+                debugLog('WC: Setup complete');
             } else {
                 debugLog('Path: MetaMask direct');
                 // When multiple wallets are installed (e.g. XOVA + MetaMask), one of them
