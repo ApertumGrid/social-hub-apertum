@@ -14220,8 +14220,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const wcProv = await window._WCEthProviderClass.init({
                     projectId: WC_PROJECT_ID,
                     showQrModal: !_wcIsMobile,
-                    chains: [1],
-                    optionalChains: [APTM_CHAIN_ID],
+                    optionalChains: [APTM_CHAIN_ID, 1],
+                    methods: [
+                        'eth_sendTransaction',
+                        'eth_signTransaction',
+                        'eth_sign',
+                        'personal_sign',
+                        'eth_signTypedData'
+                    ],
+                    events: ['chainChanged', 'accountsChanged'],
                     rpcMap: {
                         [APTM_CHAIN_ID]: APTM_RPC,
                         1: 'https://cloudflare-eth.com'
