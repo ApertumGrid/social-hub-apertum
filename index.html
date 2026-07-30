@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -15321,7 +15320,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             var uRef  = window.fs.doc(window.db, 'users', addr.toLowerCase());
             var uSnap = await window.fs.getDoc(uRef);
             if (uSnap.exists() && uSnap.data().referredBy) { localStorage.removeItem('sh_ref'); return; }
-            await window.fs.updateDoc(uRef, { referredBy: storedRef });
+            await window.fs.setDoc(uRef, { referredBy: storedRef }, { merge: true });
             localStorage.removeItem('sh_ref');
             window.fs.setDoc(window.fs.doc(window.db, 'referral_stats', storedRef), { totalReferred: window.fs.increment(1) }, { merge: true }).catch(function(){});
         } catch(e) { console.warn('[referral] writeReferredBy:', e); }
