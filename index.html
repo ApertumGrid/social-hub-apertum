@@ -14218,15 +14218,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('Loading wallet connection...');
 
                     // Load Reown AppKit from CDN
-                    const [appKitCore, appKitAdapter, networksPackage] = await Promise.all([
+                    const [appKitCore, appKitAdapter] = await Promise.all([
                         import('https://esm.sh/@reown/appkit@1.1.2'),
-                        import('https://esm.sh/@reown/appkit-adapter-ethers@1.1.2'),
-                        import('https://esm.sh/@reown/appkit/networks@1.1.2')
+                        import('https://esm.sh/@reown/appkit-adapter-ethers@1.1.2')
                     ]);
 
                     window._ReownAppKit = appKitCore.createAppKit || appKitCore.default;
                     window._ReownEthersAdapter = appKitAdapter.EthersAdapter || appKitAdapter.default;
-                    window._ReownNetworks = networksPackage;
 
                     debugLog('Reown: SDK loaded');
                 }
@@ -14252,11 +14250,29 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     }
                 };
 
-                // Define networks array (include mainnet for broader wallet support)
-                const networks = [
-                    apertumNetwork,
-                    window._ReownNetworks.mainnet  // Ethereum mainnet for fallback
-                ];
+                // Define Ethereum mainnet for fallback
+                const ethereumMainnet = {
+                    id: 1,
+                    name: 'Ethereum',
+                    nativeCurrency: {
+                        decimals: 18,
+                        name: 'Ether',
+                        symbol: 'ETH',
+                    },
+                    rpcUrls: {
+                        default: { http: ['https://cloudflare-eth.com'] },
+                        public: { http: ['https://cloudflare-eth.com'] }
+                    },
+                    blockExplorers: {
+                        default: {
+                            name: 'Etherscan',
+                            url: 'https://etherscan.io'
+                        }
+                    }
+                };
+
+                // Define networks array
+                const networks = [apertumNetwork, ethereumMainnet];
 
                 debugLog('Reown: Creating modal...');
 
