@@ -61,8 +61,13 @@ button:disabled {
     display: none;
     align-items: flex-end;
     justify-content: center;
+    transition: opacity 0.2s;
 }
 .wallet-sheet.show { display: flex; }
+.wallet-sheet.hiding {
+    opacity: 0;
+    pointer-events: none;
+}
 .wallet-card {
     width: 100%;
     max-width: 480px;
@@ -73,6 +78,7 @@ button:disabled {
     transition: transform 0.3s;
 }
 .wallet-sheet.show .wallet-card { transform: translateY(0); }
+.wallet-sheet.hiding .wallet-card { transform: translateY(100%); }
 .wallet-header {
     display: flex;
     align-items: center;
@@ -139,7 +145,7 @@ button:disabled {
     margin-top: 20px;
     font-family: 'Courier New', monospace;
     font-size: 0.75rem;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 .log-entry {
@@ -148,6 +154,13 @@ button:disabled {
 }
 .log-entry.error { color: #ef4444; }
 .log-entry.success { color: #22c55e; }
+.log-entry.highlight {
+    color: #fbbf24;
+    font-weight: bold;
+    background: rgba(251, 191, 36, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
 </style>
 </head>
 <body>
@@ -175,7 +188,7 @@ button:disabled {
             <div class="wallet-title">Connect a wallet</div>
             <button class="wallet-close" onclick="closeSheet()">✕</button>
         </div>
-        <div class="wallet-subtitle">Choose the app to approve the connection in.</div>
+        <div class="wallet-subtitle">Choose the app to approve the connection in. The sheet will auto-close so you can see the debug log.</div>
         <div id="walletList"></div>
     </div>
 </div>
@@ -197,6 +210,18 @@ function log(msg, type = 'info') {
     logEl.appendChild(entry);
     logEl.scrollTop = logEl.scrollHeight;
     console.log(`[WC Test] ${msg}`);
+
+    // Auto-close wallet sheet when new log entries appear (helps see logs after switching from wallet app)
+    const sheet = document.getElementById('walletSheet');
+    if (sheet.classList.contains('show') && type !== 'info') {
+        // Close sheet after a brief delay when important messages appear
+        setTimeout(() => {
+            if (sheet.classList.contains('show')) {
+                log('Auto-closing wallet sheet to show debug output...', 'highlight');
+                closeSheet();
+            }
+        }, 1000);
+    }
 }
 
 function setStatus(msg, className = '') {
@@ -206,7 +231,11 @@ function setStatus(msg, className = '') {
 }
 
 function closeSheet() {
-    document.getElementById('walletSheet').classList.remove('show');
+    const sheet = document.getElementById('walletSheet');
+    sheet.classList.add('hiding');
+    setTimeout(() => {
+        sheet.classList.remove('show', 'hiding');
+    }, 300);
 }
 
 function openWalletSheet(wcUri) {
@@ -255,9 +284,16 @@ function openWalletSheet(wcUri) {
             </span>
         `;
         a.onclick = () => {
-            log(`Opening ${w.name}...`, 'info');
+            log(`Tapping ${w.name} button...`, 'highlight');
+            log(`Opening link: ${w.link.substring(0, 60)}...`, 'info');
+
+            // Auto-close sheet 2 seconds after tapping, so log is visible when switching back
             setTimeout(() => {
-                log(`Tapped ${w.name} button - wallet app should open`, 'success');
+                log(`${w.name} should be opening now. Closing wallet sheet in 3s so you can see logs...`, 'highlight');
+                setTimeout(() => {
+                    closeSheet();
+                    log('Wallet sheet closed. Switch back to see what happened!', 'success');
+                }, 3000);
             }, 100);
         };
         listEl.appendChild(a);
@@ -265,6 +301,13 @@ function openWalletSheet(wcUri) {
 
     document.getElementById('walletSheet').classList.add('show');
 }
+
+// Listen for page visibility changes - log when user switches back
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        log('👁️ User switched back to browser tab', 'highlight');
+    }
+});
 
 window.testConnect = async function() {
     const btn = document.getElementById('connectBtn');
@@ -296,7 +339,7 @@ window.testConnect = async function() {
         });
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        log(`Device: ${isMobile ? 'MOBILE' : 'DESKTOP'}`);
+        log(`Device: ${isMobile ? 'MOBILE 📱' : 'DESKTOP 🖥️'}`, 'highlight');
 
         setStatus('Initializing WalletConnect provider...', '');
         log('Calling WCEthProviderClass.init()...');
@@ -321,19 +364,20 @@ window.testConnect = async function() {
         log('Provider initialized ✓', 'success');
 
         if (isMobile) {
-            log('Mobile detected - setting up display_uri handler');
+            log('Mobile detected - setting up display_uri handler', 'highlight');
             wcProvider.on('display_uri', (uri) => {
-                log('display_uri event fired!', 'success');
+                log('🚀 display_uri event fired!', 'success');
                 openWalletSheet(uri);
             });
         }
 
         setStatus('Calling enable() to trigger connection...', '');
-        log('Calling wcProvider.enable()...');
+        log('Calling wcProvider.enable()...', 'highlight');
+        log('Waiting for wallet connection...', 'info');
 
         await wcProvider.enable();
 
-        log('✓ CONNECTION SUCCESS!', 'success');
+        log('✅ CONNECTION SUCCESS!', 'success');
         setStatus('✅ Connected successfully! Check accounts below.', 'success');
 
         const accounts = wcProvider.accounts || [];
@@ -352,6 +396,7 @@ window.testConnect = async function() {
 };
 
 log('Test page loaded. Ready to test.', 'success');
+log('Tap Connect, then choose a wallet. The sheet will auto-close after 5 seconds so you can see logs.', 'highlight');
 </script>
 
 </body>
