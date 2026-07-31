@@ -10527,7 +10527,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         </div>
                     </div>
                 </div>
-
                 <!-- Compose -->
                 <div class="card composer-collapsed" id="composer-card" style="border-color: rgba(124,92,191,0.25);">
                     <div class="composer-row" onclick="expandComposer()" title="Click to compose a signal">
@@ -12348,13 +12347,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                     ">
                                         <span style="font-size:1.2rem;">📷</span> Preview
                                     </button>
+
+                                    <!-- Permission error banner (shown if camera/mic fails) -->
+                                    <div id="permission-error-banner" style="display:none; grid-column:1 / -1;"></div>
+
+                                    <!-- Button 1: Enable Camera & Mic (visible by default) -->
+                                    <button id="enable-media-btn" onclick="enableCameraAndMic()" style="
+                                        background:linear-gradient(135deg,#e03e3e,#b02020);
+                                        border:none; border-radius:12px; padding:12px 16px;
+                                        color:#fff; font-size:0.75rem; font-weight:700; cursor:pointer;
+                                        display:flex; align-items:center; justify-content:center; gap:8px;
+                                        box-shadow:0 4px 12px rgba(224,62,62,0.25);
+                                        letter-spacing:0.3px; transition:all 0.2s; grid-column:1 / -1;
+                                    ">
+                                        <span style="font-size:1rem;">📹</span> Enable Camera &amp; Mic
+                                    </button>
+
+                                    <!-- Button 2: Go Live (hidden until camera/mic verified) -->
                                     <button id="live-go-live-btn" onclick="startLiveStream()" style="
                                         background:linear-gradient(135deg,#e03e3e,#b02020);
                                         border:none; border-radius:12px; padding:12px 16px;
                                         color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;
-                                        display:flex; align-items:center; justify-content:center; gap:8px;
+                                        display:none; align-items:center; justify-content:center; gap:8px;
                                         box-shadow:0 8px 24px rgba(224,62,62,0.35);
-                                        letter-spacing:0.3px; transition:all 0.2s;
+                                        letter-spacing:0.3px; transition:all 0.2s; grid-column:1 / -1;
                                     ">
                                         <span style="font-size:1rem;">🔴</span> Go Live
                                     </button>
@@ -29946,6 +29962,159 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 enableBtn.style.pointerEvents = '';
                 enableBtn.style.opacity = '';
             }
+        }
+    };
+
+    // ── Track lifecycle cleanup (prevents leaks) - PORTED FROM USDT ──────────────────────
+    async function closeExistingTracks() {
+        if (window.localVideoTrack) {
+            try {
+                window.localVideoTrack.close();
+            } catch (e) { console.warn('[closeTrack] video:', e); }
+            window.localVideoTrack = null;
+        }
+        if (window.localAudioTrack) {
+            try {
+                window.localAudioTrack.close();
+            } catch (e) { console.warn('[closeTrack] audio:', e); }
+            window.localAudioTrack = null;
+        }
+    }
+
+    // ── Permission Error Display (ported from USDT) ─────────────────────
+    var _permissionRetryHandler = null;
+
+    function showPermissionError(message, retryHandlerName) {
+        const banner = document.getElementById('permission-error-banner');
+        if (!banner) return;
+
+        _permissionRetryHandler = retryHandlerName;
+
+        banner.innerHTML = `
+            <div style="
+                background:rgba(224,62,62,0.15);
+                border:1px solid rgba(224,62,62,0.4);
+                border-radius:8px;
+                padding:16px;
+                margin-bottom:12px;
+            ">
+                <div style="color:#e03e3e; font-size:0.9rem; font-weight:600; margin-bottom:8px;">
+                    ⚠️ Permission Error
+                </div>
+                <div style="color:rgba(255,255,255,0.8); font-size:0.85rem; line-height:1.6; margin-bottom:12px;">
+                    ${message}
+                </div>
+                <button onclick="${retryHandlerName}()" style="
+                    background:linear-gradient(135deg,#e03e3e,#b02020);
+                    border:none;
+                    border-radius:8px;
+                    padding:10px 16px;
+                    color:#fff;
+                    font-size:0.8rem;
+                    font-weight:700;
+                    cursor:pointer;
+                    box-shadow:0 2px 8px rgba(224,62,62,0.3);
+                ">
+                    Try Again
+                </button>
+            </div>
+        `;
+        banner.style.display = 'block';
+    }
+
+    function hidePermissionError() {
+        const banner = document.getElementById('permission-error-banner');
+        if (banner) {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+        }
+        _permissionRetryHandler = null;
+    }
+
+    // ── Enable Camera & Mic (PORTED FROM USDT - user-triggered permission flow) ─────────
+    window.enableCameraAndMic = async function() {
+        const enableBtn = document.getElementById('enable-media-btn');
+        const goLiveBtn = document.getElementById('live-go-live-btn');
+
+        // Show loading state
+        if (enableBtn) {
+            enableBtn.innerHTML = '<span style="font-size:1rem;">⏳</span> Requesting permissions...';
+            enableBtn.style.pointerEvents = 'none';
+            enableBtn.style.opacity = '0.6';
+        }
+
+        hidePermissionError();
+
+        try {
+            if (!window.AgoraRTC) {
+                throw new Error('Agora SDK not loaded yet — please wait a moment and try again.');
+            }
+
+            // Close any existing tracks first
+            await closeExistingTracks();
+
+            // Acquire tracks
+            [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
+            window._localVideoTrack_ref = localVideoTrack;
+            window._localAudioTrack_ref = localAudioTrack;
+
+            // Apply noise suppression if enabled
+            if (noiseSuppressOn) {
+                try { await localAudioTrack.setAINSMode('AGGRESSIVE'); } catch(_) {}
+            }
+
+            // Re-apply muted state if it was set
+            if (isMicMuted) {
+                try { await localAudioTrack.setEnabled(false); } catch(_) {}
+            }
+
+            // Show camera preview
+            const ph = document.getElementById('live-preview-placeholder');
+            if (ph) ph.style.display = 'none';
+            const staticVid = document.getElementById('live-local-video');
+            if (staticVid) staticVid.style.display = 'none';
+
+            _playInContainer(localVideoTrack, 'live-local-preview');
+            _enablePreLiveControls();
+
+            // Verify microphone
+            const verification = await verifyMicTrack(localAudioTrack);
+
+            if (!verification.ok) {
+                await closeExistingTracks();
+                showPermissionError(verification.message, 'enableCameraAndMic');
+                if (enableBtn) {
+                    enableBtn.innerHTML = '<span style="font-size:1rem;">📹</span> Enable Camera &amp; Mic';
+                    enableBtn.style.pointerEvents = '';
+                    enableBtn.style.opacity = '';
+                }
+                return;
+            }
+
+            // SUCCESS: Hide Enable button, show Go Live button
+            if (enableBtn) enableBtn.style.display = 'none';
+            if (goLiveBtn) goLiveBtn.style.display = 'flex';
+
+            console.log('[Live] Media verified - mic max volume:', verification.maxVolume);
+
+        } catch (e) {
+            console.error('[Live] Permission error:', e);
+            await closeExistingTracks();
+
+            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
+                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
+                : e.message || 'Failed to access camera/microphone. Please try again.';
+
+            showPermissionError(msg, 'enableCameraAndMic');
+
+            if (enableBtn) {
+                enableBtn.innerHTML = '<span style="font-size:1rem;">📹</span> Enable Camera &amp; Mic';
+                enableBtn.style.pointerEvents = '';
+                enableBtn.style.opacity = '';
+            }
+
+            const ph = document.getElementById('live-preview-placeholder');
+            if (ph) ph.style.display = '';
         }
     };
 
