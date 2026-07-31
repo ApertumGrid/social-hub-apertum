@@ -14282,6 +14282,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Write referredBy if user arrived via referral link
             if (typeof _writeReferredBy === 'function') _writeReferredBy(userAddress);
 
+            // Ensure user has a referral code (generates for new users + backfills for existing)
+            if (typeof _ensureReferralCode === 'function') _ensureReferralCode(userAddress);
+
             // Store wallet type and eth ref so we can auto-reconnect after sleep/wake
             window._shLastWalletType = walletType;
             window._shLastEth        = eth;
@@ -15316,6 +15319,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!window.db || !window.fs || !addr) return;
         var storedRef = localStorage.getItem('sh_ref');
         if (!storedRef || storedRef === addr.toLowerCase()) return;
+
+        // Resolve short code to wallet address if needed
+        if (storedRef.length < 42) {
+            try {
+                var codeDoc = await window.fs.getDoc(window.fs.doc(window.db, 'referral_codes', storedRef));
+                if (codeDoc.exists()) {
+                    storedRef = codeDoc.data().walletAddress.toLowerCase();
+                } else {
+                    console.warn('[referral] Invalid code:', storedRef);
+                    localStorage.removeItem('sh_ref');
+                    return;
+                }
+            } catch(e) {
+                console.warn('[referral] Code lookup failed:', e);
+                localStorage.removeItem('sh_ref');
+                return;
+            }
+        }
+
         try {
             var uRef  = window.fs.doc(window.db, 'users', addr.toLowerCase());
             var uSnap = await window.fs.getDoc(uRef);
@@ -15325,6 +15347,64 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             window.fs.setDoc(window.fs.doc(window.db, 'referral_stats', storedRef), { totalReferred: window.fs.increment(1) }, { merge: true }).catch(function(){});
         } catch(e) { console.warn('[referral] writeReferredBy:', e); }
     }
+
+    // Generate unique 6-character referral code
+    async function _generateReferralCode(addr) {
+        if (!window.db || !window.fs || !addr) return null;
+        var chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Remove ambiguous: 0,O,1,l,I
+        var maxAttempts = 10;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++) {
+            var code = '';
+            for (var i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            try {
+                var codeRef = window.fs.doc(window.db, 'referral_codes', code);
+                var codeSnap = await window.fs.getDoc(codeRef);
+                if (!codeSnap.exists()) {
+                    // Code is unique, claim it
+                    await window.fs.setDoc(codeRef, {
+                        walletAddress: addr.toLowerCase(),
+                        createdAt: Date.now()
+                    });
+                    // Store code in user document
+                    await window.fs.setDoc(
+                        window.fs.doc(window.db, 'users', addr.toLowerCase()),
+                        { referralCode: code },
+                        { merge: true }
+                    );
+                    console.log('[referral] Generated code:', code, 'for', addr);
+                    return code;
+                }
+            } catch(e) {
+                console.warn('[referral] Code generation attempt failed:', e);
+            }
+        }
+        console.error('[referral] Failed to generate unique code after', maxAttempts, 'attempts');
+        return null;
+    }
+
+    // Ensure user has a referral code (for existing users)
+    async function _ensureReferralCode(addr) {
+        if (!window.db || !window.fs || !addr) return;
+        try {
+            var uRef = window.fs.doc(window.db, 'users', addr.toLowerCase());
+            var uSnap = await window.fs.getDoc(uRef);
+            if (uSnap.exists() && uSnap.data().referralCode) {
+                // Already has a code
+                window._userReferralCode = uSnap.data().referralCode;
+                return;
+            }
+            // Generate code for existing user
+            var code = await _generateReferralCode(addr);
+            if (code) window._userReferralCode = code;
+        } catch(e) {
+            console.warn('[referral] ensureReferralCode failed:', e);
+        }
+    }
+    window._ensureReferralCode = _ensureReferralCode;
 
     async function _checkReferralMilestones(spenderAddr, amount) {
         if (!window.db || !window.fs || !spenderAddr) return;
@@ -15386,12 +15466,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     window.toggleReferralPanel = toggleReferralPanel;
 
-    function copyReferralLink() {
+    async function copyReferralLink() {
         var addr = (typeof userAddress !== 'undefined') ? userAddress : window.userAddress;
         if (!addr) { showToast('Connect your wallet first'); return; }
-        var link = 'https://socialhubapertum.com?ref=' + addr.toLowerCase();
+
+        // Get or generate referral code
+        var code = window._userReferralCode;
+        if (!code) {
+            showToast('Generating your referral code...');
+            await _ensureReferralCode(addr);
+            code = window._userReferralCode;
+        }
+
+        // Build link (use code if available, fallback to address)
+        var ref = code || addr.toLowerCase();
+        var link = 'https://socialhubapertum.com?ref=' + ref;
+
         navigator.clipboard.writeText(link).then(function() {
-            showToast('Referral link copied!');
+            showToast('Referral link copied!' + (code ? ' (Short link)' : ''));
         }).catch(function() {
             showToast('Copy failed — copy manually: ' + link);
         });
@@ -19099,6 +19191,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Silent auto-reconnect if wallet was connected before refresh
             await _silentAutoConnect();
+
+            // Ensure existing connected users get a referral code (backfill)
+            if (window.userAddress && typeof _ensureReferralCode === 'function') {
+                setTimeout(() => { _ensureReferralCode(window.userAddress); }, 2000);
+            }
 
             // Start global feed
             setTimeout(() => { loadGlobalFeed(); }, 1500);
