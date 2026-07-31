@@ -16292,9 +16292,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
 
             // Log as platform settle — distinct from personal user settle entries
+            // Read Treasury address from contract for accurate logging
+            let treasuryAddr = 'Treasury';
+            try {
+                const roContract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, getRpcProvider());
+                treasuryAddr = await roContract.treasury();
+            } catch(e) { console.warn('[AdminWithdraw] Could not read treasury address:', e); }
+
             logTransaction('settle', poolUsdt, {
-                from: userAddress, to: 'admin-wallet',
-                description: `Platform Revenue Settled — ${revenueStars} ★ = $${poolUsdt.toFixed(4)} APTM via adminWithdrawToTreasury()`
+                from: 'Platform Revenue Pool', to: treasuryAddr,
+                description: `Platform Revenue Settled — ${revenueStars} ★ = ${poolUsdt.toFixed(4)} APTM via adminWithdrawToTreasury()`
             });
 
             // ── Step 8: Update all revenue display elements to 0 ─────────────────
@@ -16305,8 +16312,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             s('drawer-admin-count',    "0 fee events");
 
             console.log(`[AdminWithdraw] ── Complete. adminWithdraw() confirmed on block ${receipt.blockNumber} ──`);
-            showToast(`✓ Platform revenue withdrawn via adminWithdraw() — block ${receipt.blockNumber}`);
-            if (typeof window._checkFirstEarnings === 'function') window._checkFirstEarnings(userAddress, poolUsdt.toFixed(2) + ' APTM');
+            alert(`Platform Revenue Settled\n\n${revenueStars} ★ (${poolUsdt.toFixed(4)} APTM) withdrawn to Treasury.\n\nBlock: ${receipt.blockNumber}`);
             updateUI();
             updateDrawerUI();
             syncData();
