@@ -14003,6 +14003,113 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     window._silentAutoConnect = _silentAutoConnect;
 
+    // ── WalletConnect session restoration on page load ────────────────────────
+    // iOS Safari aggressively unloads background tabs. When user returns from
+    // MetaMask app, Safari may fully reload the page. This function restores
+    // WalletConnect sessions using the SDK's built-in restoration from localStorage.
+    async function _restoreWalletConnectSession() {
+        try {
+            // Check if WalletConnect session exists in localStorage
+            var hasWCSession = false;
+            try {
+                var keys = Object.keys(localStorage);
+                hasWCSession = keys.some(function(k) { return k.startsWith('wc@2:core') || k.startsWith('wc@2:client'); });
+            } catch(_) {}
+
+            if (!hasWCSession) return;
+
+            // Load WalletConnect SDK
+            if (!window._WCEthProviderClass) {
+                var mod = await import('https://esm.sh/@walletconnect/ethereum-provider@2.17.3');
+                window._WCEthProviderClass = mod.default || mod.EthereumProvider || mod;
+            }
+
+            // Initialize provider - will auto-restore session from localStorage
+            var WC_PROJECT_ID = (window.APP_CONFIG && window.APP_CONFIG.wcProjectId) || '422b74ec70be253bbdc47a7479725899';
+            var wcProv = await window._WCEthProviderClass.init({
+                projectId: WC_PROJECT_ID,
+                showQrModal: false,  // Don't show modal for restoration
+                chains: [1],
+                optionalChains: [APTM_CHAIN_ID],
+                rpcMap: {
+                    [APTM_CHAIN_ID]: APTM_RPC,
+                    1: 'https://cloudflare-eth.com'
+                },
+                metadata: {
+                    name: 'SocialHub',
+                    description: 'Web3 Social Platform on Apertum',
+                    url: 'https://www.socialhubapertum.com',
+                    icons: ['https://socialhubapertum.com/favicon.ico']
+                }
+            });
+
+            // Check if session was actually restored (not just initialized)
+            if (!wcProv.connected || !wcProv.accounts || wcProv.accounts.length === 0) {
+                // No active session, clean exit
+                return;
+            }
+
+            console.log('[WC Restore] Found active session, reconnecting...');
+
+            // Session exists! Restore the full connection state
+            window._activeWCProvider = wcProv;
+            window._wcSessionAlive = true;
+
+            // Set up provider/signer/contract exactly like manual connect does
+            provider = new ethers.providers.Web3Provider(wcProv);
+            var accts = wcProv.accounts;
+            userAddress = accts[0];
+            window.userAddress = userAddress;
+            signer = provider.getSigner();
+            hubContract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer);
+            window.hubContract = hubContract;
+            window.provider = provider;
+            window.signer = signer;
+
+            // Set wallet type for future reference
+            window._shLastWalletType = 'walletconnect';
+            window._shLastEth = wcProv;
+            try { localStorage.setItem('sh_wallet_type', 'walletconnect'); } catch(_) {}
+
+            // Update UI to show connected state
+            _setWalletConnectedUI(userAddress);
+
+            // Run all the post-connection hooks
+            if (typeof _writeReferredBy === 'function') _writeReferredBy(userAddress);
+            if (typeof _ensureReferralCode === 'function') _ensureReferralCode(userAddress);
+
+            // Set up session event listeners (same as manual connect)
+            var _wcSessionDead = function(reason) {
+                console.warn('[WC] Session ended:', reason);
+                window._activeWCProvider = null;
+                window._shLastWalletType = '';
+                window._wcSessionAlive = false;
+                try {
+                    Object.keys(localStorage).forEach(function(k) {
+                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) localStorage.removeItem(k);
+                    });
+                } catch(_) {}
+                showToast('WalletConnect session dropped — tap Reconnect to resume.');
+                var _wcBanner = document.getElementById('wc-reconnect-banner');
+                if (_wcBanner) _wcBanner.style.display = 'block';
+            };
+            wcProv.on('disconnect', function() { _wcSessionDead('relay disconnect'); });
+            wcProv.on('session_delete', function() { _wcSessionDead('session deleted by wallet'); });
+            wcProv.on('session_expire', function() { _wcSessionDead('session expired'); });
+
+            // Sync balances
+            await syncData();
+            console.log('[WC Restore] Session restored successfully');
+
+        } catch(e) {
+            console.warn('[WC Restore] Failed to restore session:', e.message);
+            // Clean up any half-restored state
+            window._activeWCProvider = null;
+            window._wcSessionAlive = false;
+        }
+    }
+    window._restoreWalletConnectSession = _restoreWalletConnectSession;
+
     // ── Chain enforcement — switches any EIP-1193 provider to Apertum (2786) ──
     async function _ensureBSCChain(eth) { return _ensureApertumChain(eth); } // compat alias
     async function _ensureApertumChain(eth) {
@@ -14085,12 +14192,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     try { await window._activeWCProvider.disconnect(); } catch(_) {}
                     window._activeWCProvider = null;
                 }
-                // Clear stale WC session/pairing keys from localStorage before every
-                // connect. Stale keys cause WC to resume a dead session — MetaMask
-                // opens but shows nothing because the pairing is expired on its end.
+                // Clear stale pairing keys from localStorage before manual connect.
+                // Preserves session keys (wc@2:core:*, wc@2:client:*) so page reload
+                // can restore active sessions. Only clears pairing to force fresh
+                // wallet selection and avoid "stale pairing" bug on manual reconnect.
                 try {
                     Object.keys(localStorage).forEach(function(k) {
-                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) {
+                        if (k.startsWith('wc@2:core:pairing') ||
+                            k.startsWith('wc@2:universal_provider') ||
+                            k === 'walletconnect') {
                             localStorage.removeItem(k);
                         }
                     });
@@ -19191,6 +19301,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Silent auto-reconnect if wallet was connected before refresh
             await _silentAutoConnect();
+
+            // WalletConnect session restoration (iOS Safari fix)
+            await _restoreWalletConnectSession();
 
             // Ensure existing connected users get a referral code (backfill)
             if (window.userAddress && typeof _ensureReferralCode === 'function') {
