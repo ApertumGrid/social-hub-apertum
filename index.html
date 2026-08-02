@@ -29969,17 +29969,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     // ── Track lifecycle cleanup (prevents leaks) - PORTED FROM USDT ──────────────────────
     async function closeExistingTracks() {
-        if (window.localVideoTrack) {
+        if (localVideoTrack) {
             try {
-                window.localVideoTrack.close();
+                const _mstV = localVideoTrack.getMediaStreamTrack ? localVideoTrack.getMediaStreamTrack() : null;
+                if (_mstV) _mstV.stop();
+                localVideoTrack.stop();
+                localVideoTrack.close();
             } catch (e) { console.warn('[closeTrack] video:', e); }
-            window.localVideoTrack = null;
+            localVideoTrack = null;
+            window._localVideoTrack_ref = null;
         }
-        if (window.localAudioTrack) {
+        if (localAudioTrack) {
             try {
-                window.localAudioTrack.close();
+                const _mstA = localAudioTrack.getMediaStreamTrack ? localAudioTrack.getMediaStreamTrack() : null;
+                if (_mstA) _mstA.stop();
+                localAudioTrack.stop();
+                localAudioTrack.close();
             } catch (e) { console.warn('[closeTrack] audio:', e); }
-            window.localAudioTrack = null;
+            localAudioTrack = null;
+            window._localAudioTrack_ref = null;
         }
     }
 
@@ -30172,6 +30180,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         window._currentStreamMode = streamMode;
 
         if (!title) {
+            _isStartingLive = false;
             showToast('Enter a stream title before going live.');
             if (_titleInput) {
                 _titleInput.focus();
@@ -30183,6 +30192,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return;
         }
         if (!category) {
+            _isStartingLive = false;
             showToast('Select a category before going live.');
             if (_catSelect) {
                 _catSelect.style.borderColor = 'rgba(224,62,62,0.75)';
