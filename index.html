@@ -13850,6 +13850,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             address.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase() ? '' : 'none';
         // Start notification listener for this wallet
         try { if (typeof subscribeToNotifs === 'function') subscribeToNotifs(address); } catch(_) {}
+        // Update lottery card to show buy buttons now that wallet is connected (fixes mobile WalletConnect bug)
+        try { if (typeof _renderLotteryCard === 'function' && window._lotteryRound) _renderLotteryCard(window._lotteryRound); } catch(_) {}
     }
 
     // ── Push Notification registration ────────────────────────────────────────
