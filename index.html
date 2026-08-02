@@ -36067,6 +36067,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     var _patchedStart = async function() {
         if (window.innerWidth <= 768) {
             await _origStart.apply(this, arguments);
+            // Go Live was blocked (e.g. missing title) — isHosting never got set, nothing to lay out
+            if (!document.body.classList.contains('is-hosting')) return;
             // _origStart may itself set cinema-mode — strip it back off
             document.body.classList.remove('cinema-mode');
             var vc = document.getElementById('live-broadcaster-video-container');
@@ -36099,6 +36101,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return;
         }
         await _origStart.apply(this, arguments);
+        // Go Live was blocked (e.g. missing title) — isHosting never got set, don't enter cinema mode
+        if (!document.body.classList.contains('is-hosting')) return;
         document.body.classList.add('cinema-mode');
         setTimeout(function(){
             var vc = document.getElementById('live-broadcaster-video-container');
