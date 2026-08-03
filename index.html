@@ -10817,6 +10817,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             <div id="page-earnings" class="page">
                 <div class="page-heading">Creator <span>Studio</span></div>
 
+                <!-- Shown when the user has a settled-but-unclaimed on-chain balance — e.g. they
+                     clicked Withdraw, the platform settled it on-chain, but they never completed
+                     the wallet-confirmation step to actually receive it. Ported from USDT
+                     (SocialHubCloud) 2026-08-03 after finding a real case there. -->
+                <div id="pending-withdrawal-banner" style="display:none; background:rgba(240,180,41,0.1); border:1px solid rgba(240,180,41,0.35); border-radius:12px; padding:14px 16px; margin-bottom:14px; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div style="font-size:0.85rem; color:#f0b429; font-weight:600; line-height:1.5;">
+                        ⚠ You have <span id="pending-withdrawal-amount">$0.00</span> from a previous withdrawal that was never completed. Your balance already includes it — click <strong>Withdraw APTM</strong> below to finish sending it to your wallet.
+                    </div>
+                </div>
+
                 <div class="studio-tabs">
                     <div class="studio-tab active" onclick="setStudioTab('main',this)">Overview</div>
                     <div class="studio-tab" onclick="setStudioTab('recordings',this)">My Recordings</div>
@@ -14579,6 +14589,23 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         toggleWalletDropdown();
     }
 
+    // Shows a proactive prompt when a user has a settled-but-unclaimed on-chain
+    // withdrawable balance — i.e. they clicked Withdraw once, it was settled on the
+    // contract, but they never completed the wallet-confirmation step. Their displayed
+    // balance already includes this amount (see creatorEarnings = fbCreatorStars +
+    // onChainSettled below), so without this banner it just looks like a normal balance
+    // with no indication a second click is needed. Ported from USDT 2026-08-03.
+    function _updatePendingWithdrawalBanner(withdrawableUsdt) {
+        const banner = document.getElementById('pending-withdrawal-banner');
+        const amountEl = document.getElementById('pending-withdrawal-amount');
+        if (!banner) return;
+        if (withdrawableUsdt > 0.001) {
+            if (amountEl) amountEl.textContent = '$' + withdrawableUsdt.toFixed(4);
+            banner.style.display = 'flex';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
 
     async function syncData() {
         if (!hubContract && window.hubContract) hubContract = window.hubContract;
@@ -14631,6 +14658,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     window._onChainDepositedUsdt = depositedUsdValue;
                     creatorEarnings   = fbCreatorStars + onChainSettled;
                     currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
+                    _updatePendingWithdrawalBanner(withdrawableHuman * _aptmPrice);
                     console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} @ $${_aptmPrice.toFixed(4)} | depositedUSD=${depositedUsdValue.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
                     // Write live USD value back to Firestore so onSnapshot displays correct Stars
                     const _syncPayload = { lastSync: Date.now() };
@@ -14677,6 +14705,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const onChainEarned = Math.max(0, Math.floor(earnHuman * _aptmPrice / CONFIG.STAR_USD * 100) / 100);
                 window._onChainEarned = onChainEarned;
                 window._onChainWithdrawableUsdt = earnHuman * _aptmPrice;
+                _updatePendingWithdrawalBanner(earnHuman * _aptmPrice);
 
                 const spendLockActive = (Date.now() - _lastSpendTime) < SPEND_LOCK_MS;
                 if (!spendLockActive) {
@@ -18388,6 +18417,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     let _settleInProgress = false;
 
+    // Logs a failed/incomplete withdrawal attempt to Firestore. Previously this
+    // information only ever existed in a transient browser alert() and vanished the
+    // moment the user dismissed it. Ported from USDT 2026-08-03 after finding a stuck
+    // lottery-winner withdrawal with zero record of why it never completed. Only called
+    // for failures that can happen AFTER the Cloud Function has already settled the
+    // withdrawal on-chain (revert, or any exception during the final wallet confirmation)
+    // — those are the cases where real money can be left stranded on-chain, unclaimed.
+    function _logWithdrawFailure(reason) {
+        try {
+            if (!window.db || !window.fs || !userAddress) return;
+            window.fs.addDoc(window.fs.collection(window.db, 'withdrawal_failures'), {
+                address:    userAddress.toLowerCase(),
+                reason:     String(reason).slice(0, 300),
+                timestamp:  Date.now()
+            }).catch(function(){});
+        } catch (e) { /* never let logging break the failure path itself */ }
+    }
+
     async function settleStarsToWallet(event) {
         const _clickedBtn = (event && event.target) ? event.target : null;
         if (_clickedBtn) { _clickedBtn.disabled = true; _clickedBtn.textContent = 'Requesting…'; }
@@ -18480,6 +18527,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const receipt = await tx.wait();
 
             if (!receipt || receipt.status !== 1) {
+                _logWithdrawFailure('Withdrawal reverted on-chain after CF settlement. txHash=' + (tx ? tx.hash : 'none'));
                 if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
                 return alert('Withdrawal reverted on-chain. Your balance is unchanged. Try again.');
             }
@@ -18509,6 +18557,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch (err) {
             console.error('[settleStarsToWallet] threw:', err);
+            _logWithdrawFailure((err.reason || err.message || String(err)).slice(0, 300));
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
             alert('Withdrawal failed: ' + (err.reason || err.message || String(err)).slice(0, 200));
         }
