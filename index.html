@@ -22841,10 +22841,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             } catch (e) { console.warn('[alias check]', e); }
         }
 
-        // ── Admin bypass: set cost = 0 for the platform owner ────────────────────
-        // The master wallet below pays zero Stars to create Community Hubs.
+        // ── Admin bypass: set cost = 0 for whitelisted wallets ───────────────────
+        // Ashley adds giveaway winner addresses here (any case — lowercased
+        // automatically below), then pushes this file live via GitHub. Safe to
+        // leave an address in after it's used — they've already created their
+        // one Hub via the normal 1,000★ flow.
+        var _FREE_HUB_WALLETS = [
+            '0xe348fedea1850a0c2d4ac0fed3f903774de1e16a'   // Ashley's own wallet
+        ];
         var effectiveCost = COMMUNITY_STARTUP_COST;
-        if (userAddress && userAddress.toLowerCase() === '0xe348fedea1850a0c2d4ac0fed3f903774de1e16a') {
+        if (userAddress && _FREE_HUB_WALLETS.includes(userAddress.toLowerCase())) {
             effectiveCost = 0;
         }
 
