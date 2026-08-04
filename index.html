@@ -16943,7 +16943,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
 
             logTransaction('settle', safeWithdrawAptm, {
-                from: addr, to: 'wallet',
+                from: addr, to: addr,
                 description: 'Settled ' + totalStarsDisplay.toFixed(2) + '★ → ' + safeWithdrawAptm.toFixed(4) + ' $APTM to wallet'
             });
             showToast('Settled! ' + safeWithdrawAptm.toFixed(4) + ' APTM → wallet ✓');
@@ -18617,7 +18617,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[Withdraw] Firebase zero failed:', e); }
             }
 
-            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
+            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: addr, description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
             updateUI(); updateDrawerUI();
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
             alert('Withdrawal Successful! ' + actualWithdrawnAptm + ' APTM sent to your wallet.');
