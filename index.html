@@ -13282,6 +13282,57 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         STORAGE_BUCKET: "gs://socialhubaptm.firebasestorage.app"
     };
 
+    // ── Deterministic default identity for wallets with no name/avatar set ────
+    // Pure display fallbacks — NEVER written to any Firestore doc, NEVER touches
+    // userHandle/userAvatar or the profile-completeness gate. Same wallet address
+    // always produces the same name/avatar (no Math.random). Attached to window
+    // since this app's live-streaming code runs in a separate <script> block that
+    // doesn't share closure scope with this one.
+    function _addrHash(addr) {
+        var s = String(addr || '0x0').toLowerCase().replace(/^0x/, '');
+        var h = 0;
+        for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+        return Math.abs(h);
+    }
+    window._defaultHandleFor = function(addr) {
+        var h = _addrHash(addr);
+        var adjectives = ['Silver','Crimson','Golden','Shadow','Electric','Cosmic','Velvet','Frozen','Blazing','Mystic','Neon','Wild','Silent','Rapid','Iron','Lunar','Solar','Amber','Jade','Crystal'];
+        var nouns = ['Fox','Wolf','Hawk','Tiger','Falcon','Panther','Raven','Lynx','Cobra','Eagle','Bear','Shark','Dragon','Phoenix','Puma','Otter','Stag','Owl','Viper','Orca'];
+        var adj  = adjectives[h % adjectives.length];
+        var noun = nouns[Math.floor(h / adjectives.length) % nouns.length];
+        var num  = (h % 900) + 100;
+        return adj + ' ' + noun + ' ' + num;
+    };
+    // Deterministic blockies/jazzicon-style identicon — pure client-side SVG data
+    // URI, no network request, no external image hosting. 5x5 grid, horizontally
+    // symmetric, color + pattern both derived from the address hash.
+    window._defaultAvatarSvgFor = function(addr) {
+        var s = String(addr || '0x0').toLowerCase().replace(/^0x/, '');
+        var h = _addrHash(addr);
+        var hue = h % 360;
+        var bg = 'hsl(' + hue + ',40%,18%)';
+        var fg = 'hsl(' + ((hue + 150 + (h % 60)) % 360) + ',65%,55%)';
+        var size = 5, cell = 40;
+        var bits = (s + s + s).split('');
+        var bi = 0, rects = '';
+        for (var row = 0; row < size; row++) {
+            for (var col = 0; col < Math.ceil(size / 2); col++) {
+                var c = bits[bi % bits.length]; bi++;
+                var on = (c.charCodeAt(0) % 2) === 0;
+                if (on) {
+                    rects += '<rect x="' + (col * cell) + '" y="' + (row * cell) + '" width="' + cell + '" height="' + cell + '" fill="' + fg + '"/>';
+                    var mirror = size - 1 - col;
+                    if (mirror !== col) {
+                        rects += '<rect x="' + (mirror * cell) + '" y="' + (row * cell) + '" width="' + cell + '" height="' + cell + '" fill="' + fg + '"/>';
+                    }
+                }
+            }
+        }
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (size * cell) + '" height="' + (size * cell) + '" viewBox="0 0 ' + (size * cell) + ' ' + (size * cell) + '">' +
+                   '<rect width="100%" height="100%" fill="' + bg + '"/>' + rects + '</svg>';
+        return 'data:image/svg+xml,' + encodeURIComponent(svg);
+    };
+
     // ── fmtUsdt: exact USDT display — always truncates, never rounds up ──────
     // Prevents the display from promising more than the user will actually receive.
     // Shows 3 decimal places when needed (e.g. $2.088), 2 otherwise (e.g. $1.99).
@@ -14863,9 +14914,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             s('earnings-aptm-value',     myUsdtStr);
 
             // Only show identity in nav when wallet is actually connected
-            const pbAv = document.getElementById('pb-avatar'); if (pbAv) pbAv.src = userAddress ? userAvatar : '';
-            const nvAv = document.getElementById('nav-avatar'); if (nvAv) nvAv.src = userAddress ? userAvatar : '';
-            const pbH  = document.getElementById('pb-handle');  if (pbH)  pbH.textContent = userAddress ? userHandle : 'Anonymous';
+            const pbAv = document.getElementById('pb-avatar'); if (pbAv) pbAv.src = userAddress ? (userAvatar || window._defaultAvatarSvgFor(userAddress)) : '';
+            const nvAv = document.getElementById('nav-avatar'); if (nvAv) nvAv.src = userAddress ? (userAvatar || window._defaultAvatarSvgFor(userAddress)) : '';
+            const pbH  = document.getElementById('pb-handle');  if (pbH)  pbH.textContent = userAddress ? (userHandle || window._defaultHandleFor(userAddress)) : 'Anonymous';
             const nvH  = document.getElementById('nav-handle');  if (nvH)  nvH.textContent = userAddress ? userHandle : 'Connect Wallet';
 
             // Update settle button text with live APTM amount
@@ -18067,7 +18118,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                     const textDiv = document.createElement('div');
                     textDiv.className = "cmt-body-line";
-                    textDiv.innerHTML = '<span class="cmt-author">' + (comment.author || "Anonymous") + '</span>: ' +
+                    textDiv.innerHTML = '<span class="cmt-author">' + (comment.author || window._defaultHandleFor(authorAddr)) + '</span>: ' +
                                         '<span class="cmt-text">' + linkify(comment.text || "") + '</span>';
 
                     const meta = document.createElement('div');
@@ -19069,8 +19120,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const localName   = localStorage.getItem('hub_userName');
             const localPic    = localStorage.getItem('hub_userPic');
             const displayPic  = (isMe && localPic)  ? localPic
-                                : (post.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${post.authorAddr || 'anon'}`);
-            const displayName = (isMe && localName) ? localName : (post.author || 'Anonymous');
+                                : (post.avatar || window._defaultAvatarSvgFor(post.authorAddr));
+            const displayName = (isMe && localName) ? localName : (post.author || window._defaultHandleFor(post.authorAddr));
             const safeAddr    = (post.authorAddr || '').replace(/'/g, '');
 
             let mediaHtml = '';
@@ -19458,7 +19509,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (typeof showMobileTab === 'function') showMobileTab('home');
 
         // 2. Try to resolve a display name for this wallet.
-        let wallName = targetAddr.slice(0, 6) + '…' + targetAddr.slice(-4);
+        // Seeds with the same deterministic generated name the People list already
+        // shows (window._defaultHandleFor) instead of the raw truncated address —
+        // otherwise this pre-resolved value gets passed into showProfileHero() as
+        // an already-truthy parameter, silently bypassing the fallback added there.
+        let wallName = window._defaultHandleFor(targetAddr);
         if (userAddress && targetAddr.toLowerCase() === userAddress.toLowerCase()) {
             wallName = userAddress ? (userHandle || wallName) : wallName;
         } else if (window.db) {
@@ -19933,9 +19988,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (_heroBalUnsub) { try { _heroBalUnsub(); } catch(_) {} _heroBalUnsub = null; }
 
         // ── Step 1: Render immediately with placeholders (prevents blank flash) ───
-        document.getElementById('hero-name').textContent  = wallName || (addrLower.slice(0,6) + '…' + addrLower.slice(-4));
+        document.getElementById('hero-name').textContent  = wallName || window._defaultHandleFor(addrLower);
         document.getElementById('hero-addr').textContent  = addrLower.slice(0,6) + '…' + addrLower.slice(-4);
-        document.getElementById('hero-avatar').src        = `https://api.dicebear.com/7.x/identicon/svg?seed=${addrLower}`;
+        document.getElementById('hero-avatar').src        = window._defaultAvatarSvgFor(addrLower);
         document.getElementById('hero-avatar').classList.remove('has-signal');
         const bioEl = document.getElementById('hero-bio');
         if (bioEl) { bioEl.textContent = ''; bioEl.classList.remove('visible'); }
@@ -20050,8 +20105,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         // ── Step 3: Live identity via onSnapshot on user_metadata ─────────────────
         const metaRef = window.fs.doc(window.db, 'user_metadata', addrLower);
         _heroUnsub = window.fs.onSnapshot(metaRef, async (metaSnap) => {
-            let resolvedName = wallName || (addrLower.slice(0,6) + '…' + addrLower.slice(-4));
-            let avatarUrl    = `https://api.dicebear.com/7.x/identicon/svg?seed=${addrLower}`;
+            let resolvedName = wallName || window._defaultHandleFor(addrLower);
+            let avatarUrl    = window._defaultAvatarSvgFor(addrLower);
             let bioText      = '';
             let bannerUrl    = '';
             let links        = [];
@@ -21887,12 +21942,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 var avImg = document.createElement('img');
                 avImg.className = 'av';
                 avImg.crossOrigin = 'anonymous';
-                avImg.src = escHtml(post.avatar || ('https://api.dicebear.com/7.x/identicon/svg?seed=' + (post.authorAddr || 'anon')));
-                avImg.onerror = function() { this.src = 'https://api.dicebear.com/7.x/identicon/svg?seed=' + (post.authorAddr || 'anon'); };
+                avImg.src = post.avatar || window._defaultAvatarSvgFor(post.authorAddr);
+                avImg.onerror = function() { this.onerror = null; this.src = window._defaultAvatarSvgFor(post.authorAddr); };
 
                 var postMeta = document.createElement('div');
                 postMeta.className = 'post-meta';
-                postMeta.innerHTML = '<div class="post-author">' + escHtml(post.author || 'Anonymous') + ownerBadge + subBadge + pinnedBadge + '</div>' +
+                postMeta.innerHTML = '<div class="post-author">' + escHtml(post.author || window._defaultHandleFor(post.authorAddr)) + ownerBadge + subBadge + pinnedBadge + '</div>' +
                     '<div class="post-addr">' + shortAddr + (post.isEdited ? '<span class="edited-badge">(edited)</span>' : '') + '</div>';
 
                 identity.appendChild(avImg);
@@ -22698,7 +22753,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         el.innerHTML = notifs.map(function(n) {
             var meta    = _NOTIF_META[n.type] || { icon: '🔔', label: n.type };
             var isUnread = n.timestamp > _notifLastReadTs;
-            var actor   = escHtml(n.actorName || 'Someone');
+            var actor   = escHtml(n.actorName || window._defaultHandleFor(n.actorAddr));
             var label   = meta.label;
             // Augment label for types that carry extra context
             if (n.type === 'tip'       && n.amount)  label = 'tipped you <strong>' + n.amount + '★</strong>';
@@ -23805,8 +23860,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     function buildFlickCard(postId, post) {
         if (!post.media) return null;
         const safeAddr    = (post.authorAddr || '').replace(/['"]/g, '');
-        const displayName = post.author || 'Anonymous';
-        const displayPic  = post.avatar || ('https://api.dicebear.com/7.x/identicon/svg?seed=' + (post.authorAddr || 'anon'));
+        const displayName = post.author || window._defaultHandleFor(post.authorAddr);
+        const displayPic  = post.avatar || window._defaultAvatarSvgFor(post.authorAddr);
         const addrShort   = post.authorAddr ? post.authorAddr.slice(0,6) + '…' + post.authorAddr.slice(-4) : '';
         // Linkify caption — hashtags + URLs active. Show 300 chars with expand if longer.
         const _rawText    = post.text || '';
@@ -27806,11 +27861,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (tab==='people') {
             if (!_srPeople.length) return '<div class="sr-empty">No people found</div>';
             return _srPeople.map(function(u){
-                var name=u.displayName||u.handle||'Anonymous', addr=u.address||u.id||'';
-                var av=u.avatarUrl||u.avatar||('https://api.dicebear.com/7.x/identicon/svg?seed='+encodeURIComponent(name));
+                var addr=u.address||u.id||'';
+                var name=u.displayName||u.handle||window._defaultHandleFor(addr);
+                var av=u.avatarUrl||u.avatar||window._defaultAvatarSvgFor(addr);
                 var short=addr?addr.slice(0,6)+'…'+addr.slice(-4):'';
                 return '<div class="sr-person" onclick="_srGoUser(\''+esc(addr||u.id)+'\')">' +
-                    '<img src="'+esc(av)+'" onerror="this.src=\'https://api.dicebear.com/7.x/identicon/svg?seed=x\'">' +
+                    '<img src="'+esc(av)+'" onerror="this.onerror=null;this.src=\''+esc(window._defaultAvatarSvgFor(addr))+'\';">' +
                     '<div><div class="sr-pname">'+esc(name)+'</div>'+(short?'<div class="sr-paddr">'+short+'</div>':'')+
                     '</div></div>';
             }).join('');
@@ -32569,7 +32625,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const nameAttrs= addr ? `class="live-chat-user lcu-click" onclick="window._openChatCtx(event,this.closest('[data-id]'))"` : `class="live-chat-user"`;
             const replyBtn = `<button class="live-reply-btn" onclick="event.stopPropagation();window._setReplyTo('${_esc(m.id||'')}','${_esc(m.author||'')}','${_esc((m.text||'').slice(0,40))}')">↩</button>`;
             const replyQ   = m.replyTo ? `<div class="lcm-reply-quote"><b>${_esc(m.replyTo.author)}</b>: ${_esc(m.replyTo.text)}</div>` : '';
-            const av       = m.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + _esc(m.author||'hub');
+            const av       = m.avatar || window._defaultAvatarSvgFor(addr);
             const badge    = _giftBadge(addr);
 
             if (m.isGift && m.giftStyle) {
