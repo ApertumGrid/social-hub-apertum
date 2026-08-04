@@ -650,6 +650,16 @@
         #composer-card:not(.composer-collapsed) .composer-trigger-pill { display: none; }
         /* Show name/sub only when expanded */
         #composer-card:not(.composer-collapsed) .composer-row > div:last-child { display: block !important; }
+        /* â”€â”€ Hub composer collapsed state â€” same compact trigger pattern as the main composer â”€â”€ */
+        #comm-composer-card.comm-composer-collapsed .composer-body { display: none; }
+        #comm-composer-card.comm-composer-collapsed .composer-row  { margin-bottom: 0; cursor: pointer; }
+        #comm-composer-card.comm-composer-collapsed { cursor: pointer; padding: 10px 14px; }
+        #comm-composer-card.comm-composer-collapsed .composer-sub::after {
+            content: '  âœ¦ tap to broadcast again';
+            color: var(--teal);
+        }
+        #comm-composer-card:not(.comm-composer-collapsed) .composer-trigger-pill { display: none; }
+        #comm-composer-card:not(.comm-composer-collapsed) .composer-row > div:last-child { display: block !important; }
         /* â”€â”€ FIX 1: Signals bar only visible on home tab â”€â”€ */
         #signals-bar.signals-hidden,
         #category-bar.signals-hidden { display: none !important; }
@@ -11625,10 +11635,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="border-top:1px solid var(--border); padding-top:12px; margin-bottom:12px;">
                             <div style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
                             <div style="display:flex; gap:8px; margin-bottom:8px;">
-                                <button type="button" id="comm-edit-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-edit-pm-followers" class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('followers_only')">Followers Only</button>
+                                <button type="button" id="comm-edit-pm-open"  class="btn"          style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('open')">Everyone</button>
                                 <button type="button" id="comm-edit-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('owner_only')">Owner Only</button>
                             </div>
-                            <input type="hidden" id="comm-edit-posting-mode" value="open">
+                            <input type="hidden" id="comm-edit-posting-mode" value="followers_only">
                             <div id="comm-edit-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
                                 Posting fee:
                                 <input type="number" id="comm-edit-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
@@ -11677,15 +11688,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </div>
                         </div>
                     </div>
-                    <div class="card" id="comm-composer-card" style="border-color:rgba(45,212,191,0.28); margin-bottom:16px;">
-                        <div class="composer-row">
+                    <div class="card comm-composer-collapsed" id="comm-composer-card" style="border-color:rgba(45,212,191,0.28); margin-bottom:16px;">
+                        <div class="composer-row" onclick="_expandCommComposer()" title="Click to compose a signal">
                             <img id="comm-pb-avatar" class="av" src="https://api.dicebear.com/7.x/identicon/svg?seed=Hub">
-                            <div>
+                            <div class="composer-trigger-pill" id="comm-composer-trigger-pill">
+                                <span>What's your signal to this Hub?</span>
+                            </div>
+                            <div style="display:none;">
                                 <div class="composer-name" id="comm-pb-handle">Anonymous_Creator</div>
                                 <div class="composer-sub" id="comm-composer-sub">Broadcasting to the Hub</div>
                             </div>
                         </div>
 
+                        <div class="composer-body">
                         <textarea id="comm-post-text" class="field"
                                   placeholder="What's your signal to this Hub?"
                                   rows="3"
@@ -11737,6 +11752,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <button id="comm-visibility-btn" class="comm-visibility-btn" onclick="togglePostVisibility()">&#128065; Everyone</button>
                         </div>
                         <button class="btn btn-teal" id="comm-broadcast-btn" onclick="handleCommBroadcast()">◈ Broadcast to Hub</button>
+                        </div>
                     </div>
                     <!-- ── End Community Composer ── -->
 
@@ -11793,10 +11809,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="margin-bottom:12px;">
                             <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
                             <div style="display:flex; gap:8px; margin-bottom:8px;">
-                                <button type="button" id="comm-create-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-create-pm-followers" class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('followers_only')">Followers Only</button>
+                                <button type="button" id="comm-create-pm-open"  class="btn"          style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('open')">Everyone</button>
                                 <button type="button" id="comm-create-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('owner_only')">Owner Only</button>
                             </div>
-                            <input type="hidden" id="comm-create-posting-mode" value="open">
+                            <input type="hidden" id="comm-create-posting-mode" value="followers_only">
                             <div id="comm-create-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
                                 Posting fee:
                                 <input type="number" id="comm-create-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
@@ -20488,6 +20505,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window._expandComposer  = _expandComposer;
     window._collapseComposer = _collapseComposer;
 
+    // ── Hub composer collapse / expand — same pattern as the main composer ──
+    function _expandCommComposer() {
+        const card = document.getElementById('comm-composer-card');
+        if (!card) return;
+        card.classList.remove('comm-composer-collapsed');
+        card.removeAttribute('title');
+        const ta = document.getElementById('comm-post-text');
+        if (ta) setTimeout(function() { ta.focus(); }, 60);
+    }
+
+    function _collapseCommComposer() {
+        const card = document.getElementById('comm-composer-card');
+        if (!card) return;
+        card.classList.add('comm-composer-collapsed');
+        card.setAttribute('title', 'Click to write a new broadcast');
+    }
+    window._expandCommComposer  = _expandCommComposer;
+    window._collapseCommComposer = _collapseCommComposer;
+
     async function handleBroadcastWithSignal() {
         const txt = document.getElementById('post-text')?.value.trim();
         if (!txt) return showToast('Write something first!');
@@ -21149,11 +21185,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const isAdmin     = userAddress && userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
         const isHubOwnerD = _activeCommunity && userAddress &&
                             userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
-        const postingMode = (_activeCommunity && _activeCommunity.postingMode) || 'open';
+        const postingMode = (_activeCommunity && _activeCommunity.postingMode) || 'followers_only';
         const postingFee  = parseFloat((_activeCommunity && _activeCommunity.postingFee) || 0);
+        const commIdD     = ((_activeCommunity && _activeCommunity.id) || '').toLowerCase();
+        const isFollowingD = commIdD && _followingSet.has(commIdD);
 
         if (postingMode === 'owner_only' && !isHubOwnerD && !isAdmin) {
             el.textContent = '🔒 Owner posts only — guests cannot broadcast here';
+            el.style.color = 'rgba(239,68,68,0.8)';
+            if (btn) btn.disabled = true;
+            return;
+        }
+        if (postingMode === 'followers_only' && !isHubOwnerD && !isAdmin && !isFollowingD) {
+            el.textContent = '🔒 Follow this Hub to post here';
             el.style.color = 'rgba(239,68,68,0.8)';
             if (btn) btn.disabled = true;
             return;
@@ -21181,25 +21225,29 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     function commCreatePostingMode(mode) {
         var pmInput = document.getElementById('comm-create-posting-mode');
+        var btnFol  = document.getElementById('comm-create-pm-followers');
         var btnOpen = document.getElementById('comm-create-pm-open');
         var btnOwn  = document.getElementById('comm-create-pm-owner');
         var feeRow  = document.getElementById('comm-create-fee-row');
         if (pmInput) pmInput.value = mode;
+        if (btnFol)  btnFol.className  = 'btn' + (mode === 'followers_only' ? ' btn-teal' : '');
         if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
         if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
-        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+        if (feeRow)  feeRow.style.display = (mode === 'open' || mode === 'followers_only') ? 'flex' : 'none';
     }
     window.commCreatePostingMode = commCreatePostingMode;
 
     function commEditPostingMode(mode) {
         var pmInput = document.getElementById('comm-edit-posting-mode');
+        var btnFol  = document.getElementById('comm-edit-pm-followers');
         var btnOpen = document.getElementById('comm-edit-pm-open');
         var btnOwn  = document.getElementById('comm-edit-pm-owner');
         var feeRow  = document.getElementById('comm-edit-fee-row');
         if (pmInput) pmInput.value = mode;
+        if (btnFol)  btnFol.className  = 'btn' + (mode === 'followers_only' ? ' btn-teal' : '');
         if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
         if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
-        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+        if (feeRow)  feeRow.style.display = (mode === 'open' || mode === 'followers_only') ? 'flex' : 'none';
     }
     window.commEditPostingMode = commEditPostingMode;
 
@@ -21225,8 +21273,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const _isHubOwner = userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
 
         // ── Posting mode guard ────────────────────────────────────────────────
-        if ((_activeCommunity.postingMode || 'open') === 'owner_only' && !_isHubOwner && !isAdmin) {
+        const _postingMode = _activeCommunity.postingMode || 'followers_only';
+        if (_postingMode === 'owner_only' && !_isHubOwner && !isAdmin) {
             return showToast('Only the Hub owner can post here.');
+        }
+        if (_postingMode === 'followers_only' && !_isHubOwner && !isAdmin &&
+            !_followingSet.has((_activeCommunity.id || '').toLowerCase())) {
+            return showToast('Follow this Hub before posting.');
         }
         let mediaUrl   = '';
         let feeAmount  = CONFIG.FEES.TEXT;
@@ -21385,6 +21438,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (progWrap) progWrap.style.display = 'none';
             if (fPrev)    fPrev.style.display    = 'none';
             commSelectedFile = null;
+            if (typeof _collapseCommComposer === 'function') _collapseCommComposer();
 
             // Reset preview
             ['comm-preview-img','comm-preview-iframe','comm-preview-video'].forEach(function(id) {
@@ -22276,7 +22330,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (_cm) { _cm.value = Array.isArray(_activeCommunity.coMods) ? _activeCommunity.coMods.join('\n') : ''; _cm.style.height = 'auto'; _cm.style.height = Math.min(_cm.scrollHeight, 200) + 'px'; }
             var _pf = document.getElementById('comm-edit-posting-fee');
             if (_pf) _pf.value = String(_activeCommunity.postingFee || 0);
-            commEditPostingMode(_activeCommunity.postingMode || 'open');
+            commEditPostingMode(_activeCommunity.postingMode || 'followers_only');
         }
         panel.style.display = isOpen ? 'none' : 'block';
     }
@@ -22325,7 +22379,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (subPrice > 500) subPrice = 500;
         var coModsRaw   = (document.getElementById('comm-edit-comods')?.value || '');
         var coMods      = coModsRaw.split(/[\n,]+/).map(function(a) { return a.trim().toLowerCase(); }).filter(function(a) { return a.startsWith('0x') && a.length >= 10; });
-        var postingMode = (document.getElementById('comm-edit-posting-mode')?.value || 'open');
+        var postingMode = (document.getElementById('comm-edit-posting-mode')?.value || 'followers_only');
         var postingFee  = parseFloat(document.getElementById('comm-edit-posting-fee')?.value || '0');
         if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
         if (!name) return showToast('Hub name cannot be empty.');
@@ -22914,7 +22968,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var imgPos      = (document.getElementById('comm-create-img-position')?.value || '50% 50%').trim();
         var website     = _normalizeWebsiteUrl(document.getElementById('comm-website-input')?.value || '');
         var alias       = (document.getElementById('comm-alias-input')?.value || '').trim().toLowerCase();
-        var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'open');
+        var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'followers_only');
         var postingFee  = parseFloat(document.getElementById('comm-create-posting-fee')?.value || '0');
         if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
 
