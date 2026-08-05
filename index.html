@@ -27442,7 +27442,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     function _buildPostShareUrl(postId) {
         try {
-            var fnBase = 'https://socialhubaptm.web.app';
+            var fnBase = 'https://share.socialhubapertum.com';
             var url = new URL(fnBase);
             url.searchParams.set('post', postId);
             // Cache-bust: Telegram caches per URL, so each share gets a unique
@@ -27450,7 +27450,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             url.searchParams.set('t', Date.now());
             return url.toString();
         } catch (_) {
-            return 'https://socialhubaptm.web.app/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
+            return 'https://share.socialhubapertum.com/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
         }
     }
 
