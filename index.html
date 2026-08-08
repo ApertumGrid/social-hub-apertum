@@ -30010,6 +30010,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Close old tracks cleanly (not publishing yet, safe to close)
             if (localVideoTrack) { try { localVideoTrack.close(); } catch(_) {} localVideoTrack = null; }
             if (localAudioTrack) { try { localAudioTrack.close(); } catch(_) {} localAudioTrack = null; }
+            await _delayForCameraRelease();
 
             [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
             window._localVideoTrack_ref = localVideoTrack;
@@ -30037,10 +30038,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch(e) {
             console.error('[Live] Preview error:', e);
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera permission denied — please allow camera access in your browser settings.'
-                : 'Camera error: ' + (e.message || String(e));
-            showToast(msg);
+            showToast(_mediaErrorMessage(e));
             const ph = $('live-preview-placeholder');
             if (ph) ph.style.display = '';
         }
@@ -30204,6 +30202,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 try { cohostAudioTrack.close(); } catch(_) {}
                 cohostAudioTrack = null;
             }
+            await _delayForCameraRelease();
 
             // Acquire tracks (synchronously in this click handler)
             [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
@@ -30263,9 +30262,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
             if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
 
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
-                : e.message || 'Failed to access camera/microphone. Please try again.';
+            const msg = _mediaErrorMessage(e);
 
             if (errorDiv) {
                 errorDiv.innerHTML = `
@@ -30296,6 +30293,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
         }
     };
+
+    // ── Camera/mic error messaging + retry-race mitigation ─────────────────
+    // NotReadableError ("Could not start video source") happens when the OS/browser
+    // hasn't yet released the camera hardware from a just-closed track — track.stop()/
+    // close() don't synchronously free the hardware, so immediately re-acquiring right
+    // after (as every Enable/Preview/Try Again path used to) can race that release.
+    // Used by enableCameraAndMic, startLocalPreview, and enableCohostMedia.
+    function _mediaErrorMessage(e) {
+        if (e.name === 'NotAllowedError' || e.message?.includes('Permission')) {
+            return 'Camera/microphone permission denied. Please allow access in your browser settings and try again.';
+        }
+        if (e.name === 'NotReadableError') {
+            return 'Camera is in use by another app or browser tab. Close it, then tap Try Again.';
+        }
+        return e.message || 'Failed to access camera/microphone. Please try again.';
+    }
+    function _delayForCameraRelease() {
+        return new Promise(function(resolve) { setTimeout(resolve, 350); });
+    }
 
     // ── Track lifecycle cleanup (prevents leaks) - PORTED FROM USDT ──────────────────────
     async function closeExistingTracks() {
@@ -30392,6 +30408,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Close any existing tracks first
             await closeExistingTracks();
+            await _delayForCameraRelease();
 
             // Acquire tracks
             [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
@@ -30441,9 +30458,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             console.error('[Live] Permission error:', e);
             await closeExistingTracks();
 
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
-                : e.message || 'Failed to access camera/microphone. Please try again.';
+            const msg = _mediaErrorMessage(e);
 
             showPermissionError(msg, 'enableCameraAndMic');
 
