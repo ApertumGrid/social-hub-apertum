@@ -316,6 +316,10 @@
         /* Sapphire gem stays as-is â€” it's the icon colour, exactly what Option B keeps */
         .gem-sapphire { background:radial-gradient(circle at 35% 30%,#6baeff,#2255cc 40%,#0d2a7a 80%,#060e30); box-shadow:0 4px 14px rgba(30,80,220,.5),inset 0 -2px 4px rgba(0,0,50,.5); }
         .gem-ruby { background:radial-gradient(circle at 35% 30%,#ff8888,#cc2222 40%,#880808 80%,#300202); box-shadow:0 4px 14px rgba(180,20,20,.6),inset 0 -2px 4px rgba(80,0,0,.5); }
+        /* Referenced by several small status dots (.lbtn-live-pulse, .vault-live-dot,
+           the desktop/mobile Live nav dots) but was never actually defined anywhere
+           in this file — those dots have silently never animated. */
+        @keyframes vaultPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(0.8); } }
         .lbtn-live-pulse { position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#e03e3e; box-shadow:0 0 5px #e03e3e; animation:vaultPulse 1.8s ease infinite; }
         .lbtn.lbtn-active { transform:translateY(-2px); }
         /* Active state â€” same neutral silver glow for all cards */
@@ -5016,6 +5020,19 @@
                 flex-shrink: 0 !important;
             }
 
+            /* Mobile dashboard Live button — small pulsing dot badge, only shown
+               while at least one stream is genuinely active (see the ambient
+               live-status listener). Not decorative — it reflects real state. */
+            #mdash-live { position: relative !important; }
+            .mdash-live-dot {
+                display: none;
+                position: absolute; top: 4px; right: 14px;
+                width: 7px; height: 7px; border-radius: 50%;
+                background: #e03e3e; box-shadow: 0 0 6px #e03e3e;
+                animation: vaultPulse 1.8s ease infinite;
+            }
+            #mdash-live.live-pulse-active .mdash-live-dot { display: block; }
+
             .mdash-btn {
                 flex: 1 !important;
                 padding: 10px 3px !important;
@@ -7540,7 +7557,7 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
     position: relative !important;
     overflow: hidden !important;
     text-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-    animation: live-btn-pulse 2s ease-in-out infinite !important;
+    animation: none !important;
     transition: transform 0.15s, filter 0.15s !important;
 }
 }
@@ -7550,7 +7567,7 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
     top: 0 !important; left: 0 !important;
     width: 40% !important; height: 100% !important;
     background: rgba(255,255,255,0.22) !important;
-    animation: btn-shimmer 2.5s ease-in-out infinite 1s !important;
+    animation: none !important;
     pointer-events: none !important;
 }
 #topnav-live-btn:hover {
@@ -7560,8 +7577,14 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
 #topnav-live-btn span[style*="border-radius:50%"] {
     background: rgba(255,255,255,0.9) !important;
     box-shadow: 0 0 8px rgba(255,255,255,0.9) !important;
-    animation: vaultPulse 1.4s ease infinite !important;
+    animation: none !important;
+    opacity: 0.4 !important;
 }
+/* Only pulse/shimmer/glow the Live nav button while at least one stream is
+   genuinely active — driven by the ambient live-status listener, not decorative. */
+body.someone-live #topnav-live-btn { animation: live-btn-pulse 2s ease-in-out infinite !important; }
+body.someone-live #topnav-live-btn::after { animation: btn-shimmer 2.5s ease-in-out infinite 1s !important; }
+body.someone-live #topnav-live-btn span[style*="border-radius:50%"] { animation: vaultPulse 1.4s ease infinite !important; opacity: 1 !important; }
 
 
 /* ═══ sh-logo-override ══════════════════════════════════════════════════════ */
@@ -10117,7 +10140,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 </div>
             </div>
             <button id="topnav-live-btn" onclick="_lbtnActivate(document.getElementById('nav-live'));switchPage('live',document.getElementById('nav-live'))" title="Go Live" style="align-items:center;gap:7px;padding:8px 16px;border-radius:50px;border:1.5px solid rgba(224,62,62,0.45);background:rgba(224,62,62,0.10);color:#e03e3e;font-family:var(--font-body);font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.18s;flex-shrink:0;white-space:nowrap;display:none;">
-                <span style="width:8px;height:8px;border-radius:50%;background:#e03e3e;box-shadow:0 0 6px #e03e3e;animation:vaultPulse 1.8s ease infinite;flex-shrink:0;"></span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#e03e3e;box-shadow:0 0 6px #e03e3e;flex-shrink:0;"></span>
                 Live Stream
             </button>
             <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light mode">🌙</button>
@@ -10169,6 +10192,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <div class="wdd-option-text">
                                 <span class="wdd-name">XOVA Wallet</span>
                                 <span class="wdd-sub" id="wdd-xova-status">Mobile &amp; Extension</span>
+                            </div>
+                        </button>
+                        <button id="wdd-brave-btn" class="wdd-option" onclick="_connectWithProvider('brave');toggleWalletDropdown()">
+                            <div class="wdd-logo" style="display:flex;align-items:center;justify-content:center;background:#FB542B;font-size:1.05rem;">🦁</div>
+                            <div class="wdd-option-text">
+                                <span class="wdd-name">Brave Wallet</span>
+                                <span class="wdd-sub" id="wdd-brave-status">Browser extension</span>
+                            </div>
+                        </button>
+                        <button id="wdd-rabby-btn" class="wdd-option" onclick="_connectWithProvider('rabby');toggleWalletDropdown()">
+                            <div class="wdd-logo" style="display:flex;align-items:center;justify-content:center;background:#7084FF;font-size:1.05rem;">🐰</div>
+                            <div class="wdd-option-text">
+                                <span class="wdd-name">Rabby Wallet</span>
+                                <span class="wdd-sub" id="wdd-rabby-status">Browser extension</span>
                             </div>
                         </button>
                         <button class="wdd-option" onclick="_connectWithProvider('walletconnect');toggleWalletDropdown()">
@@ -10233,6 +10270,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         </button>
         <button class="mdash-btn"        id="mdash-live"        onclick="showMobileTab('live')">
             <span class="mbtn-icon">🔴</span>Live
+            <span class="mdash-live-dot" id="mdash-live-dot"></span>
         </button>
     </div>
 
@@ -13845,8 +13883,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (isOpen) { dd.style.display = 'none'; return; }
 
         // Update detected status labels before opening
-        var mmStatus   = document.getElementById('wdd-mm-status');
-        var xovaStatus = document.getElementById('wdd-xova-status');
+        var mmStatus    = document.getElementById('wdd-mm-status');
+        var xovaStatus  = document.getElementById('wdd-xova-status');
+        var braveStatus = document.getElementById('wdd-brave-status');
+        var rabbyStatus = document.getElementById('wdd-rabby-status');
         var hasMetaMask = (window.ethereum && window.ethereum.isMetaMask)
                        || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isMetaMask));
         // XOVA is connectable only if we can actually reach its provider —
@@ -13854,8 +13894,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var hasXova = (window.xova && (window.xova.ethereum || typeof window.xova.request === 'function'))
                    || (window.ethereum && window.ethereum.isXova)
                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isXova));
-        if (mmStatus)   mmStatus.textContent   = hasMetaMask ? '✓ Detected' : 'Not installed';
-        if (xovaStatus) xovaStatus.textContent = hasXova     ? '✓ Detected' : 'Not installed';
+        // Brave Wallet and Rabby both inject a MetaMask-compatible window.ethereum but
+        // set their own flag (isBraveWallet / isRabby) instead of isMetaMask — checking
+        // only isMetaMask previously made both show "Not installed" even when present.
+        var hasBrave = (window.ethereum && window.ethereum.isBraveWallet)
+                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isBraveWallet));
+        var hasRabby = (window.ethereum && window.ethereum.isRabby)
+                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isRabby));
+        if (mmStatus)    mmStatus.textContent    = hasMetaMask ? '✓ Detected' : 'Not installed';
+        if (xovaStatus)  xovaStatus.textContent  = hasXova     ? '✓ Detected' : 'Not installed';
+        if (braveStatus) braveStatus.textContent = hasBrave    ? '✓ Detected' : 'Not installed';
+        if (rabbyStatus) rabbyStatus.textContent = hasRabby    ? '✓ Detected' : 'Not installed';
 
         // Show correct section
         var connectSection   = document.getElementById('wdd-connect-section');
@@ -14310,6 +14359,34 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
                 const _xovaOnAptm = await _ensureApertumChain(eth);
                 if (!_xovaOnAptm) return;
+            } else if (walletType === 'brave') {
+                // Brave Wallet injects a MetaMask-compatible window.ethereum and sets
+                // isBraveWallet — never isMetaMask. Never fall back to generic
+                // window.ethereum here: if the user has MetaMask installed too and
+                // Brave isn't actually the active/injecting wallet, silently grabbing
+                // whatever's on window.ethereum would connect the wrong wallet under
+                // the "Brave Wallet" banner.
+                if (window.ethereum && window.ethereum.isBraveWallet) {
+                    eth = window.ethereum;
+                } else if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+                    eth = window.ethereum.providers.find(p => p.isBraveWallet) || null;
+                }
+                if (!eth) {
+                    showToast('Brave Wallet not found. Open this page in the Brave browser with Brave Wallet enabled.');
+                    return;
+                }
+            } else if (walletType === 'rabby') {
+                // Same reasoning as Brave above — Rabby sets isRabby, never isMetaMask,
+                // and we never want to silently fall back to a different injected wallet.
+                if (window.ethereum && window.ethereum.isRabby) {
+                    eth = window.ethereum;
+                } else if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+                    eth = window.ethereum.providers.find(p => p.isRabby) || null;
+                }
+                if (!eth) {
+                    showToast('Rabby Wallet not found. Please install the Rabby extension.');
+                    return;
+                }
             } else if (walletType === 'walletconnect') {
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
@@ -14649,7 +14726,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Allow WC session drop listeners to fire now (handshake complete)
             if (walletType === 'walletconnect') window._wcConnecting = false;
-            showToast('Connected via ' + (walletType === 'xova' ? 'XOVA Wallet' : walletType === 'walletconnect' ? 'WalletConnect' : 'MetaMask') + ' ✓');
+            showToast('Connected via ' + ({ xova: 'XOVA Wallet', walletconnect: 'WalletConnect', brave: 'Brave Wallet', rabby: 'Rabby Wallet' }[walletType] || 'MetaMask') + ' ✓');
             // Prompt for push notifications (delayed slightly so connect toast shows first)
             setTimeout(function() { initPushNotifications(userAddress); }, 2500);
         } catch(err) {
@@ -37008,6 +37085,40 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.addEventListener('resize', checkLiveBtn);
 })();
 
+// ── Ambient "someone is live" indicator ───────────────────────────
+// Drives the pulsing red dot/glow on the desktop Live nav button and the
+// small badge dot on the mobile dashboard Live button. Both used to pulse
+// unconditionally (purely decorative) regardless of whether anyone was
+// actually broadcasting — this makes the pulse genuinely reflect whether
+// at least one stream is currently active.
+(function() {
+    function _applyLiveAmbientState(anyLive) {
+        document.body.classList.toggle('someone-live', anyLive);
+        var mBtn = document.getElementById('mdash-live');
+        if (mBtn) mBtn.classList.toggle('live-pulse-active', anyLive);
+    }
+    function _startLiveAmbientListener() {
+        if (!window.db || !window.fs) { setTimeout(_startLiveAmbientListener, 800); return; }
+        try {
+            var col = window.fs.collection(window.db, 'live_streams');
+            var q   = window.fs.query(col, window.fs.where('active', '==', true));
+            window.fs.onSnapshot(q, function(snap) {
+                var now = Date.now();
+                var MAX_AGE = 6 * 60 * 60 * 1000; // matches loadStreamBrowser's zombie-stream cutoff
+                var anyLive = false;
+                snap.forEach(function(d) {
+                    var data = d.data();
+                    var startMs = (data.startedAt && data.startedAt.toMillis && data.startedAt.toMillis()) || (data.startedAt && data.startedAt.seconds * 1000) || 0;
+                    var age = startMs ? now - startMs : 0;
+                    if (age < MAX_AGE) anyLive = true;
+                });
+                _applyLiveAmbientState(anyLive);
+            }, function(err) { console.warn('[LiveAmbient] listener error:', err); });
+        } catch (e) { console.warn('[LiveAmbient] init error:', e); }
+    }
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(_startLiveAmbientListener, 1000); });
+})();
+
 // ── VIEWER COUNT BUMP ANIMATION ──────────────────────────────────
 (function() {
     function animateBump(el) {
@@ -37062,8 +37173,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         btn.id = 'cinema-shortcut-btn';
         btn.title = 'Cinema Mode';
         btn.innerHTML = '⛶ Cinema';
+        // top:58px (not 10px) — #live-stream-info-bar sits at top:0 with the share/
+        // leaderboard buttons in its top-right corner at z-index:18; at top:10px this
+        // button (z-index:25) painted directly over them on hover, blocking the share
+        // button. Dropping below the info bar's ~52px height clears the overlap.
         btn.style.cssText = [
-            'position:absolute', 'top:10px', 'right:10px', 'z-index:25',
+            'position:absolute', 'top:58px', 'right:10px', 'z-index:25',
             'background:rgba(0,0,0,0.55)', 'backdrop-filter:blur(8px)',
             'border:1px solid rgba(255,255,255,0.18)', 'color:rgba(255,255,255,0.85)',
             'border-radius:20px', 'padding:4px 12px', 'font-size:0.62rem',
