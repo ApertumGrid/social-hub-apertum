@@ -14100,9 +14100,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window._silentAutoConnect = _silentAutoConnect;
 
     // ── WalletConnect session restoration on page load ────────────────────────
-    // iOS Safari aggressively unloads background tabs. When user returns from
-    // MetaMask app, Safari may fully reload the page. This function restores
-    // WalletConnect sessions using the SDK's built-in restoration from localStorage.
+    // Mobile browsers (Chrome and Safari, both Android and iOS) routinely reload
+    // the page — pull-to-refresh, or navigating away and back. This function
+    // restores WalletConnect sessions using the SDK's built-in restoration from
+    // localStorage, so the user doesn't have to reconnect from scratch every time.
     async function _restoreWalletConnectSession() {
         try {
             // Check if WalletConnect session exists in localStorage
@@ -14113,6 +14114,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             } catch(_) {}
 
             if (!hasWCSession) return;
+
+            // Clear stale PAIRING keys before attempting restore — same fix already
+            // applied to manual reconnect (see _connectWithProvider). A dead/expired
+            // pairing left in localStorage can confuse init() into a bad state that
+            // then blocks the *next* manual "Connect Wallet" click too, forcing the
+            // user to disconnect from MetaMask's own side to unstick it.
+            try {
+                Object.keys(localStorage).forEach(function(k) {
+                    if (k.startsWith('wc@2:core:pairing') ||
+                        k.startsWith('wc@2:universal_provider') ||
+                        k === 'walletconnect') {
+                        localStorage.removeItem(k);
+                    }
+                });
+            } catch(_) {}
 
             // Load WalletConnect SDK
             if (!window._WCEthProviderClass) {
@@ -14141,7 +14157,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Check if session was actually restored (not just initialized)
             if (!wcProv.connected || !wcProv.accounts || wcProv.accounts.length === 0) {
-                // No active session, clean exit
+                // No active session — clean up any leftover session/pairing keys so a
+                // subsequent manual "Connect Wallet" click starts fully fresh instead
+                // of colliding with orphaned WalletConnect state.
+                try {
+                    Object.keys(localStorage).forEach(function(k) {
+                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) localStorage.removeItem(k);
+                    });
+                } catch(_) {}
                 return;
             }
 
@@ -19435,10 +19458,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(() => { subscribeAnchorCount(); }, 800);
 
             // Silent auto-reconnect if wallet was connected before refresh
-            await _silentAutoConnect();
+            try { await _silentAutoConnect(); } catch(e) { console.warn('[AutoConnect] threw:', e.message); }
 
-            // WalletConnect session restoration (iOS Safari fix)
-            await _restoreWalletConnectSession();
+            // WalletConnect session restoration — mobile browsers reload the page
+            // often (pull-to-refresh, tab switch away and back); this restores an
+            // existing session so the user isn't dropped back to "Connect Wallet".
+            try { await _restoreWalletConnectSession(); } catch(e) { console.warn('[WC Restore] threw:', e.message); }
 
             // Ensure existing connected users get a referral code (backfill)
             if (window.userAddress && typeof _ensureReferralCode === 'function') {
@@ -29984,7 +30009,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.openCohostPermissionModal = function(targetSlot) {
         _cohostTargetSlot = targetSlot;
         const modal = document.getElementById('cohost-permission-modal');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+            // #app-shell has position:relative + z-index:5, which traps this modal's
+            // z-index:10002 inside its own stacking context. #cinema-shell (desktop
+            // cinema mode) lives outside #app-shell at z-index:50, so it painted over
+            // this modal even though 10002 > 50. Re-parent to <body> so the modal's
+            // z-index is compared against #cinema-shell directly.
+            if (modal.parentElement !== document.body) document.body.appendChild(modal);
+            modal.style.display = 'flex';
+        }
     };
 
     window.closeCohostPermissionModal = function() {
