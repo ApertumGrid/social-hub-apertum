@@ -13928,8 +13928,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             address.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase() ? '' : 'none';
         // Start notification listener for this wallet
         try { if (typeof subscribeToNotifs === 'function') subscribeToNotifs(address); } catch(_) {}
-        // Update lottery card to show buy buttons now that wallet is connected (fixes mobile WalletConnect bug)
-        try { if (typeof _renderLotteryCard === 'function' && window._lotteryRound) _renderLotteryCard(window._lotteryRound); } catch(_) {}
+        // Update lottery card to show buy buttons now that wallet is connected (fixes mobile WalletConnect bug).
+        // Uses the narrow wallet-gate refresh, NOT a full _renderLotteryCard repaint — see
+        // _refreshLotteryWalletGate for why (stale-pot regression bug, fixed 2026-08-08).
+        try { if (typeof _refreshLotteryWalletGate === 'function') _refreshLotteryWalletGate(); } catch(_) {}
     }
 
     // ── Push Notification registration ────────────────────────────────────────
@@ -23229,6 +23231,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch(_) {}
     }
 
+    // Toggle buy-vs-connect UI on wallet connect/reconnect WITHOUT repainting
+    // pot/tickets/countdown from the cached _lotteryRound object. _lotteryRound
+    // is only kept fresh by the single lottery_rounds onSnapshot listener set up
+    // once in loadLottery() — if that listener missed a beat (tab backgrounded,
+    // laptop sleep, WalletConnect relay hiccup) around the same time a reconnect
+    // fires, a full _renderLotteryCard(window._lotteryRound) here would paint a
+    // stale, lower pot/ticket count over the correct on-screen value until the
+    // listener's next legitimate update. This only touches the wallet-gated bits.
+    function _refreshLotteryWalletGate() {
+        var round = window._lotteryRound;
+        if (!round) return;
+        var buyEl = document.getElementById('lottery-buy-section');
+        var conEl = document.getElementById('lottery-connect-prompt');
+        if (window.userAddress) {
+            if (buyEl) buyEl.style.display = 'block';
+            if (conEl) conEl.style.display = 'none';
+            _loadMyLotteryTickets(round.id, round.totalTickets || 1);
+        } else {
+            if (buyEl) buyEl.style.display = 'none';
+            if (conEl) conEl.style.display = 'block';
+        }
+    }
+    window._refreshLotteryWalletGate = _refreshLotteryWalletGate;
+
     function _updateLotteryCountdown(endsAt) {
         var el   = document.getElementById('lottery-countdown');
         if (!el) return;
@@ -29063,7 +29089,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             <div class="vr-card-meta">
                 <span>👥 ${r.listenerCount||0}</span>
                 <span>⭐ ${parseFloat(r.starsEarned||0).toFixed(1)}★</span>
-                ${r.handRaisePrice ? `<span>🙋 ${r.handRaisePrice}★ to speak</span>` : ''}
+                <span>🙋 ${r.handRaisePrice > 0 ? r.handRaisePrice + '★ to speak' : 'Free to speak'}</span>
             </div>
             <button class="vr-join-btn" onclick="event.stopPropagation();window.joinVoiceRoom('${roomId}',false)">${lbl}</button>
         </div>`;
@@ -29074,7 +29100,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const titleEl = document.getElementById('vr-new-title');
         const priceEl = document.getElementById('vr-new-price');
         const title   = (titleEl ? titleEl.value.trim() : '') || 'Voice Room';
-        const price   = Math.max(1, parseInt(priceEl ? priceEl.value : '5') || 5);
+        // `|| 5` would silently turn a host-chosen 0 (free stage access) into 5 —
+        // 0 is falsy in JS but is a legitimate configured price here.
+        const _priceParsed = parseInt(priceEl ? priceEl.value : '5', 10);
+        const price   = Number.isFinite(_priceParsed) ? Math.max(0, _priceParsed) : 5;
         closeStartRoomModal();
         showToast('Opening room…');
         try {
@@ -29401,16 +29430,26 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch(e) { console.error('[sendVRChat]', e); }
     };
 
+    // In-flight guards below are UX/defense-in-depth only — the authoritative fix
+    // against duplicate charges is the atomic status-check-and-flip transaction in
+    // the admitSpeakerVR Cloud Function. These just stop a double-click/double-tap
+    // from firing a second HTTP request in the first place.
+    var _vrRaiseHandInFlight = false;
+    var _vrAdmitInFlight     = {}; // keyed by roomId+'_'+reqAddr
+
     window.vrRaiseHand = async function() {
         if (!userAddress || !_vrRoomId || _vrIsHost || _vrIsSpeaker) return;
         if (!window.db || !window.fs) return;
-        const roomSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
-        if (!roomSnap || !roomSnap.exists()) return;
-        const _rdVR  = roomSnap.data();
-        if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
-        const price = parseFloat(_rdVR.handRaisePrice || 1);
-        if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
+        if (_vrRaiseHandInFlight) return;
+        _vrRaiseHandInFlight = true;
         try {
+            const roomSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
+            if (!roomSnap || !roomSnap.exists()) return;
+            const _rdVR  = roomSnap.data();
+            if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
+            // `|| 1` would silently charge 1★ to raise a hand in a room the host set to free (0).
+            const price = Number.isFinite(_rdVR.handRaisePrice) ? _rdVR.handRaisePrice : 1;
+            if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
             const res  = await fetch(VR_CF_BASE + 'raiseHandVR', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ roomId: _vrRoomId, userAddr: userAddress, userName: userHandle||'Anonymous', userAvatar: userAvatar||'', bidStars: price })
@@ -29421,10 +29460,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const btn = document.getElementById('vr-ctrl-hand');
             if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
         } catch(e) { showToast('Could not raise hand'); }
+        finally { _vrRaiseHandInFlight = false; }
     };
 
     window.vrAdmitSpeaker = async function(roomId, reqAddr) {
         if (!_vrIsHost || !userAddress) return;
+        const _key = roomId + '_' + reqAddr;
+        if (_vrAdmitInFlight[_key]) return;
+        _vrAdmitInFlight[_key] = true;
         showToast('Admitting…');
         try {
             const res  = await fetch(VR_CF_BASE + 'admitSpeakerVR', {
@@ -29435,6 +29478,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (data.error) { showToast(data.error); return; }
             showToast('Speaker admitted');
         } catch(e) { showToast('Could not admit speaker'); }
+        finally { delete _vrAdmitInFlight[_key]; }
     };
 
     window.vrToggleRequests = async function() {
@@ -38139,7 +38183,7 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">Room title</div>
         <input id="vr-new-title" class="field" placeholder="What are we talking about?" style="margin-bottom:14px;margin-top:0;" maxlength="80">
         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">🙋 Hand raise price (★ to speak)</div>
-        <input id="vr-new-price" class="field" type="number" value="5" min="1" max="500" style="margin-bottom:18px;margin-top:0;">
+        <input id="vr-new-price" class="field" type="number" value="5" min="0" max="500" style="margin-bottom:18px;margin-top:0;">
         <div style="display:flex;gap:8px;">
             <button class="btn btn-teal" style="flex:1;" onclick="startVoiceRoom()">Open Room</button>
             <button class="btn btn-outline" style="flex:1;" onclick="closeStartRoomModal()">Cancel</button>
