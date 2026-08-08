@@ -2940,6 +2940,16 @@
             letter-spacing:0.5px; display:none; z-index:12;
         }
 
+        /* Screen-share letterbox — when the host shares a (landscape) screen, the
+           viewer plays with object-fit:contain, leaving bars. Give the container a
+           subtle black background on mobile so those bars read as clean letterbox. */
+        @media (max-width: 700px) {
+            #live-remote-video-container.screen-share-active,
+            #live-remote-video-container.screen-share-active #live-remote-video {
+                background:#000 !important;
+            }
+        }
+
         .live-stream-card {
             border:1px solid var(--border);
             border-radius:var(--radius-md);
@@ -30732,6 +30742,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         _activeLiveChannel    = null;
         _watchingStreamId     = null;
         window._watchingStreamId = null;
+        // Reset screen-share fit state so it never leaks into the next stream
+        window._hostScreenSharing = false;
+        var _rvcReset = document.getElementById('live-remote-video-container');
+        if (_rvcReset) _rvcReset.classList.remove('screen-share-active');
         cohostRequests        = {};
         peakViewers           = 0;
         starGoalTarget        = 0;
@@ -30922,7 +30936,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                     // Force the inner div to fill so Agora can inject into it
                                     remoteEl.style.width  = container.offsetWidth  + 'px';
                                     remoteEl.style.height = container.offsetHeight + 'px';
-                                    remoteUser.videoTrack.play(remoteEl);
+                                    remoteUser.videoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                                    if (window._forceRemoteVideoFit) setTimeout(window._forceRemoteVideoFit, 120);
                                     // Hide waiting room — _wrTimer only fires once at page load;
                                     // subsequent joins need explicit hide here.
                                     var _wr = document.getElementById('live-waiting-room');
@@ -31198,10 +31213,63 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 var _rv = document.getElementById('live-remote-video');
                 function _applyRvHeight(){var _lm=window._viewerLayoutMode;if(_rv&&(!_lm||_lm==='solo'||_lm==='presentation')){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
                 _applyRvHeight();
-                function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit','cover','important');}});}
+                function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit',window._hostVideoFit?window._hostVideoFit():'cover','important');}});}
                 setTimeout(_fixAgoraChildren,500);setTimeout(_fixAgoraChildren,1500);
                 if(_rv&&!window._rvChildObs){window._rvChildObs=new MutationObserver(function(){_fixAgoraChildren();});window._rvChildObs.observe(_rv,{childList:true,subtree:true});}
             }
+
+            // ── Screen-share-aware object-fit ───────────────────────────────────
+            // Host camera = portrait-friendly → viewers use object-fit:cover (fills).
+            // Host screen share = landscape → viewers must use object-fit:contain so the
+            // whole screen is visible. Default-safe: missing/false → 'cover' (unchanged).
+            // Ported from USDT (SocialHubCloud), which already had this fixed.
+            if (typeof window._hostScreenSharing === 'undefined') window._hostScreenSharing = false;
+            window._hostVideoFit = function() { return window._hostScreenSharing ? 'contain' : 'cover'; };
+            // Force the correct object-fit DIRECTLY on the Agora-rendered <video> element.
+            // Agora sets object-fit inline based on the play() `fit` config, but it will NOT
+            // re-apply it when a track is already rendering, and its resize observer can
+            // revert CSS. Setting the inline style with !important beats both.
+            window._forceRemoteVideoFit = function() {
+                try {
+                    var _host = document.getElementById('live-remote-video');
+                    if (!_host) return;
+                    var _v = _host.querySelector('video');
+                    if (_v) _v.style.setProperty('object-fit', window._hostVideoFit(), 'important');
+                } catch (_) {}
+            };
+            // Apply a screen-share state change on the viewer side: flip the global fit
+            // mode, toggle the mobile letterbox background, re-play the host track, and
+            // force the object-fit on the actual video element (Agora won't re-apply it
+            // on replay).
+            window._applyScreenShareFit = function(isSharing) {
+                if (isSharing === window._hostScreenSharing) return; // no change
+                window._hostScreenSharing = isSharing;
+                var _vc = document.getElementById('live-remote-video-container');
+                if (_vc) _vc.classList.toggle('screen-share-active', isSharing);
+                try {
+                    var _rel = document.getElementById('live-remote-video');
+                    if (_rel && window._liveHostVideoTrack) {
+                        window._liveHostVideoTrack.play(_rel, { fit: window._hostVideoFit() });
+                    }
+                } catch (_) {}
+                window._forceRemoteVideoFit();
+                setTimeout(window._forceRemoteVideoFit, 150);
+                setTimeout(window._forceRemoteVideoFit, 400);
+                setTimeout(window._forceRemoteVideoFit, 900);
+            };
+            // Extra safety net beyond the reference (USDT) implementation: a
+            // MutationObserver that re-applies the correct fit whenever Agora swaps the
+            // <video> element, catching any play() call site elsewhere that doesn't pass
+            // an explicit fit option.
+            if (!window._remoteVideoFitObs) {
+                var _rvForFit = document.getElementById('live-remote-video');
+                if (_rvForFit) {
+                    window._remoteVideoFitObs = new MutationObserver(function() { window._forceRemoteVideoFit(); });
+                    window._remoteVideoFitObs.observe(_rvForFit, { childList: true, subtree: true });
+                }
+            }
+            window._applyScreenShareFit(!!(streamData && streamData.screenSharing));
+
             // Scroll to top so the info bar is visible (page may have been scrolled from a previous section)
             try { window.scrollTo({top:0,behavior:'instant'}); } catch(_) { window.scrollTo(0,0); }
             var _pw = document.getElementById('live-player-wrap');
@@ -32881,6 +32949,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 window._applyHostCamOffOverlay(!!d.hostCamOff, d.hostAvatar || '');
             }
 
+            // Host screen-share: switch remote video to object-fit:contain so nothing
+            // gets cropped off-frame (screen content is landscape and information-dense,
+            // unlike a face-cam where cropping to fill the frame is fine).
+            if (!isHosting) _applyScreenShareFit(!!d.screenSharing);
+
             if (!isHosting && d.streamLayout) {
                 _applyViewerLayout(d.streamLayout);
                 // Update Join Stage button availability
@@ -32978,7 +33051,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(function() {
                 var _remEl = document.getElementById('live-remote-video');
                 if (_remEl && window._liveHostVideoTrack) {
-                    try { window._liveHostVideoTrack.play(_remEl, { fit: 'cover' }); } catch(_) {}
+                    try { window._liveHostVideoTrack.play(_remEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); } catch(_) {}
+                    if (window._forceRemoteVideoFit) window._forceRemoteVideoFit();
                 }
                 window._syncAgoraToSlots && window._syncAgoraToSlots(window._currentCoSlots || [], false);
             }, 250);
@@ -33711,7 +33785,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             // In cinema mode live-remote-video is position:absolute so
                             // offsetWidth is 0 — don't gate on size, just play immediately
                             try {
-                                _trackRef.play(remoteEl);
+                                _trackRef.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                                window._liveHostVideoTrack = _trackRef;
                                 console.log('[CoHost] Host video playing in live-remote-video, uid:', ru.uid);
                             } catch(e) {
                                 if (_retry < 20) {
@@ -33797,7 +33872,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         if (ru2.uid === _myViewerUid) continue;
                         if (window._cohostPublishedUid && ru2.uid === window._cohostPublishedUid) continue;
                         if (ru2.videoTrack) {
-                            ru2.videoTrack.play(remoteEl);
+                            ru2.videoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                            window._liveHostVideoTrack = ru2.videoTrack;
                             console.log('[CoHost] Safety net: re-rendered host video uid:', ru2.uid);
                             break;
                         }
@@ -33853,7 +33929,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     try { await agoraClient.subscribe(_ru, 'audio'); if (_ru.audioTrack) _ru.audioTrack.play(); } catch(_) {}
                     if (_ru.videoTrack && _liveHostUid && _ru.uid === _liveHostUid) {
                         var _re = document.getElementById('live-remote-video');
-                        if (_re) { try { _ru.videoTrack.play(_re); } catch(_) {} }
+                        if (_re) { try { _ru.videoTrack.play(_re, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); window._liveHostVideoTrack = _ru.videoTrack; } catch(_) {} }
                     }
                 }
             } catch(_leaveReSub) { console.warn('[CoHost] leave re-subscribe error:', _leaveReSub); }
@@ -34371,6 +34447,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const lbl = $('screen-share-label'); if (lbl) lbl.style.display = 'none';
 
                 if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🖥</span> Share Screen'; btn.classList.remove('active'); }
+
+                // Signal viewers to revert to object-fit:cover (camera)
+                if (currentStreamId && window.db && window.fs) {
+                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { screenSharing: false }).catch(function(){});
+                }
+
                 showToast('📷 Back to camera.');
             } catch(e) {
                 isScreenSharing = false; // ensure state is consistent
@@ -34422,6 +34504,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 const lbl = $('screen-share-label'); if (lbl) lbl.style.display = 'block';
                 isScreenSharing = true;
+                // Signal viewers to switch to object-fit:contain so they see the full screen
+                if (currentStreamId && window.db && window.fs) {
+                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { screenSharing: true }).catch(function(){});
+                }
                 if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🖥</span> Stop Sharing'; btn.classList.add('active'); }
 
                 // Handle user clicking "Stop" in browser's native share dialog
@@ -35320,6 +35406,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 window._applyHostCamOffOverlay(!!d.hostCamOff, d.hostAvatar || '');
             }
 
+            // Host screen-share: switch remote video to object-fit:contain so nothing
+            // gets cropped off-frame (screen content is landscape and information-dense,
+            // unlike a face-cam where cropping to fill the frame is fine).
+            if (!isHosting) _applyScreenShareFit(!!d.screenSharing);
+
             if (!isHosting && d.streamLayout) {
                 if (typeof _applyViewerLayout === 'function') {
                     _applyViewerLayout(d.streamLayout);
@@ -36155,7 +36246,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var h = col ? col.offsetHeight : 240;
                     remoteEl.style.width  = w + 'px';
                     remoteEl.style.height = h + 'px';
-                    try { window._liveHostVideoTrack.play(remoteEl); } catch(_) {}
+                    try { window._liveHostVideoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); } catch(_) {}
                 }
             }
         }, 300);
