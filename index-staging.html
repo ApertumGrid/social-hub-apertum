@@ -316,6 +316,10 @@
         /* Sapphire gem stays as-is â€” it's the icon colour, exactly what Option B keeps */
         .gem-sapphire { background:radial-gradient(circle at 35% 30%,#6baeff,#2255cc 40%,#0d2a7a 80%,#060e30); box-shadow:0 4px 14px rgba(30,80,220,.5),inset 0 -2px 4px rgba(0,0,50,.5); }
         .gem-ruby { background:radial-gradient(circle at 35% 30%,#ff8888,#cc2222 40%,#880808 80%,#300202); box-shadow:0 4px 14px rgba(180,20,20,.6),inset 0 -2px 4px rgba(80,0,0,.5); }
+        /* Referenced by several small status dots (.lbtn-live-pulse, .vault-live-dot,
+           the desktop/mobile Live nav dots) but was never actually defined anywhere
+           in this file — those dots have silently never animated. */
+        @keyframes vaultPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(0.8); } }
         .lbtn-live-pulse { position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#e03e3e; box-shadow:0 0 5px #e03e3e; animation:vaultPulse 1.8s ease infinite; }
         .lbtn.lbtn-active { transform:translateY(-2px); }
         /* Active state â€” same neutral silver glow for all cards */
@@ -650,6 +654,16 @@
         #composer-card:not(.composer-collapsed) .composer-trigger-pill { display: none; }
         /* Show name/sub only when expanded */
         #composer-card:not(.composer-collapsed) .composer-row > div:last-child { display: block !important; }
+        /* â”€â”€ Hub composer collapsed state â€” same compact trigger pattern as the main composer â”€â”€ */
+        #comm-composer-card.comm-composer-collapsed .composer-body { display: none; }
+        #comm-composer-card.comm-composer-collapsed .composer-row  { margin-bottom: 0; cursor: pointer; }
+        #comm-composer-card.comm-composer-collapsed { cursor: pointer; padding: 10px 14px; }
+        #comm-composer-card.comm-composer-collapsed .composer-sub::after {
+            content: '  âœ¦ tap to broadcast again';
+            color: var(--teal);
+        }
+        #comm-composer-card:not(.comm-composer-collapsed) .composer-trigger-pill { display: none; }
+        #comm-composer-card:not(.comm-composer-collapsed) .composer-row > div:last-child { display: block !important; }
         /* â”€â”€ FIX 1: Signals bar only visible on home tab â”€â”€ */
         #signals-bar.signals-hidden,
         #category-bar.signals-hidden { display: none !important; }
@@ -1666,7 +1680,6 @@
             font-size:1rem !important; padding:2px !important;
         }
         #cinema-controls .studio-btn-icon { font-size:0.8rem !important; }
-        #cinema-controls .studio-toolbar { display:contents !important; }
         /* Panels inside controls â€” displayed normally, no more fixed positioning */
         /* Host-only toggleable panels â€” hidden until button clicked */
         #cinema-controls-panels #poll-creator,
@@ -1982,8 +1995,11 @@
             #cinema-controls-panels #viewer-gift-panel .live-gift-head { display:none !important; }
         }
 
-        /* ── MOBILE HOST FULLSCREEN FALLBACK (MetaMask / non-cinema WebView) ── */
-        @media (max-width: 700px) {
+        /* ── MOBILE HOST FULLSCREEN FALLBACK (MetaMask / non-cinema WebView) ──
+           768px to match the JS go-live/join mobile check (was 700px — the
+           mismatch meant widths 701-768px got neither this fallback layout
+           nor the desktop cinema layout). ── */
+        @media (max-width: 768px) {
             body.is-hosting #topnav           { display: none !important; }
             body.is-hosting #mobile-dashboard  { display: none !important; }
             body.is-hosting #bottom-nav        { display: none !important; }
@@ -2361,6 +2377,17 @@
         .studio-toolbar {
             display:flex; flex-wrap:wrap; gap:8px;
             padding:10px 0; margin-bottom:10px;
+        }
+        /* #host-icon-strip already exposes every action (via its "more" drawer)
+           on every screen size, so the full labeled grid is now redundant and
+           would otherwise show alongside it — duplicated — once cinema mode
+           sweeps it into the desktop side panel. Both selectors are needed:
+           .studio-toolbar lives under #live-active-panel normally, but
+           enterCinema()/exitCinema() relocate it into #cinema-controls while
+           hosting on desktop. */
+        body.is-hosting .studio-toolbar,
+        body.is-hosting #cinema-controls .studio-toolbar {
+            display: none !important;
         }
         .studio-btn {
             display:flex; align-items:center; gap:6px;
@@ -2928,6 +2955,16 @@
             background:rgba(45,212,191,0.85); color:#fff;
             font-size:0.62rem; font-weight:800; padding:3px 12px; border-radius:20px;
             letter-spacing:0.5px; display:none; z-index:12;
+        }
+
+        /* Screen-share letterbox — when the host shares a (landscape) screen, the
+           viewer plays with object-fit:contain, leaving bars. Give the container a
+           subtle black background on mobile so those bars read as clean letterbox. */
+        @media (max-width: 700px) {
+            #live-remote-video-container.screen-share-active,
+            #live-remote-video-container.screen-share-active #live-remote-video {
+                background:#000 !important;
+            }
         }
 
         .live-stream-card {
@@ -3795,47 +3832,47 @@
 
         .post-actions {
             display: flex; align-items: center;
-            gap: 0px;
+            gap: 6px;
             padding: 10px 0 4px;
             border-top: 1px solid rgba(255,255,255,0.06);
         }
         .pact {
-            display: flex; align-items: center; gap: 5px;
-            padding: 6px 10px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            box-sizing: border-box;
+            min-height: 36px;
+            padding: 0 12px; border-radius: 999px;
             font-size: 0.72rem; font-weight: 700;
             cursor: pointer;
-            color: rgba(255,255,255,0.35);
-            background: none; border: none;
+            color: var(--text-muted);
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
             transition: all 0.15s; position: relative;
         }
         .pact svg { flex-shrink: 0; transition: all 0.15s; }
         .pact-label, .pact-mobile-cost { display: none !important; }
 
-        /* Each action has its own permanent colour — visible at rest, brighter on hover */
-        .pact.pact-like  { color: rgba(255,77,109,0.55); }
-        .pact.pact-like:hover  { color: #ff4d6d; background: rgba(255,77,109,0.08); }
-        .pact.pact-like:hover svg path { stroke: #ff4d6d; }
+        /* One deliberate neutral state for every action — no per-icon colour.
+           The gold accent is reserved for an action's ACTIVE state only (e.g. pact-liked). */
+        .pact:hover {
+            color: var(--text-primary);
+            background: var(--bg-input);
+            border-color: var(--border-md);
+        }
 
-        .pact.pact-comment  { color: rgba(167,139,250,0.55); }
-        .pact.pact-comment:hover { color: #a78bfa; background: rgba(167,139,250,0.08); }
+        .pact.pact-liked {
+            color: var(--gold) !important;
+            background: rgba(240,180,41,0.10);
+            border-color: rgba(240,180,41,0.4);
+        }
+        .pact.pact-liked svg path { fill: var(--gold); stroke: var(--gold); }
 
-        .pact.signal  { color: rgba(45,212,191,0.55); }
-        .pact.signal:hover { color: #2dd4bf; background: rgba(45,212,191,0.08); }
-
-        .pact.boost  { color: rgba(240,180,41,0.55); }
-        .pact.boost:hover { color: #f0b429; background: rgba(240,180,41,0.08); }
-
-        .pact.rain  { color: rgba(96,165,250,0.55); }
-        .pact.rain:hover { color: #60a5fa; background: rgba(96,165,250,0.08); }
-
-        .pact.share  { color: rgba(255,255,255,0.3); }
-        .pact.share:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
-
-        .pact.pact-liked { color: #ff4d6d !important; }
-        .pact.pact-liked svg path { fill: #ff4d6d; stroke: #ff4d6d; }
-
-        .pact.views { cursor: default; color: rgba(255,255,255,0.25); margin-left: auto; }
-        .pact.views:hover { background: none; color: rgba(255,255,255,0.25); }
+        .pact.views {
+            cursor: default; color: var(--text-muted);
+            margin-left: auto;
+            background: none; border: none; padding: 0 4px; min-height: auto;
+            font-weight: 600;
+        }
+        .pact.views:hover { background: none; color: var(--text-muted); border: none; }
         .pact-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; }
 
         /* â”€â”€ HUB TOTAL EARNINGS BADGE â”€â”€ */
@@ -3866,12 +3903,6 @@
            ðŸŒ§ï¸ RAIN BUTTON â€” post-level tipping with animation
         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .pact.rain { position: relative; }
-        .pact.rain:hover {
-            color: var(--gold);
-            border-color: rgba(240,180,41,0.4);
-            background: rgba(240,180,41,0.07);
-            box-shadow: 0 0 12px rgba(240,180,41,0.22);
-        }
         .pact.rain > svg, .pact.rain > span { pointer-events: none; }
 
         /* Rain amount picker dropdown */
@@ -3980,12 +4011,6 @@
 
         /* â”€â”€ SHARE BUTTON & DROPDOWN â”€â”€ */
         .pact.share { position: relative; }
-        .pact.share:hover {
-            color: var(--text-primary);
-            border-color: rgba(124,92,191,0.35);
-            background: var(--purple-dim);
-            box-shadow: 0 0 10px rgba(124,92,191,0.18);
-        }
         /* Prevent SVG children eating the click â€” clicks must reach the parent div */
         .pact.share > svg, .pact.share > span { pointer-events: none; }
         .share-dropdown {
@@ -4084,9 +4109,11 @@
             .hero-action-btn[data-cost]::before,
             .comm-follow-btn[data-cost]::before { display: none; }
 
-            /* Compact post action bar on mobile */
-            .post-actions { gap: 1px; padding-top: 8px; }
-            .pact { padding: 5px 7px; gap: 4px; font-size: 0.7rem; }
+            /* Compact post action bar on mobile — same pill chrome, tighter spacing.
+               min-height:36px is inherited from the base .pact rule, not overridden here,
+               so the touch target stays comfortable even as horizontal padding shrinks. */
+            .post-actions { gap: 4px; padding-top: 8px; }
+            .pact { padding: 0 9px; gap: 4px; font-size: 0.7rem; }
         }
 
         /* â”€â”€ CATEGORY FILTER BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -4996,6 +5023,19 @@
                 flex-shrink: 0 !important;
             }
 
+            /* Mobile dashboard Live button — small pulsing dot badge, only shown
+               while at least one stream is genuinely active (see the ambient
+               live-status listener). Not decorative — it reflects real state. */
+            #mdash-live { position: relative !important; }
+            .mdash-live-dot {
+                display: none;
+                position: absolute; top: 4px; right: 14px;
+                width: 7px; height: 7px; border-radius: 50%;
+                background: #e03e3e; box-shadow: 0 0 6px #e03e3e;
+                animation: vaultPulse 1.8s ease infinite;
+            }
+            #mdash-live.live-pulse-active .mdash-live-dot { display: block; }
+
             .mdash-btn {
                 flex: 1 !important;
                 padding: 10px 3px !important;
@@ -5806,11 +5846,13 @@
            transition:all 0.12s on .cbtn, so we just extend those values.
            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-        /* Post Like button â€” pops red on click, springs back */
+        /* Post Like button â€” pops gold on click, springs back.
+           Uses the same accent as the resting liked state (var(--gold)) so the
+           post action bar keeps its single-accent rule: no red/blue mid-interaction flash. */
         .pact.like-active {
-            color: #ff4d6d !important;
-            border-color: rgba(255,77,109,0.35) !important;
-            background: rgba(255,77,109,0.08) !important;
+            color: var(--gold) !important;
+            border-color: rgba(240,180,41,0.4) !important;
+            background: rgba(240,180,41,0.10) !important;
         }
         .pact:active {
             transform: scale(0.88);
@@ -5819,24 +5861,25 @@
         /* Spring-back is handled by the existing transition:all 0.13s when
            :active is released â€” no extra rule needed. */
 
-        /* â”€â”€ STATE 1: Liked â€” solid red fill â”€â”€ */
+        /* â”€â”€ STATE 1: Liked â€” gold accent, matches the post action bar's single active colour â”€â”€ */
         .pact.pact-liked {
-            color: #fff !important;
-            background: linear-gradient(135deg, #ff4d6d, #ff1744) !important;
-            border-color: rgba(255,23,68,0.5) !important;
+            color: var(--gold) !important;
+            background: rgba(240,180,41,0.10) !important;
+            border-color: rgba(240,180,41,0.4) !important;
             font-weight: 700 !important;
         }
         .pact.pact-liked:hover {
-            background: linear-gradient(135deg, #ff6b81, #ff4d6d) !important;
-            border-color: rgba(255,77,109,0.7) !important;
+            background: rgba(240,180,41,0.16) !important;
+            border-color: rgba(240,180,41,0.6) !important;
         }
+        .pact.pact-liked svg path { fill: var(--gold); stroke: var(--gold); }
 
         /* â”€â”€ STATE 2+: Mega Hype â€” pulse glow animation â”€â”€ */
         @keyframes megaHypePulse {
-            0%   { box-shadow: 0 0 0 0 rgba(255,23,68,0.7); transform: scale(1); }
-            40%  { box-shadow: 0 0 0 8px rgba(255,23,68,0.25); transform: scale(1.08); }
-            70%  { box-shadow: 0 0 0 14px rgba(255,23,68,0.08); transform: scale(1.04); }
-            100% { box-shadow: 0 0 0 0 rgba(255,23,68,0); transform: scale(1); }
+            0%   { box-shadow: 0 0 0 0 rgba(240,180,41,0.7); transform: scale(1); }
+            40%  { box-shadow: 0 0 0 8px rgba(240,180,41,0.25); transform: scale(1.08); }
+            70%  { box-shadow: 0 0 0 14px rgba(240,180,41,0.08); transform: scale(1.04); }
+            100% { box-shadow: 0 0 0 0 rgba(240,180,41,0); transform: scale(1); }
         }
         .pact.pact-mega-hype {
             animation: megaHypePulse 0.55s ease-out forwards;
@@ -7520,7 +7563,7 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
     position: relative !important;
     overflow: hidden !important;
     text-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-    animation: live-btn-pulse 2s ease-in-out infinite !important;
+    animation: none !important;
     transition: transform 0.15s, filter 0.15s !important;
 }
 }
@@ -7530,7 +7573,7 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
     top: 0 !important; left: 0 !important;
     width: 40% !important; height: 100% !important;
     background: rgba(255,255,255,0.22) !important;
-    animation: btn-shimmer 2.5s ease-in-out infinite 1s !important;
+    animation: none !important;
     pointer-events: none !important;
 }
 #topnav-live-btn:hover {
@@ -7540,8 +7583,14 @@ html.dark #topnav-live-btn { border-color:rgba(239,68,68,.45) !important; backgr
 #topnav-live-btn span[style*="border-radius:50%"] {
     background: rgba(255,255,255,0.9) !important;
     box-shadow: 0 0 8px rgba(255,255,255,0.9) !important;
-    animation: vaultPulse 1.4s ease infinite !important;
+    animation: none !important;
+    opacity: 0.4 !important;
 }
+/* Only pulse/shimmer/glow the Live nav button while at least one stream is
+   genuinely active — driven by the ambient live-status listener, not decorative. */
+body.someone-live #topnav-live-btn { animation: live-btn-pulse 2s ease-in-out infinite !important; }
+body.someone-live #topnav-live-btn::after { animation: btn-shimmer 2.5s ease-in-out infinite 1s !important; }
+body.someone-live #topnav-live-btn span[style*="border-radius:50%"] { animation: vaultPulse 1.4s ease infinite !important; opacity: 1 !important; }
 
 
 /* ═══ sh-logo-override ══════════════════════════════════════════════════════ */
@@ -10097,7 +10146,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 </div>
             </div>
             <button id="topnav-live-btn" onclick="_lbtnActivate(document.getElementById('nav-live'));switchPage('live',document.getElementById('nav-live'))" title="Go Live" style="align-items:center;gap:7px;padding:8px 16px;border-radius:50px;border:1.5px solid rgba(224,62,62,0.45);background:rgba(224,62,62,0.10);color:#e03e3e;font-family:var(--font-body);font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.18s;flex-shrink:0;white-space:nowrap;display:none;">
-                <span style="width:8px;height:8px;border-radius:50%;background:#e03e3e;box-shadow:0 0 6px #e03e3e;animation:vaultPulse 1.8s ease infinite;flex-shrink:0;"></span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#e03e3e;box-shadow:0 0 6px #e03e3e;flex-shrink:0;"></span>
                 Live Stream
             </button>
             <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light mode">🌙</button>
@@ -10149,6 +10198,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <div class="wdd-option-text">
                                 <span class="wdd-name">XOVA Wallet</span>
                                 <span class="wdd-sub" id="wdd-xova-status">Mobile &amp; Extension</span>
+                            </div>
+                        </button>
+                        <button id="wdd-brave-btn" class="wdd-option" onclick="_connectWithProvider('brave');toggleWalletDropdown()">
+                            <div class="wdd-logo" style="display:flex;align-items:center;justify-content:center;background:#FB542B;font-size:1.05rem;">🦁</div>
+                            <div class="wdd-option-text">
+                                <span class="wdd-name">Brave Wallet</span>
+                                <span class="wdd-sub" id="wdd-brave-status">Browser extension</span>
+                            </div>
+                        </button>
+                        <button id="wdd-rabby-btn" class="wdd-option" onclick="_connectWithProvider('rabby');toggleWalletDropdown()">
+                            <div class="wdd-logo" style="display:flex;align-items:center;justify-content:center;background:#7084FF;font-size:1.05rem;">🐰</div>
+                            <div class="wdd-option-text">
+                                <span class="wdd-name">Rabby Wallet</span>
+                                <span class="wdd-sub" id="wdd-rabby-status">Browser extension</span>
                             </div>
                         </button>
                         <button class="wdd-option" onclick="_connectWithProvider('walletconnect');toggleWalletDropdown()">
@@ -10213,6 +10276,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         </button>
         <button class="mdash-btn"        id="mdash-live"        onclick="showMobileTab('live')">
             <span class="mbtn-icon">🔴</span>Live
+            <span class="mdash-live-dot" id="mdash-live-dot"></span>
         </button>
     </div>
 
@@ -11574,7 +11638,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </div>
                         </div>
                         <div class="comm-member-chip" id="comm-member-chip">⬡ 0 Members</div>
-                        <button class="comm-follow-btn" id="comm-follow-btn" data-cost="Costs 1 ★" onclick="commFollowHub()"><span class="pact-label">+ Follow Hub</span></button>
+                        <button class="comm-follow-btn" id="comm-follow-btn" data-cost="Costs 1 ★" onclick="commFollowHub()">+ Follow Hub</button>
                         <button class="comm-edit-btn" id="comm-edit-btn" style="display:none;" onclick="toggleCommEditPanel()">✎ Edit Hub</button>
                         <button class="hub-sub-btn" id="comm-sub-btn" style="display:none;" onclick="commSubscribeToHub()">★ Subscribe</button>
                     </div>
@@ -11625,10 +11689,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="border-top:1px solid var(--border); padding-top:12px; margin-bottom:12px;">
                             <div style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
                             <div style="display:flex; gap:8px; margin-bottom:8px;">
-                                <button type="button" id="comm-edit-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-edit-pm-followers" class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('followers_only')">Followers Only</button>
+                                <button type="button" id="comm-edit-pm-open"  class="btn"          style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('open')">Everyone</button>
                                 <button type="button" id="comm-edit-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commEditPostingMode('owner_only')">Owner Only</button>
                             </div>
-                            <input type="hidden" id="comm-edit-posting-mode" value="open">
+                            <input type="hidden" id="comm-edit-posting-mode" value="followers_only">
                             <div id="comm-edit-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
                                 Posting fee:
                                 <input type="number" id="comm-edit-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
@@ -11677,15 +11742,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             </div>
                         </div>
                     </div>
-                    <div class="card" id="comm-composer-card" style="border-color:rgba(45,212,191,0.28); margin-bottom:16px;">
-                        <div class="composer-row">
+                    <div class="card comm-composer-collapsed" id="comm-composer-card" style="border-color:rgba(45,212,191,0.28); margin-bottom:16px;">
+                        <div class="composer-row" onclick="_expandCommComposer()" title="Click to compose a signal">
                             <img id="comm-pb-avatar" class="av" src="https://api.dicebear.com/7.x/identicon/svg?seed=Hub">
-                            <div>
+                            <div class="composer-trigger-pill" id="comm-composer-trigger-pill">
+                                <span>What's your signal to this Hub?</span>
+                            </div>
+                            <div style="display:none;">
                                 <div class="composer-name" id="comm-pb-handle">Anonymous_Creator</div>
                                 <div class="composer-sub" id="comm-composer-sub">Broadcasting to the Hub</div>
                             </div>
                         </div>
 
+                        <div class="composer-body">
                         <textarea id="comm-post-text" class="field"
                                   placeholder="What's your signal to this Hub?"
                                   rows="3"
@@ -11737,6 +11806,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             <button id="comm-visibility-btn" class="comm-visibility-btn" onclick="togglePostVisibility()">&#128065; Everyone</button>
                         </div>
                         <button class="btn btn-teal" id="comm-broadcast-btn" onclick="handleCommBroadcast()">◈ Broadcast to Hub</button>
+                        </div>
                     </div>
                     <!-- ── End Community Composer ── -->
 
@@ -11793,10 +11863,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="margin-bottom:12px;">
                             <div style="font-size:0.68rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px; letter-spacing:0.3px;">✏ WHO CAN POST</div>
                             <div style="display:flex; gap:8px; margin-bottom:8px;">
-                                <button type="button" id="comm-create-pm-open"  class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('open')">Everyone</button>
+                                <button type="button" id="comm-create-pm-followers" class="btn btn-teal" style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('followers_only')">Followers Only</button>
+                                <button type="button" id="comm-create-pm-open"  class="btn"          style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('open')">Everyone</button>
                                 <button type="button" id="comm-create-pm-owner" class="btn"          style="flex:1; font-size:0.73rem;" onclick="commCreatePostingMode('owner_only')">Owner Only</button>
                             </div>
-                            <input type="hidden" id="comm-create-posting-mode" value="open">
+                            <input type="hidden" id="comm-create-posting-mode" value="followers_only">
                             <div id="comm-create-fee-row" style="display:flex; align-items:center; gap:8px; font-size:0.73rem; color:var(--text-secondary);">
                                 Posting fee:
                                 <input type="number" id="comm-create-posting-fee" class="field" min="0" max="9999" value="0" style="width:70px; padding:4px 8px; font-size:0.73rem;">
@@ -13818,8 +13889,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (isOpen) { dd.style.display = 'none'; return; }
 
         // Update detected status labels before opening
-        var mmStatus   = document.getElementById('wdd-mm-status');
-        var xovaStatus = document.getElementById('wdd-xova-status');
+        var mmStatus    = document.getElementById('wdd-mm-status');
+        var xovaStatus  = document.getElementById('wdd-xova-status');
+        var braveStatus = document.getElementById('wdd-brave-status');
+        var rabbyStatus = document.getElementById('wdd-rabby-status');
         var hasMetaMask = (window.ethereum && window.ethereum.isMetaMask)
                        || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isMetaMask));
         // XOVA is connectable only if we can actually reach its provider —
@@ -13827,8 +13900,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var hasXova = (window.xova && (window.xova.ethereum || typeof window.xova.request === 'function'))
                    || (window.ethereum && window.ethereum.isXova)
                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isXova));
-        if (mmStatus)   mmStatus.textContent   = hasMetaMask ? '✓ Detected' : 'Not installed';
-        if (xovaStatus) xovaStatus.textContent = hasXova     ? '✓ Detected' : 'Not installed';
+        // Brave Wallet and Rabby both inject a MetaMask-compatible window.ethereum but
+        // set their own flag (isBraveWallet / isRabby) instead of isMetaMask — checking
+        // only isMetaMask previously made both show "Not installed" even when present.
+        var hasBrave = (window.ethereum && window.ethereum.isBraveWallet)
+                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isBraveWallet));
+        var hasRabby = (window.ethereum && window.ethereum.isRabby)
+                    || (window.ethereum && Array.isArray(window.ethereum.providers) && window.ethereum.providers.some(p => p.isRabby));
+        if (mmStatus)    mmStatus.textContent    = hasMetaMask ? '✓ Detected' : 'Not installed';
+        if (xovaStatus)  xovaStatus.textContent  = hasXova     ? '✓ Detected' : 'Not installed';
+        if (braveStatus) braveStatus.textContent = hasBrave    ? '✓ Detected' : 'Not installed';
+        if (rabbyStatus) rabbyStatus.textContent = hasRabby    ? '✓ Detected' : 'Not installed';
 
         // Show correct section
         var connectSection   = document.getElementById('wdd-connect-section');
@@ -13911,8 +13993,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             address.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase() ? '' : 'none';
         // Start notification listener for this wallet
         try { if (typeof subscribeToNotifs === 'function') subscribeToNotifs(address); } catch(_) {}
-        // Update lottery card to show buy buttons now that wallet is connected (fixes mobile WalletConnect bug)
-        try { if (typeof _renderLotteryCard === 'function' && window._lotteryRound) _renderLotteryCard(window._lotteryRound); } catch(_) {}
+        // Update lottery card to show buy buttons now that wallet is connected (fixes mobile WalletConnect bug).
+        // Uses the narrow wallet-gate refresh, NOT a full _renderLotteryCard repaint — see
+        // _refreshLotteryWalletGate for why (stale-pot regression bug, fixed 2026-08-08).
+        try { if (typeof _refreshLotteryWalletGate === 'function') _refreshLotteryWalletGate(); } catch(_) {}
     }
 
     // ── Push Notification registration ────────────────────────────────────────
@@ -14083,9 +14167,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window._silentAutoConnect = _silentAutoConnect;
 
     // ── WalletConnect session restoration on page load ────────────────────────
-    // iOS Safari aggressively unloads background tabs. When user returns from
-    // MetaMask app, Safari may fully reload the page. This function restores
-    // WalletConnect sessions using the SDK's built-in restoration from localStorage.
+    // Mobile browsers (Chrome and Safari, both Android and iOS) routinely reload
+    // the page — pull-to-refresh, or navigating away and back. This function
+    // restores WalletConnect sessions using the SDK's built-in restoration from
+    // localStorage, so the user doesn't have to reconnect from scratch every time.
     async function _restoreWalletConnectSession() {
         try {
             // Check if WalletConnect session exists in localStorage
@@ -14096,6 +14181,21 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             } catch(_) {}
 
             if (!hasWCSession) return;
+
+            // Clear stale PAIRING keys before attempting restore — same fix already
+            // applied to manual reconnect (see _connectWithProvider). A dead/expired
+            // pairing left in localStorage can confuse init() into a bad state that
+            // then blocks the *next* manual "Connect Wallet" click too, forcing the
+            // user to disconnect from MetaMask's own side to unstick it.
+            try {
+                Object.keys(localStorage).forEach(function(k) {
+                    if (k.startsWith('wc@2:core:pairing') ||
+                        k.startsWith('wc@2:universal_provider') ||
+                        k === 'walletconnect') {
+                        localStorage.removeItem(k);
+                    }
+                });
+            } catch(_) {}
 
             // Load WalletConnect SDK
             if (!window._WCEthProviderClass) {
@@ -14124,7 +14224,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Check if session was actually restored (not just initialized)
             if (!wcProv.connected || !wcProv.accounts || wcProv.accounts.length === 0) {
-                // No active session, clean exit
+                // No active session — clean up any leftover session/pairing keys so a
+                // subsequent manual "Connect Wallet" click starts fully fresh instead
+                // of colliding with orphaned WalletConnect state.
+                try {
+                    Object.keys(localStorage).forEach(function(k) {
+                        if (k.startsWith('wc@2:') || k.startsWith('walletconnect')) localStorage.removeItem(k);
+                    });
+                } catch(_) {}
                 return;
             }
 
@@ -14258,6 +14365,34 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
                 const _xovaOnAptm = await _ensureApertumChain(eth);
                 if (!_xovaOnAptm) return;
+            } else if (walletType === 'brave') {
+                // Brave Wallet injects a MetaMask-compatible window.ethereum and sets
+                // isBraveWallet — never isMetaMask. Never fall back to generic
+                // window.ethereum here: if the user has MetaMask installed too and
+                // Brave isn't actually the active/injecting wallet, silently grabbing
+                // whatever's on window.ethereum would connect the wrong wallet under
+                // the "Brave Wallet" banner.
+                if (window.ethereum && window.ethereum.isBraveWallet) {
+                    eth = window.ethereum;
+                } else if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+                    eth = window.ethereum.providers.find(p => p.isBraveWallet) || null;
+                }
+                if (!eth) {
+                    showToast('Brave Wallet not found. Open this page in the Brave browser with Brave Wallet enabled.');
+                    return;
+                }
+            } else if (walletType === 'rabby') {
+                // Same reasoning as Brave above — Rabby sets isRabby, never isMetaMask,
+                // and we never want to silently fall back to a different injected wallet.
+                if (window.ethereum && window.ethereum.isRabby) {
+                    eth = window.ethereum;
+                } else if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+                    eth = window.ethereum.providers.find(p => p.isRabby) || null;
+                }
+                if (!eth) {
+                    showToast('Rabby Wallet not found. Please install the Rabby extension.');
+                    return;
+                }
             } else if (walletType === 'walletconnect') {
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
@@ -14597,7 +14732,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Allow WC session drop listeners to fire now (handshake complete)
             if (walletType === 'walletconnect') window._wcConnecting = false;
-            showToast('Connected via ' + (walletType === 'xova' ? 'XOVA Wallet' : walletType === 'walletconnect' ? 'WalletConnect' : 'MetaMask') + ' ✓');
+            showToast('Connected via ' + ({ xova: 'XOVA Wallet', walletconnect: 'WalletConnect', brave: 'Brave Wallet', rabby: 'Rabby Wallet' }[walletType] || 'MetaMask') + ' ✓');
             // Prompt for push notifications (delayed slightly so connect toast shows first)
             setTimeout(function() { initPushNotifications(userAddress); }, 2500);
         } catch(err) {
@@ -16926,7 +17061,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
 
             logTransaction('settle', safeWithdrawAptm, {
-                from: addr, to: 'wallet',
+                from: addr, to: addr,
                 description: 'Settled ' + totalStarsDisplay.toFixed(2) + '★ → ' + safeWithdrawAptm.toFixed(4) + ' $APTM to wallet'
             });
             showToast('Settled! ' + safeWithdrawAptm.toFixed(4) + ' APTM → wallet ✓');
@@ -18600,7 +18735,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[Withdraw] Firebase zero failed:', e); }
             }
 
-            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: 'wallet', description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
+            logTransaction('settle', actualWithdrawnAptm, { from: addr, to: addr, description: 'Withdrew ' + actualWithdrawnAptm + ' APTM to wallet' });
             updateUI(); updateDrawerUI();
             if (_clickedBtn) { _clickedBtn.disabled = false; _clickedBtn.textContent = 'Withdraw APTM →'; }
             alert('Withdrawal Successful! ' + actualWithdrawnAptm + ' APTM sent to your wallet.');
@@ -19183,13 +19318,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <span class="pact-num" id="cc-${postId}" style="color:var(--purple-lt);"></span>
                     </div>
                     <div class="pact signal" data-cost="Costs 1 ★" onclick="promoteToSignal('${postId}')" title="Promote to Daily Signals (1★ — 24h)">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M1 6c0 0 4-4 11-4s11 4 11 4"/><path d="M1 10c0 0 4-4 11-4s11 4 11 4"/><path d="M5 14c0 0 2.5-2.5 7-2.5s7 2.5 7 2.5"/><circle cx="12" cy="18" r="2" fill="currentColor"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
                     </div>
                     <div class="pact boost" data-cost="Costs 10 ★" onclick="boostPost('${postId}')" title="Boost to top of feed (10★)">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
                     </div>
                     <div class="pact rain" onclick="toggleRainPicker('${postId}',event)" title="Rain Stars on this post">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M18 8h-1.26A8 8 0 1 0 9 18h9a5 5 0 0 0 0-10z"/><path d="M8 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M12 21.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M16 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/></svg>
                         <span class="rain-total-badge" id="rain-total-${postId}" style="${(post.rainTotal||0)>0?'':'display:none'}">★${parseFloat(post.rainTotal||0).toFixed(0)}</span>
                     </div>
                     <div class="pact share" onclick="openShareModal('${postId}',event)" title="Share">
@@ -19418,10 +19553,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(() => { subscribeAnchorCount(); }, 800);
 
             // Silent auto-reconnect if wallet was connected before refresh
-            await _silentAutoConnect();
+            try { await _silentAutoConnect(); } catch(e) { console.warn('[AutoConnect] threw:', e.message); }
 
-            // WalletConnect session restoration (iOS Safari fix)
-            await _restoreWalletConnectSession();
+            // WalletConnect session restoration — mobile browsers reload the page
+            // often (pull-to-refresh, tab switch away and back); this restores an
+            // existing session so the user isn't dropped back to "Connect Wallet".
+            try { await _restoreWalletConnectSession(); } catch(e) { console.warn('[WC Restore] threw:', e.message); }
 
             // Ensure existing connected users get a referral code (backfill)
             if (window.userAddress && typeof _ensureReferralCode === 'function') {
@@ -20488,6 +20625,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window._expandComposer  = _expandComposer;
     window._collapseComposer = _collapseComposer;
 
+    // ── Hub composer collapse / expand — same pattern as the main composer ──
+    function _expandCommComposer() {
+        const card = document.getElementById('comm-composer-card');
+        if (!card) return;
+        card.classList.remove('comm-composer-collapsed');
+        card.removeAttribute('title');
+        const ta = document.getElementById('comm-post-text');
+        if (ta) setTimeout(function() { ta.focus(); }, 60);
+    }
+
+    function _collapseCommComposer() {
+        const card = document.getElementById('comm-composer-card');
+        if (!card) return;
+        card.classList.add('comm-composer-collapsed');
+        card.setAttribute('title', 'Click to write a new broadcast');
+    }
+    window._expandCommComposer  = _expandCommComposer;
+    window._collapseCommComposer = _collapseCommComposer;
+
     async function handleBroadcastWithSignal() {
         const txt = document.getElementById('post-text')?.value.trim();
         if (!txt) return showToast('Write something first!');
@@ -21149,11 +21305,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const isAdmin     = userAddress && userAddress.toLowerCase() === CONFIG.OWNER_ADDRESS.toLowerCase();
         const isHubOwnerD = _activeCommunity && userAddress &&
                             userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
-        const postingMode = (_activeCommunity && _activeCommunity.postingMode) || 'open';
+        const postingMode = (_activeCommunity && _activeCommunity.postingMode) || 'followers_only';
         const postingFee  = parseFloat((_activeCommunity && _activeCommunity.postingFee) || 0);
+        const commIdD     = ((_activeCommunity && _activeCommunity.id) || '').toLowerCase();
+        const isFollowingD = commIdD && _followingSet.has(commIdD);
 
         if (postingMode === 'owner_only' && !isHubOwnerD && !isAdmin) {
             el.textContent = '🔒 Owner posts only — guests cannot broadcast here';
+            el.style.color = 'rgba(239,68,68,0.8)';
+            if (btn) btn.disabled = true;
+            return;
+        }
+        if (postingMode === 'followers_only' && !isHubOwnerD && !isAdmin && !isFollowingD) {
+            el.textContent = '🔒 Follow this Hub to post here';
             el.style.color = 'rgba(239,68,68,0.8)';
             if (btn) btn.disabled = true;
             return;
@@ -21181,25 +21345,29 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     function commCreatePostingMode(mode) {
         var pmInput = document.getElementById('comm-create-posting-mode');
+        var btnFol  = document.getElementById('comm-create-pm-followers');
         var btnOpen = document.getElementById('comm-create-pm-open');
         var btnOwn  = document.getElementById('comm-create-pm-owner');
         var feeRow  = document.getElementById('comm-create-fee-row');
         if (pmInput) pmInput.value = mode;
+        if (btnFol)  btnFol.className  = 'btn' + (mode === 'followers_only' ? ' btn-teal' : '');
         if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
         if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
-        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+        if (feeRow)  feeRow.style.display = (mode === 'open' || mode === 'followers_only') ? 'flex' : 'none';
     }
     window.commCreatePostingMode = commCreatePostingMode;
 
     function commEditPostingMode(mode) {
         var pmInput = document.getElementById('comm-edit-posting-mode');
+        var btnFol  = document.getElementById('comm-edit-pm-followers');
         var btnOpen = document.getElementById('comm-edit-pm-open');
         var btnOwn  = document.getElementById('comm-edit-pm-owner');
         var feeRow  = document.getElementById('comm-edit-fee-row');
         if (pmInput) pmInput.value = mode;
+        if (btnFol)  btnFol.className  = 'btn' + (mode === 'followers_only' ? ' btn-teal' : '');
         if (btnOpen) btnOpen.className = 'btn' + (mode === 'open'       ? ' btn-teal' : '');
         if (btnOwn)  btnOwn.className  = 'btn' + (mode === 'owner_only' ? ' btn-teal' : '');
-        if (feeRow)  feeRow.style.display = mode === 'open' ? 'flex' : 'none';
+        if (feeRow)  feeRow.style.display = (mode === 'open' || mode === 'followers_only') ? 'flex' : 'none';
     }
     window.commEditPostingMode = commEditPostingMode;
 
@@ -21225,8 +21393,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const _isHubOwner = userAddress.toLowerCase() === (_activeCommunity.ownerId || '').toLowerCase();
 
         // ── Posting mode guard ────────────────────────────────────────────────
-        if ((_activeCommunity.postingMode || 'open') === 'owner_only' && !_isHubOwner && !isAdmin) {
+        const _postingMode = _activeCommunity.postingMode || 'followers_only';
+        if (_postingMode === 'owner_only' && !_isHubOwner && !isAdmin) {
             return showToast('Only the Hub owner can post here.');
+        }
+        if (_postingMode === 'followers_only' && !_isHubOwner && !isAdmin &&
+            !_followingSet.has((_activeCommunity.id || '').toLowerCase())) {
+            return showToast('Follow this Hub before posting.');
         }
         let mediaUrl   = '';
         let feeAmount  = CONFIG.FEES.TEXT;
@@ -21385,6 +21558,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (progWrap) progWrap.style.display = 'none';
             if (fPrev)    fPrev.style.display    = 'none';
             commSelectedFile = null;
+            if (typeof _collapseCommComposer === 'function') _collapseCommComposer();
 
             // Reset preview
             ['comm-preview-img','comm-preview-iframe','comm-preview-video'].forEach(function(id) {
@@ -22016,7 +22190,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 rainBtn.className = 'pact rain';
                 rainBtn.title = 'Rain Stars on this post';
                 rainBtn.innerHTML =
-                    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>' +
+                    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M18 8h-1.26A8 8 0 1 0 9 18h9a5 5 0 0 0 0-10z"/><path d="M8 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M12 21.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M16 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/></svg>' +
                     '<span class="rain-total-badge" id="rain-total-' + postId + '" style="' + ((post.rainTotal||0)>0?'':'display:none') + '">\u2605' + parseFloat(post.rainTotal||0).toFixed(0) + '</span>';
 
                 // Build rain picker as a SEPARATE element on body — never nested in the button
@@ -22276,7 +22450,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (_cm) { _cm.value = Array.isArray(_activeCommunity.coMods) ? _activeCommunity.coMods.join('\n') : ''; _cm.style.height = 'auto'; _cm.style.height = Math.min(_cm.scrollHeight, 200) + 'px'; }
             var _pf = document.getElementById('comm-edit-posting-fee');
             if (_pf) _pf.value = String(_activeCommunity.postingFee || 0);
-            commEditPostingMode(_activeCommunity.postingMode || 'open');
+            commEditPostingMode(_activeCommunity.postingMode || 'followers_only');
         }
         panel.style.display = isOpen ? 'none' : 'block';
     }
@@ -22325,7 +22499,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (subPrice > 500) subPrice = 500;
         var coModsRaw   = (document.getElementById('comm-edit-comods')?.value || '');
         var coMods      = coModsRaw.split(/[\n,]+/).map(function(a) { return a.trim().toLowerCase(); }).filter(function(a) { return a.startsWith('0x') && a.length >= 10; });
-        var postingMode = (document.getElementById('comm-edit-posting-mode')?.value || 'open');
+        var postingMode = (document.getElementById('comm-edit-posting-mode')?.value || 'followers_only');
         var postingFee  = parseFloat(document.getElementById('comm-edit-posting-fee')?.value || '0');
         if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
         if (!name) return showToast('Hub name cannot be empty.');
@@ -22914,7 +23088,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         var imgPos      = (document.getElementById('comm-create-img-position')?.value || '50% 50%').trim();
         var website     = _normalizeWebsiteUrl(document.getElementById('comm-website-input')?.value || '');
         var alias       = (document.getElementById('comm-alias-input')?.value || '').trim().toLowerCase();
-        var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'open');
+        var postingMode = (document.getElementById('comm-create-posting-mode')?.value || 'followers_only');
         var postingFee  = parseFloat(document.getElementById('comm-create-posting-fee')?.value || '0');
         if (isNaN(postingFee) || postingFee < 0) postingFee = 0;
 
@@ -23149,6 +23323,30 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
         } catch(_) {}
     }
+
+    // Toggle buy-vs-connect UI on wallet connect/reconnect WITHOUT repainting
+    // pot/tickets/countdown from the cached _lotteryRound object. _lotteryRound
+    // is only kept fresh by the single lottery_rounds onSnapshot listener set up
+    // once in loadLottery() — if that listener missed a beat (tab backgrounded,
+    // laptop sleep, WalletConnect relay hiccup) around the same time a reconnect
+    // fires, a full _renderLotteryCard(window._lotteryRound) here would paint a
+    // stale, lower pot/ticket count over the correct on-screen value until the
+    // listener's next legitimate update. This only touches the wallet-gated bits.
+    function _refreshLotteryWalletGate() {
+        var round = window._lotteryRound;
+        if (!round) return;
+        var buyEl = document.getElementById('lottery-buy-section');
+        var conEl = document.getElementById('lottery-connect-prompt');
+        if (window.userAddress) {
+            if (buyEl) buyEl.style.display = 'block';
+            if (conEl) conEl.style.display = 'none';
+            _loadMyLotteryTickets(round.id, round.totalTickets || 1);
+        } else {
+            if (buyEl) buyEl.style.display = 'none';
+            if (conEl) conEl.style.display = 'block';
+        }
+    }
+    window._refreshLotteryWalletGate = _refreshLotteryWalletGate;
 
     function _updateLotteryCountdown(endsAt) {
         var el   = document.getElementById('lottery-countdown');
@@ -27388,7 +27586,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     function _buildPostShareUrl(postId) {
         try {
-            var fnBase = 'https://socialhubaptm.web.app';
+            var fnBase = 'https://share.socialhubapertum.com';
             var url = new URL(fnBase);
             url.searchParams.set('post', postId);
             // Cache-bust: Telegram caches per URL, so each share gets a unique
@@ -27396,7 +27594,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             url.searchParams.set('t', Date.now());
             return url.toString();
         } catch (_) {
-            return 'https://socialhubaptm.web.app/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
+            return 'https://share.socialhubapertum.com/?post=' + encodeURIComponent(postId) + '&t=' + Date.now();
         }
     }
 
@@ -28984,7 +29182,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             <div class="vr-card-meta">
                 <span>👥 ${r.listenerCount||0}</span>
                 <span>⭐ ${parseFloat(r.starsEarned||0).toFixed(1)}★</span>
-                ${r.handRaisePrice ? `<span>🙋 ${r.handRaisePrice}★ to speak</span>` : ''}
+                <span>🙋 ${r.handRaisePrice > 0 ? r.handRaisePrice + '★ to speak' : 'Free to speak'}</span>
             </div>
             <button class="vr-join-btn" onclick="event.stopPropagation();window.joinVoiceRoom('${roomId}',false)">${lbl}</button>
         </div>`;
@@ -28995,7 +29193,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const titleEl = document.getElementById('vr-new-title');
         const priceEl = document.getElementById('vr-new-price');
         const title   = (titleEl ? titleEl.value.trim() : '') || 'Voice Room';
-        const price   = Math.max(1, parseInt(priceEl ? priceEl.value : '5') || 5);
+        // `|| 5` would silently turn a host-chosen 0 (free stage access) into 5 —
+        // 0 is falsy in JS but is a legitimate configured price here.
+        const _priceParsed = parseInt(priceEl ? priceEl.value : '5', 10);
+        const price   = Number.isFinite(_priceParsed) ? Math.max(0, _priceParsed) : 5;
         closeStartRoomModal();
         showToast('Opening room…');
         try {
@@ -29322,16 +29523,26 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch(e) { console.error('[sendVRChat]', e); }
     };
 
+    // In-flight guards below are UX/defense-in-depth only — the authoritative fix
+    // against duplicate charges is the atomic status-check-and-flip transaction in
+    // the admitSpeakerVR Cloud Function. These just stop a double-click/double-tap
+    // from firing a second HTTP request in the first place.
+    var _vrRaiseHandInFlight = false;
+    var _vrAdmitInFlight     = {}; // keyed by roomId+'_'+reqAddr
+
     window.vrRaiseHand = async function() {
         if (!userAddress || !_vrRoomId || _vrIsHost || _vrIsSpeaker) return;
         if (!window.db || !window.fs) return;
-        const roomSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
-        if (!roomSnap || !roomSnap.exists()) return;
-        const _rdVR  = roomSnap.data();
-        if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
-        const price = parseFloat(_rdVR.handRaisePrice || 1);
-        if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
+        if (_vrRaiseHandInFlight) return;
+        _vrRaiseHandInFlight = true;
         try {
+            const roomSnap = await window.fs.getDoc(window.fs.doc(window.db, VR_COL, _vrRoomId)).catch(() => null);
+            if (!roomSnap || !roomSnap.exists()) return;
+            const _rdVR  = roomSnap.data();
+            if (_rdVR.stageRequestsOpen === false) { showToast('Host has closed stage requests'); return; }
+            // `|| 1` would silently charge 1★ to raise a hand in a room the host set to free (0).
+            const price = Number.isFinite(_rdVR.handRaisePrice) ? _rdVR.handRaisePrice : 1;
+            if (parseFloat(window._liveAvailableStars || 0) < price) { showToast('Not enough Stars'); return; }
             const res  = await fetch(VR_CF_BASE + 'raiseHandVR', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ roomId: _vrRoomId, userAddr: userAddress, userName: userHandle||'Anonymous', userAvatar: userAvatar||'', bidStars: price })
@@ -29342,10 +29553,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const btn = document.getElementById('vr-ctrl-hand');
             if (btn) { btn.style.opacity = '0.45'; btn.style.pointerEvents = 'none'; }
         } catch(e) { showToast('Could not raise hand'); }
+        finally { _vrRaiseHandInFlight = false; }
     };
 
     window.vrAdmitSpeaker = async function(roomId, reqAddr) {
         if (!_vrIsHost || !userAddress) return;
+        const _key = roomId + '_' + reqAddr;
+        if (_vrAdmitInFlight[_key]) return;
+        _vrAdmitInFlight[_key] = true;
         showToast('Admitting…');
         try {
             const res  = await fetch(VR_CF_BASE + 'admitSpeakerVR', {
@@ -29356,6 +29571,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (data.error) { showToast(data.error); return; }
             showToast('Speaker admitted');
         } catch(e) { showToast('Could not admit speaker'); }
+        finally { delete _vrAdmitInFlight[_key]; }
     };
 
     window.vrToggleRequests = async function() {
@@ -29800,6 +30016,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Close old tracks cleanly (not publishing yet, safe to close)
             if (localVideoTrack) { try { localVideoTrack.close(); } catch(_) {} localVideoTrack = null; }
             if (localAudioTrack) { try { localAudioTrack.close(); } catch(_) {} localAudioTrack = null; }
+            await _delayForCameraRelease();
 
             [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
             window._localVideoTrack_ref = localVideoTrack;
@@ -29827,10 +30044,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch(e) {
             console.error('[Live] Preview error:', e);
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera permission denied — please allow camera access in your browser settings.'
-                : 'Camera error: ' + (e.message || String(e));
-            showToast(msg);
+            showToast(_mediaErrorMessage(e));
             const ph = $('live-preview-placeholder');
             if (ph) ph.style.display = '';
         }
@@ -29930,7 +30144,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.openCohostPermissionModal = function(targetSlot) {
         _cohostTargetSlot = targetSlot;
         const modal = document.getElementById('cohost-permission-modal');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+            // #app-shell has position:relative + z-index:5, which traps this modal's
+            // z-index:10002 inside its own stacking context. #cinema-shell (desktop
+            // cinema mode) lives outside #app-shell at z-index:50, so it painted over
+            // this modal even though 10002 > 50. Re-parent to <body> so the modal's
+            // z-index is compared against #cinema-shell directly.
+            if (modal.parentElement !== document.body) document.body.appendChild(modal);
+            modal.style.display = 'flex';
+        }
     };
 
     window.closeCohostPermissionModal = function() {
@@ -29986,6 +30208,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 try { cohostAudioTrack.close(); } catch(_) {}
                 cohostAudioTrack = null;
             }
+            await _delayForCameraRelease();
 
             // Acquire tracks (synchronously in this click handler)
             [cohostAudioTrack, cohostVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
@@ -30045,9 +30268,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (cohostVideoTrack) { try { cohostVideoTrack.close(); } catch(_) {} cohostVideoTrack = null; }
             if (cohostAudioTrack) { try { cohostAudioTrack.close(); } catch(_) {} cohostAudioTrack = null; }
 
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
-                : e.message || 'Failed to access camera/microphone. Please try again.';
+            const msg = _mediaErrorMessage(e);
 
             if (errorDiv) {
                 errorDiv.innerHTML = `
@@ -30078,6 +30299,25 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
         }
     };
+
+    // ── Camera/mic error messaging + retry-race mitigation ─────────────────
+    // NotReadableError ("Could not start video source") happens when the OS/browser
+    // hasn't yet released the camera hardware from a just-closed track — track.stop()/
+    // close() don't synchronously free the hardware, so immediately re-acquiring right
+    // after (as every Enable/Preview/Try Again path used to) can race that release.
+    // Used by enableCameraAndMic, startLocalPreview, and enableCohostMedia.
+    function _mediaErrorMessage(e) {
+        if (e.name === 'NotAllowedError' || e.message?.includes('Permission')) {
+            return 'Camera/microphone permission denied. Please allow access in your browser settings and try again.';
+        }
+        if (e.name === 'NotReadableError') {
+            return 'Camera is in use by another app or browser tab. Close it, then tap Try Again.';
+        }
+        return e.message || 'Failed to access camera/microphone. Please try again.';
+    }
+    function _delayForCameraRelease() {
+        return new Promise(function(resolve) { setTimeout(resolve, 350); });
+    }
 
     // ── Track lifecycle cleanup (prevents leaks) - PORTED FROM USDT ──────────────────────
     async function closeExistingTracks() {
@@ -30174,6 +30414,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Close any existing tracks first
             await closeExistingTracks();
+            await _delayForCameraRelease();
 
             // Acquire tracks
             [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
@@ -30223,9 +30464,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             console.error('[Live] Permission error:', e);
             await closeExistingTracks();
 
-            const msg = e.name === 'NotAllowedError' || e.message?.includes('Permission')
-                ? 'Camera/microphone permission denied. Please allow access in your browser settings and try again.'
-                : e.message || 'Failed to access camera/microphone. Please try again.';
+            const msg = _mediaErrorMessage(e);
 
             showPermissionError(msg, 'enableCameraAndMic');
 
@@ -30601,6 +30840,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         _activeLiveChannel    = null;
         _watchingStreamId     = null;
         window._watchingStreamId = null;
+        // Reset screen-share fit state so it never leaks into the next stream
+        window._hostScreenSharing = false;
+        var _rvcReset = document.getElementById('live-remote-video-container');
+        if (_rvcReset) _rvcReset.classList.remove('screen-share-active');
         cohostRequests        = {};
         peakViewers           = 0;
         starGoalTarget        = 0;
@@ -30791,7 +31034,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                     // Force the inner div to fill so Agora can inject into it
                                     remoteEl.style.width  = container.offsetWidth  + 'px';
                                     remoteEl.style.height = container.offsetHeight + 'px';
-                                    remoteUser.videoTrack.play(remoteEl);
+                                    remoteUser.videoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                                    if (window._forceRemoteVideoFit) setTimeout(window._forceRemoteVideoFit, 120);
                                     // Hide waiting room — _wrTimer only fires once at page load;
                                     // subsequent joins need explicit hide here.
                                     var _wr = document.getElementById('live-waiting-room');
@@ -31067,10 +31311,63 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 var _rv = document.getElementById('live-remote-video');
                 function _applyRvHeight(){var _lm=window._viewerLayoutMode;if(_rv&&(!_lm||_lm==='solo'||_lm==='presentation')){_rv.style.setProperty('position','absolute','important');_rv.style.setProperty('top','0','important');_rv.style.setProperty('left','0','important');_rv.style.setProperty('right','0','important');_rv.style.setProperty('bottom','0','important');_rv.style.setProperty('width','100%','important');_rv.style.setProperty('height','100%','important');}}
                 _applyRvHeight();
-                function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit','cover','important');}});}
+                function _fixAgoraChildren(){if(!_rv||!document.body.classList.contains('is-watching'))return;_rv.querySelectorAll('*').forEach(function(el){el.style.setProperty('position','absolute','important');el.style.setProperty('top','0','important');el.style.setProperty('left','0','important');el.style.setProperty('width','100%','important');el.style.setProperty('height','100%','important');el.style.setProperty('transform','none','important');if(el.tagName==='VIDEO'){el.style.setProperty('object-fit',window._hostVideoFit?window._hostVideoFit():'cover','important');}});}
                 setTimeout(_fixAgoraChildren,500);setTimeout(_fixAgoraChildren,1500);
                 if(_rv&&!window._rvChildObs){window._rvChildObs=new MutationObserver(function(){_fixAgoraChildren();});window._rvChildObs.observe(_rv,{childList:true,subtree:true});}
             }
+
+            // ── Screen-share-aware object-fit ───────────────────────────────────
+            // Host camera = portrait-friendly → viewers use object-fit:cover (fills).
+            // Host screen share = landscape → viewers must use object-fit:contain so the
+            // whole screen is visible. Default-safe: missing/false → 'cover' (unchanged).
+            // Ported from USDT (SocialHubCloud), which already had this fixed.
+            if (typeof window._hostScreenSharing === 'undefined') window._hostScreenSharing = false;
+            window._hostVideoFit = function() { return window._hostScreenSharing ? 'contain' : 'cover'; };
+            // Force the correct object-fit DIRECTLY on the Agora-rendered <video> element.
+            // Agora sets object-fit inline based on the play() `fit` config, but it will NOT
+            // re-apply it when a track is already rendering, and its resize observer can
+            // revert CSS. Setting the inline style with !important beats both.
+            window._forceRemoteVideoFit = function() {
+                try {
+                    var _host = document.getElementById('live-remote-video');
+                    if (!_host) return;
+                    var _v = _host.querySelector('video');
+                    if (_v) _v.style.setProperty('object-fit', window._hostVideoFit(), 'important');
+                } catch (_) {}
+            };
+            // Apply a screen-share state change on the viewer side: flip the global fit
+            // mode, toggle the mobile letterbox background, re-play the host track, and
+            // force the object-fit on the actual video element (Agora won't re-apply it
+            // on replay).
+            window._applyScreenShareFit = function(isSharing) {
+                if (isSharing === window._hostScreenSharing) return; // no change
+                window._hostScreenSharing = isSharing;
+                var _vc = document.getElementById('live-remote-video-container');
+                if (_vc) _vc.classList.toggle('screen-share-active', isSharing);
+                try {
+                    var _rel = document.getElementById('live-remote-video');
+                    if (_rel && window._liveHostVideoTrack) {
+                        window._liveHostVideoTrack.play(_rel, { fit: window._hostVideoFit() });
+                    }
+                } catch (_) {}
+                window._forceRemoteVideoFit();
+                setTimeout(window._forceRemoteVideoFit, 150);
+                setTimeout(window._forceRemoteVideoFit, 400);
+                setTimeout(window._forceRemoteVideoFit, 900);
+            };
+            // Extra safety net beyond the reference (USDT) implementation: a
+            // MutationObserver that re-applies the correct fit whenever Agora swaps the
+            // <video> element, catching any play() call site elsewhere that doesn't pass
+            // an explicit fit option.
+            if (!window._remoteVideoFitObs) {
+                var _rvForFit = document.getElementById('live-remote-video');
+                if (_rvForFit) {
+                    window._remoteVideoFitObs = new MutationObserver(function() { window._forceRemoteVideoFit(); });
+                    window._remoteVideoFitObs.observe(_rvForFit, { childList: true, subtree: true });
+                }
+            }
+            window._applyScreenShareFit(!!(streamData && streamData.screenSharing));
+
             // Scroll to top so the info bar is visible (page may have been scrolled from a previous section)
             try { window.scrollTo({top:0,behavior:'instant'}); } catch(_) { window.scrollTo(0,0); }
             var _pw = document.getElementById('live-player-wrap');
@@ -32750,6 +33047,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 window._applyHostCamOffOverlay(!!d.hostCamOff, d.hostAvatar || '');
             }
 
+            // Host screen-share: switch remote video to object-fit:contain so nothing
+            // gets cropped off-frame (screen content is landscape and information-dense,
+            // unlike a face-cam where cropping to fill the frame is fine).
+            if (!isHosting) _applyScreenShareFit(!!d.screenSharing);
+
             if (!isHosting && d.streamLayout) {
                 _applyViewerLayout(d.streamLayout);
                 // Update Join Stage button availability
@@ -32847,7 +33149,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             setTimeout(function() {
                 var _remEl = document.getElementById('live-remote-video');
                 if (_remEl && window._liveHostVideoTrack) {
-                    try { window._liveHostVideoTrack.play(_remEl, { fit: 'cover' }); } catch(_) {}
+                    try { window._liveHostVideoTrack.play(_remEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); } catch(_) {}
+                    if (window._forceRemoteVideoFit) window._forceRemoteVideoFit();
                 }
                 window._syncAgoraToSlots && window._syncAgoraToSlots(window._currentCoSlots || [], false);
             }, 250);
@@ -33580,7 +33883,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             // In cinema mode live-remote-video is position:absolute so
                             // offsetWidth is 0 — don't gate on size, just play immediately
                             try {
-                                _trackRef.play(remoteEl);
+                                _trackRef.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                                window._liveHostVideoTrack = _trackRef;
                                 console.log('[CoHost] Host video playing in live-remote-video, uid:', ru.uid);
                             } catch(e) {
                                 if (_retry < 20) {
@@ -33666,7 +33970,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         if (ru2.uid === _myViewerUid) continue;
                         if (window._cohostPublishedUid && ru2.uid === window._cohostPublishedUid) continue;
                         if (ru2.videoTrack) {
-                            ru2.videoTrack.play(remoteEl);
+                            ru2.videoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' });
+                            window._liveHostVideoTrack = ru2.videoTrack;
                             console.log('[CoHost] Safety net: re-rendered host video uid:', ru2.uid);
                             break;
                         }
@@ -33722,7 +34027,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     try { await agoraClient.subscribe(_ru, 'audio'); if (_ru.audioTrack) _ru.audioTrack.play(); } catch(_) {}
                     if (_ru.videoTrack && _liveHostUid && _ru.uid === _liveHostUid) {
                         var _re = document.getElementById('live-remote-video');
-                        if (_re) { try { _ru.videoTrack.play(_re); } catch(_) {} }
+                        if (_re) { try { _ru.videoTrack.play(_re, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); window._liveHostVideoTrack = _ru.videoTrack; } catch(_) {} }
                     }
                 }
             } catch(_leaveReSub) { console.warn('[CoHost] leave re-subscribe error:', _leaveReSub); }
@@ -34240,6 +34545,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const lbl = $('screen-share-label'); if (lbl) lbl.style.display = 'none';
 
                 if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🖥</span> Share Screen'; btn.classList.remove('active'); }
+
+                // Signal viewers to revert to object-fit:cover (camera)
+                if (currentStreamId && window.db && window.fs) {
+                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { screenSharing: false }).catch(function(){});
+                }
+
                 showToast('📷 Back to camera.');
             } catch(e) {
                 isScreenSharing = false; // ensure state is consistent
@@ -34291,6 +34602,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                 const lbl = $('screen-share-label'); if (lbl) lbl.style.display = 'block';
                 isScreenSharing = true;
+                // Signal viewers to switch to object-fit:contain so they see the full screen
+                if (currentStreamId && window.db && window.fs) {
+                    window.fs.updateDoc(window.fs.doc(window.db, LIVE_COL, currentStreamId), { screenSharing: true }).catch(function(){});
+                }
                 if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🖥</span> Stop Sharing'; btn.classList.add('active'); }
 
                 // Handle user clicking "Stop" in browser's native share dialog
@@ -35189,6 +35504,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 window._applyHostCamOffOverlay(!!d.hostCamOff, d.hostAvatar || '');
             }
 
+            // Host screen-share: switch remote video to object-fit:contain so nothing
+            // gets cropped off-frame (screen content is landscape and information-dense,
+            // unlike a face-cam where cropping to fill the frame is fine).
+            if (!isHosting) _applyScreenShareFit(!!d.screenSharing);
+
             if (!isHosting && d.streamLayout) {
                 if (typeof _applyViewerLayout === 'function') {
                     _applyViewerLayout(d.streamLayout);
@@ -36024,7 +36344,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var h = col ? col.offsetHeight : 240;
                     remoteEl.style.width  = w + 'px';
                     remoteEl.style.height = h + 'px';
-                    try { window._liveHostVideoTrack.play(remoteEl); } catch(_) {}
+                    try { window._liveHostVideoTrack.play(remoteEl, { fit: window._hostVideoFit ? window._hostVideoFit() : 'cover' }); } catch(_) {}
                 }
             }
         }, 300);
@@ -36291,6 +36611,37 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         await _origEnd.apply(this, arguments);
         exitCinema();
     };
+
+    // Reactively re-enter/exit cinema mode as the viewport crosses the mobile
+    // breakpoint mid-stream. enterCinema()/exitCinema() previously only ran
+    // once — at go-live or at join time — so resizing afterward (e.g. opening
+    // or closing DevTools) left the layout stuck in whichever mode was chosen
+    // at that moment, with no way back short of reloading the page.
+    var CINEMA_BREAKPOINT = 768;
+    var _cinemaResizeTimer = null;
+    function _reconcileCinemaLayout() {
+        var isHosting  = document.body.classList.contains('is-hosting');
+        var isWatching = document.body.classList.contains('is-watching');
+        if (!isHosting && !isWatching) return;
+        var wantCinema = window.innerWidth > CINEMA_BREAKPOINT;
+        if (wantCinema === _inCinema) return;
+        if (wantCinema) {
+            if (isHosting) {
+                enterCinema('live-broadcaster-video-container', 'live-broadcast-chat-feed');
+            } else {
+                var vc = document.getElementById('live-remote-video-container');
+                if (vc && vc.querySelector('video')) {
+                    enterCinema('live-remote-video-container', 'live-chat-feed');
+                }
+            }
+        } else {
+            exitCinema();
+        }
+    }
+    window.addEventListener('resize', function() {
+        clearTimeout(_cinemaResizeTimer);
+        _cinemaResizeTimer = setTimeout(_reconcileCinemaLayout, 200);
+    });
 
     // Wait for all functions to be defined then patch — runs ONCE.
     // _tryPatchDone prevents re-polling after the countdown IIFE has already
@@ -36786,6 +37137,91 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.addEventListener('resize', checkLiveBtn);
 })();
 
+// ── Ambient "someone is live" indicator ───────────────────────────
+// Drives the pulsing red dot/glow on the desktop Live nav button and the
+// small badge dot on the mobile dashboard Live button. Both used to pulse
+// unconditionally (purely decorative) regardless of whether anyone was
+// actually broadcasting — this makes the pulse genuinely reflect whether
+// at least one stream is currently active.
+(function() {
+    function _applyLiveAmbientState(anyLive) {
+        document.body.classList.toggle('someone-live', anyLive);
+        var mBtn = document.getElementById('mdash-live');
+        if (mBtn) mBtn.classList.toggle('live-pulse-active', anyLive);
+    }
+    function _startLiveAmbientListener() {
+        if (!window.db || !window.fs) { setTimeout(_startLiveAmbientListener, 800); return; }
+        try {
+            var col = window.fs.collection(window.db, 'live_streams');
+            var q   = window.fs.query(col, window.fs.where('active', '==', true));
+            window.fs.onSnapshot(q, function(snap) {
+                var now = Date.now();
+                var MAX_AGE = 6 * 60 * 60 * 1000; // matches loadStreamBrowser's zombie-stream cutoff
+                var anyLive = false;
+                snap.forEach(function(d) {
+                    var data = d.data();
+                    var startMs = (data.startedAt && data.startedAt.toMillis && data.startedAt.toMillis()) || (data.startedAt && data.startedAt.seconds * 1000) || 0;
+                    var age = startMs ? now - startMs : 0;
+                    if (age < MAX_AGE) anyLive = true;
+                });
+                _applyLiveAmbientState(anyLive);
+            }, function(err) { console.warn('[LiveAmbient] listener error:', err); });
+        } catch (e) { console.warn('[LiveAmbient] init error:', e); }
+    }
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(_startLiveAmbientListener, 1000); });
+})();
+
+// ── Live stream deep-link resolver ────────────────────────────────
+// Handles ?stream=<id> links — generated by the in-app Share Stream button
+// (copyLiveStreamLink / shareLiveNative / shareLiveToWhatsApp) and by the
+// "went live" notification webhook — by auto-joining that specific stream
+// on load. Previously nothing anywhere read this param, so both the share
+// button and the notification link just opened the homepage. Mirrors the
+// existing ?hub= deep-link resolver's session-guard pattern so normal
+// in-app navigation doesn't re-trigger it.
+(function() {
+    function _waitForStreamDeps(timeoutMs) {
+        return new Promise(function(resolve) {
+            var waited = 0;
+            var iv = setInterval(function() {
+                waited += 100;
+                var ready = window.db && window.fs && typeof window.joinLiveStream === 'function';
+                if (ready || waited >= timeoutMs) {
+                    clearInterval(iv);
+                    resolve(!!ready);
+                }
+            }, 100);
+        });
+    }
+    async function resolveStreamDeepLink() {
+        var params   = new URLSearchParams(window.location.search);
+        var streamId = params.get('stream');
+        if (!streamId) return;
+
+        var sessionKey = 'stream_deeplink_resolved_' + streamId;
+        try {
+            if (sessionStorage.getItem(sessionKey)) {
+                console.log('[deepLink] stream already resolved this session — skipping');
+                return;
+            }
+            sessionStorage.setItem(sessionKey, '1');
+        } catch (_) {}
+
+        var ready = await _waitForStreamDeps(6000);
+        if (!ready) { console.warn('[deepLink] Firebase/joinLiveStream not ready for stream deep-link'); return; }
+
+        try {
+            if (typeof window.switchPage === 'function') {
+                window.switchPage('live', document.getElementById('nav-live'));
+            }
+            window.joinLiveStream(streamId);
+        } catch (e) {
+            console.warn('[deepLink] stream resolve error:', e.message);
+        }
+    }
+    window.addEventListener('load', function() { setTimeout(resolveStreamDeepLink, 900); });
+})();
+
 // ── VIEWER COUNT BUMP ANIMATION ──────────────────────────────────
 (function() {
     function animateBump(el) {
@@ -36840,8 +37276,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         btn.id = 'cinema-shortcut-btn';
         btn.title = 'Cinema Mode';
         btn.innerHTML = '⛶ Cinema';
+        // top:58px (not 10px) — #live-stream-info-bar sits at top:0 with the share/
+        // leaderboard buttons in its top-right corner at z-index:18; at top:10px this
+        // button (z-index:25) painted directly over them on hover, blocking the share
+        // button. Dropping below the info bar's ~52px height clears the overlap.
         btn.style.cssText = [
-            'position:absolute', 'top:10px', 'right:10px', 'z-index:25',
+            'position:absolute', 'top:58px', 'right:10px', 'z-index:25',
             'background:rgba(0,0,0,0.55)', 'backdrop-filter:blur(8px)',
             'border:1px solid rgba(255,255,255,0.18)', 'color:rgba(255,255,255,0.85)',
             'border-radius:20px', 'padding:4px 12px', 'font-size:0.62rem',
@@ -38052,7 +38492,7 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">Room title</div>
         <input id="vr-new-title" class="field" placeholder="What are we talking about?" style="margin-bottom:14px;margin-top:0;" maxlength="80">
         <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">🙋 Hand raise price (★ to speak)</div>
-        <input id="vr-new-price" class="field" type="number" value="5" min="1" max="500" style="margin-bottom:18px;margin-top:0;">
+        <input id="vr-new-price" class="field" type="number" value="5" min="0" max="500" style="margin-bottom:18px;margin-top:0;">
         <div style="display:flex;gap:8px;">
             <button class="btn btn-teal" style="flex:1;" onclick="startVoiceRoom()">Open Room</button>
             <button class="btn btn-outline" style="flex:1;" onclick="closeStartRoomModal()">Cancel</button>
@@ -38638,21 +39078,8 @@ window._closeViewerGiftDrawer = function(){
 };
 
 // ── Detect stream start/stop via polling ──────────────────
-var _tbWasMobile = false;
 setInterval(function(){
     var isHosting = document.body.classList.contains('is-hosting');
-    if(window.innerWidth <= 700){
-        var _tb = document.querySelector('.studio-toolbar');
-        if(_tb){
-            if(isHosting && _tb.style.display !== 'none'){
-                _tb.style.setProperty('display','none','important');
-                _tbWasMobile = true;
-            } else if(!isHosting && _tbWasMobile){
-                _tb.style.display = '';
-                _tbWasMobile = false;
-            }
-        }
-    }
     var hSid = window._currentStreamId  || null;
     var vSid = window._watchingStreamId || null;
 
