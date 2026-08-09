@@ -1635,6 +1635,12 @@
             padding:8px 10px;
         }
         #cinema-chat-col .live-chat-head { display:none !important; }
+        /* Reply bar (#live-reply-bar, shown via inline style.display when
+           _setReplyTo() runs) and the input row must never be squeezed by
+           the feed's flex-grow above — without this they were reported
+           invisible on desktop even though _replyTarget was set correctly. */
+        #cinema-chat-col #live-reply-bar,
+        #cinema-chat-col .live-chat-input-row { flex-shrink:0 !important; }
         /* Mobile: show a compact chat feed inside cinema-chat-col instead of floating overlay */
         @media(max-width:700px){
             #cinema-chat-col .live-chat-feed,
@@ -8926,6 +8932,8 @@ html body #profile-hero .hero-action-btn.btn-follow {
     overflow-y:auto!important; padding:8px 10px!important;
 }
 #cinema-chat-col .live-chat-head { display:none!important; }
+#cinema-chat-col #live-reply-bar,
+#cinema-chat-col .live-chat-input-row { flex-shrink:0!important; }
 #cinema-chat-col .live-chat-input-row { background:rgba(10,8,20,0.95)!important; border-top:1px solid rgba(100,65,210,0.2)!important; padding:10px!important; }
 #cinema-chat-col .live-chat-input-row .field { background:rgba(255,255,255,0.05)!important; border:1px solid rgba(110,75,210,0.25)!important; color:rgba(210,200,245,0.9)!important; border-radius:10px!important; }
 #cinema-chat-col .live-chat-input-row .field::placeholder { color:rgba(135,105,205,0.45)!important; }
