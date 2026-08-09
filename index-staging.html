@@ -39510,6 +39510,43 @@ window._battleEndOnStreamLeave = async function(){
 };
 
 // ── Split screen: join opponent's Agora channel ───────────
+// Readiness loop for the opponent PiP: the element is often freshly created
+// (zero dimensions) the instant the video track arrives. Was a single blind
+// 300ms retry with no re-check — on a slower device/layout that one retry
+// could still land on a zero-size element and never actually render.
+// Re-checks dimensions on every attempt; after ~3s gives up and plays anyway
+// rather than silently leaving the PiP stuck on the connecting placeholder.
+function _playBattleOpponentVideo(videoTrack, attempt){
+    attempt = attempt || 0;
+    var pip = document.getElementById('battle-opponent-pip');
+    if (!pip) return;
+    pip.innerHTML = '<div class="bop-label">⚔️ Opponent</div>';
+    var w = pip.offsetWidth, h = pip.offsetHeight;
+    if (w > 0 && h > 0) {
+        videoTrack.play(pip, { fit: 'cover' });
+        return;
+    }
+    if (attempt >= 10) {
+        console.warn('[Battle] opponent pip never reported real dimensions after 3s, playing anyway');
+        videoTrack.play(pip, { fit: 'cover' });
+        return;
+    }
+    setTimeout(function(){ _playBattleOpponentVideo(videoTrack, attempt + 1); }, 300);
+}
+
+// Shared by the user-published event AND the post-join remoteUsers fallback
+// below, so both paths subscribe/play identically.
+async function _handleBattleOpponentPublish(remoteUser, mediaType){
+    try{
+        await _bViewerClient.subscribe(remoteUser,mediaType);
+        if(mediaType==='video'){
+            _bOpponentTrack=remoteUser.videoTrack;
+            _playBattleOpponentVideo(remoteUser.videoTrack);
+        }
+        if(mediaType==='audio'&&remoteUser.audioTrack) remoteUser.audioTrack.play();
+    }catch(e){ console.error('[Battle] subscribe error:',e); }
+}
+
 async function _joinBattleOpponent(oppSid){
     console.log('[Battle] _joinBattleOpponent oppSid=',oppSid,'AgoraRTC=',!!window.AgoraRTC,'client=',!!_bViewerClient);
     if(_bViewerClient||!window.AgoraRTC) return;
@@ -39524,27 +39561,8 @@ async function _joinBattleOpponent(oppSid){
         _bViewerClient=window.AgoraRTC.createClient({mode:'live',codec:'h264'});
         await _bViewerClient.setClientRole('audience',{level:1});
 
-        _bViewerClient.on('user-published',async function(remoteUser,mediaType){
-            try{
-                await _bViewerClient.subscribe(remoteUser,mediaType);
-                if(mediaType==='video'){
-                    _bOpponentTrack=remoteUser.videoTrack;
-                    var pip=document.getElementById('battle-opponent-pip');
-                    if(pip){
-                        pip.innerHTML='<div class="bop-label">⚔️ Opponent</div>';
-                        var w=pip.offsetWidth, h=pip.offsetHeight;
-                        if(w>0&&h>0){
-                            remoteUser.videoTrack.play(pip, { fit: 'cover' });
-                        } else {
-                            setTimeout(function(){
-                                var p2=document.getElementById('battle-opponent-pip');
-                                if(p2) remoteUser.videoTrack.play(p2, { fit: 'cover' });
-                            },300);
-                        }
-                    }
-                }
-                if(mediaType==='audio'&&remoteUser.audioTrack) remoteUser.audioTrack.play();
-            }catch(e){ console.error('[Battle] subscribe error:',e); }
+        _bViewerClient.on('user-published',function(remoteUser,mediaType){
+            _handleBattleOpponentPublish(remoteUser,mediaType);
         });
         _bViewerClient.on('user-left',function(){
             var pip=document.getElementById('battle-opponent-pip');
@@ -39562,6 +39580,26 @@ async function _joinBattleOpponent(oppSid){
 
         await _bViewerClient.join('e32b02aab43a4762b385498535b0f51d',oppChannel,tokenData.token,tokenData.uid||null);
         _showBattleSplit();
+
+        // Fallback: user-published isn't guaranteed to fire for a user who was
+        // already publishing before we joined/attached the listener — same
+        // class of gap the co-host promotion code already works around
+        // elsewhere in this file ("Agora internally unsubscribes... and does
+        // NOT re-fire user-published"). Check remoteUsers directly for
+        // anything the event missed. Guarded on videoTrack/audioTrack already
+        // being set, so this can't double-subscribe against the event handler
+        // whichever one wins the race.
+        setTimeout(async function(){
+            if(!_bViewerClient) return;
+            try{
+                var _existing=_bViewerClient.remoteUsers||[];
+                for(var _ei=0;_ei<_existing.length;_ei++){
+                    var _eu=_existing[_ei];
+                    if(_eu.hasVideo && !_eu.videoTrack) await _handleBattleOpponentPublish(_eu,'video');
+                    if(_eu.hasAudio && !_eu.audioTrack) await _handleBattleOpponentPublish(_eu,'audio');
+                }
+            }catch(_fallbackErr){ console.warn('[Battle] remoteUsers fallback error:',_fallbackErr); }
+        }, 300);
     }catch(e){
         console.error('[Battle] _joinBattleOpponent failed:',e.message,e);
         if(typeof showToast==='function') showToast('⚠️ Battle stream error: '+e.message);
