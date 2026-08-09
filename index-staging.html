@@ -8901,19 +8901,28 @@ html body #profile-hero .hero-action-btn.btn-follow {
     border-left:1px solid rgba(110,65,230,0.16)!important;
 }
 #cinema-controls {
-    order:2!important; flex:1 1 auto!important; min-height:0!important;
-    max-height:none!important; overflow-y:auto!important; overflow-x:hidden!important;
+    order:2!important; flex:0 0 auto!important; min-height:44px!important;
+    max-height:55%!important; overflow-y:auto!important; overflow-x:hidden!important;
     scrollbar-width:thin!important; scrollbar-color:rgba(120,80,220,0.3) transparent!important;
     display:flex!important; flex-direction:column!important;
     background:radial-gradient(ellipse 120% 60% at 50% 110%,rgba(80,20,200,0.14) 0%,transparent 70%),linear-gradient(180deg,#0b0918,#080614)!important;
     border-top:1px solid rgba(120,70,240,0.2)!important;
 }
-#cinema-controls-panels { flex:1!important; overflow-y:visible!important; max-height:none!important; padding:4px 8px 8px!important; }
+#cinema-controls-panels { flex:0 0 auto!important; overflow-y:visible!important; max-height:none!important; padding:4px 8px 8px!important; }
 #cinema-controls-panels > * { margin-bottom:8px!important; }
 #cinema-end-btn-wrap { order:4!important; flex-shrink:0!important; background:linear-gradient(180deg,#090714,#060510)!important; border-top:1px solid rgba(175,25,25,0.22)!important; padding:8px 10px!important; }
-#cinema-chat-col .live-chat-card { order:3!important; flex-shrink:0!important; flex:0 0 auto!important; border-radius:0!important; border:none!important; border-top:1px solid rgba(110,65,230,0.18)!important; background:transparent!important; }
+/* Chat card is now the primary growing/scrolling element in the column —
+   was flex:0 0 auto (content-sized, i.e. effectively just the input row
+   since the feed below was display:none), which is why the feed rule right
+   below this used to hide it entirely and the whole column read as empty
+   space above the input bar. */
+#cinema-chat-col .live-chat-card { order:3!important; flex:1 1 auto!important; min-height:0!important; border-radius:0!important; border:none!important; border-top:1px solid rgba(110,65,230,0.18)!important; background:transparent!important; }
 #cinema-chat-col .live-chat-feed,
-#cinema-chat-col #live-broadcast-chat-feed { display:none!important; }
+#cinema-chat-col #live-broadcast-chat-feed {
+    display:flex!important; flex-direction:column!important;
+    flex:1 1 auto!important; min-height:0!important; max-height:none!important;
+    overflow-y:auto!important; padding:8px 10px!important;
+}
 #cinema-chat-col .live-chat-head { display:none!important; }
 #cinema-chat-col .live-chat-input-row { background:rgba(10,8,20,0.95)!important; border-top:1px solid rgba(100,65,210,0.2)!important; padding:10px!important; }
 #cinema-chat-col .live-chat-input-row .field { background:rgba(255,255,255,0.05)!important; border:1px solid rgba(110,75,210,0.25)!important; color:rgba(210,200,245,0.9)!important; border-radius:10px!important; }
