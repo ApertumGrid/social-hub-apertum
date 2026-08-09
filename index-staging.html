@@ -2057,15 +2057,35 @@
         /* â”€â”€ Gift System CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         /* ── TikTok viewer layout — applied when body has class is-watching ── */
         body.is-watching #mobile-dashboard { display: none !important; }
-        /* Viewer icon strip — shown on mobile only when watching */
+        /* Viewer icon strip — shown on every screen size when watching, mirroring
+           #host-icon-strip's "show on all screens when hosting" pattern. Its
+           gift drawer (#viewer-gift-drawer) covers gifts + reactions, and it
+           now includes Raise Hand, so nothing in .live-action-row/
+           #viewer-gift-panel/#viewer-reactions-bar is left uncovered once
+           those are hidden below. */
         #viewer-icon-strip{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:10px;z-index:30}
+        body.is-watching #viewer-icon-strip{display:flex;}
+        /* Full labeled controls the icon strip replaces — hidden unconditionally
+           (not width-gated) and matched against both DOM positions, since
+           enterCinema()/exitCinema() relocate .live-action-row/#viewer-gift-panel
+           between #live-player-wrap and #cinema-controls-btns/#cinema-controls-panels
+           on desktop. ID-anchored selectors are required here, not bare classes —
+           several existing cinema-mode styling rules for these elements carry
+           tied or higher specificity (e.g. the "last in the stylesheet" block
+           lower in this file), so a plain .live-action-row{display:none} would
+           silently lose to them. */
+        body.is-watching #live-player-wrap .live-action-row,
+        body.is-watching #cinema-controls-btns .live-action-row,
+        body.is-watching #live-player-wrap #viewer-gift-panel,
+        body.is-watching #cinema-controls-panels #viewer-gift-panel,
+        body.is-watching #viewer-reactions-bar {
+            display: none !important;
+        }
         @media(max-width:900px){
             /* Hide page heading — info bar replaces it */
             body.is-watching #page-live>.page-heading,
             body.is-hosting  #page-live>.page-heading{display:none!important;}
             body.is-watching.is-cohost #cohost-stage-wrap{display:none!important;}
-            /* Show viewer icon strip */
-            body.is-watching #viewer-icon-strip{display:flex;}
         }
         @media(max-width:900px) {
             body.is-watching #topnav{display:none!important;}
@@ -12052,6 +12072,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                 <button class="his-btn" id="vis-sound-btn" onclick="_toggleViewerSound()" title="Sound">🔊</button>
                                 <button class="his-btn" onclick="_openViewerGiftDrawer()" title="Send a Gift">🎁</button>
                                 <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
+                                <button class="his-btn" id="vis-hand-btn" onclick="toggleRaiseHand()" title="Raise Hand">✋</button>
                                 <button class="his-btn" id="vis-stage-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
                                 <button class="his-btn" onclick="leaveLiveStream()" title="Leave" style="background:rgba(220,38,38,.35);border-color:rgba(220,38,38,.6);">✕</button>
                             </div>
@@ -39088,21 +39109,6 @@ setInterval(function(){
         if(isWatching) document.body.classList.add('is-watching');
         else document.body.classList.remove('is-watching');
     }
-    if(window.innerWidth <= 700){
-        var _vAR = document.querySelector('#live-player-wrap .live-action-row');
-        var _vRB = document.getElementById('viewer-reactions-bar');
-        var _vGP = document.getElementById('viewer-gift-panel');
-        if(isWatching){
-            if(_vAR && _vAR.style.display !== 'none') _vAR.style.setProperty('display','none','important');
-            if(_vRB && _vRB.style.display !== 'none') _vRB.style.setProperty('display','none','important');
-            if(_vGP && _vGP.style.display !== 'none') _vGP.style.setProperty('display','none','important');
-        } else {
-            if(_vAR) _vAR.style.display = '';
-            if(_vRB) _vRB.style.display = '';
-            if(_vGP) _vGP.style.display = '';
-        }
-    }
-
     if(isHosting && hSid && hSid !== _lastHostSid){
         _lastHostSid = hSid; _lastViewSid = null;
         _startReqListener(hSid, 'host');
