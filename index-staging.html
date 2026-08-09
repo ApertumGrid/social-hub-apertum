@@ -36315,10 +36315,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     var _videoPlaceholder = document.createComment('cinema-video-placeholder');
     var _chatPlaceholder  = document.createComment('cinema-chat-placeholder');
     var _inCinema = false;
+    // Which container enterCinema() actually moved — exitCinema() must restore
+    // this exact one, not guess based on which element merely exists in the
+    // DOM (both #live-broadcaster-video-container and #live-remote-video-container
+    // are always present, so an existence-based guess is wrong half the time).
+    var _activeVideoContainerId = null;
 
     function enterCinema(videoContainerId, chatFeedId) {
         if (_inCinema) return;
         _inCinema = true;
+        _activeVideoContainerId = videoContainerId;
 
         var videoEl = document.getElementById(videoContainerId);
         var feedEl  = document.getElementById(chatFeedId);
@@ -36437,8 +36443,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!_inCinema) return;
         _inCinema = false;
 
-        var videoEl        = document.getElementById('live-broadcaster-video-container') ||
-                             document.getElementById('live-remote-video-container');
+        // Was: document.getElementById('live-broadcaster-video-container') ||
+        //      document.getElementById('live-remote-video-container')
+        // Both containers always exist in the DOM (static markup, just hidden
+        // when unused), so that existence-based guess always resolved to the
+        // broadcaster's container — even when tearing down a VIEWER session,
+        // silently reinserting the wrong element and leaving the real moved
+        // element stranded. Use the ID enterCinema() actually moved instead.
+        var videoEl        = document.getElementById(_activeVideoContainerId);
+        _activeVideoContainerId = null;
         var cinemaVideoCol = document.getElementById('cinema-video-col');
         var cinemaChatCol  = document.getElementById('cinema-chat-col');
         var controlsBar    = document.getElementById('cinema-controls');
@@ -36528,6 +36541,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     var _patchedStart = async function() {
+        // Defensive teardown: startLiveStream() previously assumed a prior
+        // viewer session had already been fully torn down by leaveLiveStream()
+        // — not guaranteed (e.g. reaching Go Live without an explicit Leave).
+        // Leftover viewer state (is-watching class, handRaised, the swept
+        // .live-action-row/#viewer-gift-panel still sitting in #cinema-shell)
+        // would otherwise persist alongside the new host UI. Tear both the
+        // viewer session and any stuck cinema-mode DOM/flag down first.
+        if (document.body.classList.contains('is-watching') && typeof window.leaveLiveStream === 'function') {
+            await window.leaveLiveStream();
+        }
+        if (_inCinema) {
+            exitCinema();
+        }
         if (window.innerWidth <= 768) {
             await _origStart.apply(this, arguments);
             // Go Live was blocked (e.g. missing title) — isHosting never got set, nothing to lay out
