@@ -1091,7 +1091,6 @@
                 max-height:none !important;
                 overflow-y:visible !important;
             }
-            #live-player-wrap.pres-mode #cohost-stage-wrap           { grid-column:1; grid-row:1; order:unset !important; }
             #live-player-wrap.pres-mode #live-remote-video-container  { grid-column:1; grid-row:1; order:unset !important; }
             #live-player-wrap.pres-mode .live-action-row              { grid-column:1; grid-row:2; order:unset !important; }
             #live-player-wrap.pres-mode #viewer-poll-card,
@@ -2065,6 +2064,15 @@
            those are hidden below. */
         #viewer-icon-strip{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:10px;z-index:30}
         body.is-watching #viewer-icon-strip{display:flex;}
+        /* A co-host is still is-watching, so the icon strip shows for them too —
+           but Join Stage (already on stage) and Raise Hand (meaningless once
+           admitted) don't apply, and #vis-leave-stage-btn should take Join
+           Stage's place instead. Driven purely by body.is-cohost, which is
+           only ever toggled in _promoteToCoHost()/leaveCoHost() — no separate
+           JS sync needed here. */
+        body.is-cohost #vis-hand-btn,
+        body.is-cohost #vis-stage-btn { display: none !important; }
+        body.is-cohost #vis-leave-stage-btn { display: flex !important; }
         /* Full labeled controls the icon strip replaces — hidden unconditionally
            (not width-gated) and matched against both DOM positions, since
            enterCinema()/exitCinema() relocate .live-action-row/#viewer-gift-panel
@@ -2085,7 +2093,6 @@
             /* Hide page heading — info bar replaces it */
             body.is-watching #page-live>.page-heading,
             body.is-hosting  #page-live>.page-heading{display:none!important;}
-            body.is-watching.is-cohost #cohost-stage-wrap{display:none!important;}
         }
         @media(max-width:900px) {
             body.is-watching #topnav{display:none!important;}
@@ -2515,13 +2522,6 @@
         }
         #viewer-cohost-btn:hover { background:var(--purple-dim); }
         #viewer-cohost-btn.active { background:var(--purple); color:#fff; }
-        /* Co-host stage area (viewer promoted) */
-        #cohost-stage-wrap {
-            display:none; margin-bottom:10px;
-            background:#0d1117; border-radius:var(--radius-md);
-            overflow:hidden; position:relative; height:180px;
-        }
-        #cohost-local-video { width:100%; height:100%; }
 
         /* â”€â”€ PAID ADMISSION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .paid-badge {
@@ -8862,7 +8862,6 @@ html body #profile-hero .hero-action-btn.btn-follow {
     max-height:calc(100vh - 60px)!important;
 }
 /* Video stays first */
-#cohost-stage-wrap           { order:1!important; }
 #live-remote-video-container { order:2!important; }
 
 /* Action row (hype/hand/stage/leave) â†’ right below video */
@@ -11977,17 +11976,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <div id="live-watch-panel">
                     <!-- Active stream player -->
                     <div id="live-player-wrap" style="display:none;">
-                        <!-- Co-host stage (shown when viewer is promoted to co-host) -->
-                        <div id="cohost-stage-wrap">
-                            <div id="cohost-local-video"></div>
-                            <div style="position:absolute;top:8px;left:12px;font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:50px;">🎤 YOU — ON STAGE</div>
-                            <button onclick="leaveCoHost()" style="position:absolute;top:8px;right:10px;background:rgba(224,62,62,0.85);border:none;color:#fff;border-radius:50px;padding:3px 10px;font-size:0.65rem;font-weight:700;cursor:pointer;">Leave Stage</button>
-                            <!-- Viewer mic/cam controls while on stage -->
-                            <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;">
-                                <button onclick="toggleCoHostMic()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:600;cursor:pointer;">🔇 Mute</button>
-                                <button onclick="toggleCoHostCam()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:600;cursor:pointer;">📷 Cam Off</button>
-                            </div>
-                        </div>
                         <!-- Stream info bar — outside the video box -->
                         <div id="live-stream-info-bar">
                             <div class="lsib-left" onclick="window._openCreatorProfile()" style="cursor:pointer;">
@@ -12074,6 +12062,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                 <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
                                 <button class="his-btn" id="vis-hand-btn" onclick="toggleRaiseHand()" title="Raise Hand">✋</button>
                                 <button class="his-btn" id="vis-stage-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="his-btn" id="vis-leave-stage-btn" onclick="leaveCoHost()" title="Leave Stage" style="display:none;">🚪</button>
                                 <button class="his-btn" onclick="leaveLiveStream()" title="Leave" style="background:rgba(220,38,38,.35);border-color:rgba(220,38,38,.6);">✕</button>
                             </div>
 
@@ -31631,10 +31620,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (el && el.parentNode) el.parentNode.removeChild(el);
         });
 
-        // Hide co-host stage
-        const stageWrap = $('cohost-stage-wrap');
-        if (stageWrap) stageWrap.style.display = 'none';
-
         // Reset co-host request button
         const cohostBtn = $('viewer-cohost-btn');
         if (cohostBtn) { cohostBtn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; cohostBtn.style.opacity = ''; cohostBtn.style.pointerEvents = ''; cohostBtn.classList.remove('active'); }
@@ -34000,9 +33985,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[CoHost] safety net error:', e); }
             }, 400);
 
-            var stageWrap = $('cohost-stage-wrap');
-            if (stageWrap) stageWrap.style.display = 'block';
-
             var btn = $('viewer-cohost-btn');
             if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Leave Stage</span>'; btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.classList.add('active'); }
             isCoHost = true;
@@ -34056,10 +34038,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Remove self-view pip
             var selfPip = document.getElementById('cohost-self-pip');
             if (selfPip && selfPip.parentNode) selfPip.parentNode.removeChild(selfPip);
-
-            // Hide cohost-stage-wrap and reset button labels
-            var stageWrap = $('cohost-stage-wrap');
-            if (stageWrap) stageWrap.style.display = 'none';
 
             // Reset mic/cam state flags and button labels for next session
             _cohostMicMuted = false;
@@ -36609,6 +36587,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     var _patchedJoin = async function() {
+        // Defensive teardown, reverse direction of the fix in _patchedStart:
+        // stale host state (is-hosting class, cinema mode's DOM/flag) could
+        // otherwise persist into a new viewer/co-host session if a previous
+        // broadcast wasn't fully torn down. Deliberately does NOT call
+        // endLiveStream() — it shows a blocking confirm() dialog and writes
+        // to Firestore, both wrong for a silent safety net here. Reaching
+        // this function while genuinely still hosting isn't reachable through
+        // the UI anyway (cinema mode hides #live-tabs for hosts too), so a
+        // stuck is-hosting class this far along is a leftover flag, not an
+        // actual live stream — safe to clear client-side only.
+        if (document.body.classList.contains('is-hosting')) {
+            document.body.classList.remove('is-hosting');
+        }
+        if (_inCinema) {
+            exitCinema();
+        }
         await _origJoin.apply(this, arguments);
         // Mobile (≤768px): TikTok is-watching CSS handles the viewer fullscreen — skip cinema
         if (window.innerWidth <= 768) return;
@@ -38933,9 +38927,6 @@ body.has-battle .live-stream-overlay-top{display:none!important}
 .bbar-score.sr{text-shadow:0 0 16px rgba(125,211,252,0.9),0 0 30px rgba(14,165,233,0.45)!important;}
 .bcell.bl{background:linear-gradient(90deg,#5b21b6,#a78bfa)!important;box-shadow:0 0 8px rgba(124,92,191,0.75),0 0 18px rgba(124,92,191,0.3)!important;}
 .bcell.br{background:linear-gradient(90deg,#0284c7,#38bdf8)!important;box-shadow:0 0 8px rgba(14,165,233,0.75),0 0 18px rgba(14,165,233,0.3)!important;}
-/* Co-host stage join animation */
-@keyframes stage-join-in{0%{opacity:0;transform:scale(0.72) translateY(18px);}55%{opacity:1;transform:scale(1.05) translateY(-3px);}100%{opacity:1;transform:scale(1) translateY(0);}}
-#cohost-stage-wrap{animation:stage-join-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
 </style>
 
 <!-- Host more drawer (mobile icon strip) -->
