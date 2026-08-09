@@ -2072,6 +2072,12 @@
            JS sync needed here. */
         body.is-cohost #vis-hand-btn,
         body.is-cohost #vis-stage-btn { display: none !important; }
+        /* .his-btn{display:flex!important} (class rule, further down the sheet)
+           beats this element's inline style="display:none" — inline styles
+           without !important always lose to a stylesheet !important rule.
+           This explicit ID-anchored default-hide rule is required so the
+           door icon stays hidden until body.is-cohost is actually active. */
+        #vis-leave-stage-btn { display: none !important; }
         body.is-cohost #vis-leave-stage-btn { display: flex !important; }
         /* Full labeled controls the icon strip replaces — hidden unconditionally
            (not width-gated) and matched against both DOM positions, since
