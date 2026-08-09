@@ -39421,6 +39421,14 @@ window._closeBattleWinner=function(){
     var ov=document.getElementById('battle-winner-overlay');
     if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
     document.body.classList.remove('has-battle');
+    // Was missing the rest of _deactivate()'s teardown — left the split-screen
+    // pip, .layout-battle class, and the second Agora client (_bViewerClient)
+    // all still connected/present, so both devices stayed visually "in the
+    // battle" after closing. _clearBattleSplit() also clears any rematch
+    // pill, so _showRematchPill() must run after it, not before.
+    _bRole=null; _battleEnded=false;
+    var bar=document.getElementById('battle-bar'); if(bar) bar.style.display='none';
+    _clearBattleSplit();
     _showRematchPill();
 };
 
@@ -39443,6 +39451,9 @@ window._closeOpponentEndedNotice=function(){
     var ov=document.getElementById('battle-winner-overlay');
     if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
     document.body.classList.remove('has-battle');
+    _bRole=null; _battleEnded=false;
+    var bar=document.getElementById('battle-bar'); if(bar) bar.style.display='none';
+    _clearBattleSplit();
 };
 function _showRematchPill(){
     if(!document.body.classList.contains('is-hosting')) return;
@@ -39557,7 +39568,19 @@ window._battleEndOnStreamLeave = async function(){
 function _playBattleOpponentVideo(videoTrack, attempt){
     attempt = attempt || 0;
     var pip = document.getElementById('battle-opponent-pip');
-    if (!pip) return;
+    if (!pip) {
+        // Was a hard bail-out with no retry — if the pip wasn't in the DOM
+        // yet (or was transiently detached) on the very first call, the
+        // "Connecting…" placeholder text never got cleared and nothing ever
+        // ran again, leaving it stuck indefinitely. Retry on the same
+        // schedule as the zero-dimension case below.
+        if (attempt >= 10) {
+            console.warn('[Battle] opponent pip never appeared in the DOM after 3s, giving up');
+            return;
+        }
+        setTimeout(function(){ _playBattleOpponentVideo(videoTrack, attempt + 1); }, 300);
+        return;
+    }
     pip.innerHTML = '<div class="bop-label">⚔️ Opponent</div>';
     var w = pip.offsetWidth, h = pip.offsetHeight;
     if (w > 0 && h > 0) {
