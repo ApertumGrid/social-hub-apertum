@@ -38762,9 +38762,13 @@ body.has-battle #live-stream-info-bar{display:none!important}
 /* Clash bar inside video container */
 #live-broadcaster-video-container #battle-bar,
 #live-remote-video-container #battle-bar{position:absolute!important;top:0!important;bottom:auto!important;left:0!important;right:0!important;width:100%!important;max-width:none!important;transform:none!important;border-radius:0!important;animation:none!important;z-index:20!important;height:58px!important}
-/* Floating rematch pill */
-#battle-rematch-pill{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff;border:none;border-radius:20px;padding:9px 24px;font-size:.84rem;font-weight:800;cursor:pointer;z-index:21;letter-spacing:.5px;box-shadow:0 4px 16px rgba(220,38,38,.4);animation:bBarIn .3s ease;white-space:nowrap}
-#battle-rematch-pill:hover{transform:translateX(-50%) scale(1.06)}
+/* Floating rematch pill — wrapper holding the rematch action + a separate
+   dismiss button, so it can be cleared without starting a new battle. */
+#battle-rematch-pill{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;z-index:21;animation:bBarIn .3s ease}
+#battle-rematch-pill .brp-rematch{background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff;border:none;border-radius:20px;padding:9px 24px;font-size:.84rem;font-weight:800;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 16px rgba(220,38,38,.4);white-space:nowrap}
+#battle-rematch-pill .brp-rematch:hover{transform:scale(1.06)}
+#battle-rematch-pill .brp-dismiss{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50%;width:28px;height:28px;font-size:.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+#battle-rematch-pill .brp-dismiss:hover{background:rgba(0,0,0,.75)}
 /* Mobile */
 @media(max-width:480px){
 #battle-bar{height:52px!important}
@@ -39459,10 +39463,22 @@ function _showRematchPill(){
     if(!document.body.classList.contains('is-hosting')) return;
     var container=document.getElementById('live-broadcaster-video-container');
     if(!container||document.getElementById('battle-rematch-pill')) return;
-    var pill=document.createElement('button');
+    // Wrapper holding the rematch action + a separate dismiss button — was a
+    // single <button> with no way to clear it short of clicking it (which
+    // starts a new battle) or ending the whole stream.
+    var pill=document.createElement('div');
     pill.id='battle-rematch-pill';
-    pill.innerHTML='⚔️ Rematch';
-    pill.onclick=function(){ _clearRematchPill(); window._rematchBattle(); };
+    var rematchBtn=document.createElement('button');
+    rematchBtn.className='brp-rematch';
+    rematchBtn.innerHTML='⚔️ Rematch';
+    rematchBtn.onclick=function(){ _clearRematchPill(); window._rematchBattle(); };
+    var dismissBtn=document.createElement('button');
+    dismissBtn.className='brp-dismiss';
+    dismissBtn.title='Dismiss';
+    dismissBtn.innerHTML='✕';
+    dismissBtn.onclick=function(e){ e.stopPropagation(); _clearRematchPill(); };
+    pill.appendChild(rematchBtn);
+    pill.appendChild(dismissBtn);
     container.appendChild(pill);
 }
 function _clearRematchPill(){
