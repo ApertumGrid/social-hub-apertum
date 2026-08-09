@@ -30146,8 +30146,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const minDisplayMs = 1500; // Minimum 1.5 seconds so user can see it
 
         let maxVolume = 0;
-        const samples = 10;
         const sampleInterval = 50; // ms
+        // Sample for the full banner display time, not a fixed short window —
+        // the banner promises 1.5s+ to react, but sampling used to stop at
+        // 500ms (10 samples), failing people who hadn't started talking yet
+        // by then. Real reports: mic worked fine, still got "No sound
+        // detected" — a timing mismatch, not an actual silent mic.
+        const samples = Math.ceil(minDisplayMs / sampleInterval);
 
         for (let i = 0; i < samples; i++) {
             try {
