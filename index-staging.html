@@ -9631,6 +9631,13 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
         background: rgba(220, 38, 38, 0.35) !important;
         border-color: rgba(220, 38, 38, 0.6) !important;
     }
+    /* #vwr-mic-btn is #vis-stage-btn's mobile-only twin (same "Join Stage"
+       action, different component) — same is-cohost swap needed. Matches the
+       .vwr-bar-btn rule above on specificity (1 ID + 2 classes + type), so
+       this block must stay below it in source order to win the tie. */
+    body.is-watching.is-cohost #vwr-mic-btn { display: none !important; }
+    body.is-watching:not(.is-cohost) #vwr-leave-stage-btn { display: none !important; }
+    body.is-watching.is-cohost #vwr-leave-stage-btn { display: flex !important; }
 }
 
 
@@ -12241,6 +12248,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                 <button class="btn btn-purple btn-sm" onclick="sendLiveChat()">Send</button>
                                 <button class="vwr-bar-btn" onclick="_openViewerGiftDrawer()" title="Gift">🎁</button>
                                 <button class="vwr-bar-btn" id="vwr-mic-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="vwr-bar-btn" id="vwr-leave-stage-btn" onclick="leaveCoHost()" title="Leave Stage" style="display:none;">🚪</button>
                                 <button class="vwr-bar-btn vwr-bar-leave" onclick="leaveLiveStream()" title="Leave">✕</button>
                             </div>
                         </div>
