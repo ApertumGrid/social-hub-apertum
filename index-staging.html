@@ -32964,7 +32964,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (addr && window._mutedLiveAddrs && window._mutedLiveAddrs.has(addr)) return '';
             const da       = `data-id="${_esc(m.id||'')}" data-addr="${_esc(addr)}" data-author="${_esc(m.author||'')}" data-text="${_esc((m.text||'').slice(0,80))}" data-avatar="${_esc(m.avatar||'')}"`;
             const nameAttrs= addr ? `class="live-chat-user lcu-click" onclick="window._openChatCtx(event,this.closest('[data-id]'))"` : `class="live-chat-user"`;
-            const replyBtn = `<button class="live-reply-btn" onclick="event.stopPropagation();window._setReplyTo('${_esc(m.id||'')}','${_esc(m.author||'')}','${_esc((m.text||'').slice(0,40))}')">↩</button>`;
+            const replyBtn = `<button class="live-reply-btn" onclick="event.stopPropagation();var _m=this.closest('[data-id]');window._setReplyTo(_m.dataset.id,_m.dataset.author,_m.dataset.text.slice(0,40))">↩</button>`;
             const replyQ   = m.replyTo ? `<div class="lcm-reply-quote"><b>${_esc(m.replyTo.author)}</b>: ${_esc(m.replyTo.text)}</div>` : '';
             const av       = m.avatar || window._defaultAvatarSvgFor(addr);
             const badge    = _giftBadge(addr);
@@ -35435,6 +35435,43 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         _patchStreamDocUnsub = onSnapshot(doc(window.db, LIVE_COL, streamId), snap => {
             if (!snap.exists()) return;
             const d = snap.data();
+
+            // ── Restored from the original subscribeStreamDoc() above (line ~33023) —
+            //    that function is dead code: this later same-name declaration silently
+            //    shadows it via JS function-hoisting, so its onSnapshot callback never
+            //    ran. window._isLiveHosting was never set anywhere else, which is why
+            //    the chat context menu's Pin/Mute/Ban never appeared for anyone, and
+            //    the pinned-comment overlay never displayed what got pinned. ──
+            window._isLiveHosting       = isHosting;
+            window._currentHostStreamId = isHosting ? currentStreamId : null;
+
+            if (!isHosting) {
+                var _pw = document.getElementById('live-player-wrap');
+                if (_pw) _pw.classList.toggle('pres-mode', d.streamMode === 'presentation');
+            }
+
+            var lpcEl = document.getElementById('live-pinned-comment');
+            if (lpcEl) {
+                if (d.pinnedComment && d.pinnedComment.text) {
+                    var lpcAuth = document.getElementById('lpc-author');
+                    var lpcTxt  = document.getElementById('lpc-text');
+                    if (lpcAuth) lpcAuth.textContent = d.pinnedComment.author || '';
+                    if (lpcTxt)  lpcTxt.textContent  = d.pinnedComment.text;
+                    lpcEl.style.display = 'block';
+                } else {
+                    lpcEl.style.display = 'none';
+                }
+            }
+            document.body.classList.toggle('host-viewing', !!isHosting);
+
+            if (!isHosting && d.bannedViewers && Array.isArray(d.bannedViewers)) {
+                var myAddr = (window._liveUserAddress || '').toLowerCase();
+                if (myAddr && d.bannedViewers.indexOf(myAddr) !== -1) {
+                    showToast('You have been removed from this stream.');
+                    leaveLiveStream();
+                    return;
+                }
+            }
 
             setText('live-watch-viewers',       '👁 ' + (d.viewers || 0));
             setText('live-creator-stars-watch',  (d.starsEarned || 0).toFixed(1));
