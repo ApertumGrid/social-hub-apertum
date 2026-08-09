@@ -1091,7 +1091,6 @@
                 max-height:none !important;
                 overflow-y:visible !important;
             }
-            #live-player-wrap.pres-mode #cohost-stage-wrap           { grid-column:1; grid-row:1; order:unset !important; }
             #live-player-wrap.pres-mode #live-remote-video-container  { grid-column:1; grid-row:1; order:unset !important; }
             #live-player-wrap.pres-mode .live-action-row              { grid-column:1; grid-row:2; order:unset !important; }
             #live-player-wrap.pres-mode #viewer-poll-card,
@@ -1680,7 +1679,6 @@
             font-size:1rem !important; padding:2px !important;
         }
         #cinema-controls .studio-btn-icon { font-size:0.8rem !important; }
-        #cinema-controls .studio-toolbar { display:contents !important; }
         /* Panels inside controls â€” displayed normally, no more fixed positioning */
         /* Host-only toggleable panels â€” hidden until button clicked */
         #cinema-controls-panels #poll-creator,
@@ -1996,8 +1994,11 @@
             #cinema-controls-panels #viewer-gift-panel .live-gift-head { display:none !important; }
         }
 
-        /* ── MOBILE HOST FULLSCREEN FALLBACK (MetaMask / non-cinema WebView) ── */
-        @media (max-width: 700px) {
+        /* ── MOBILE HOST FULLSCREEN FALLBACK (MetaMask / non-cinema WebView) ──
+           768px to match the JS go-live/join mobile check (was 700px — the
+           mismatch meant widths 701-768px got neither this fallback layout
+           nor the desktop cinema layout). ── */
+        @media (max-width: 768px) {
             body.is-hosting #topnav           { display: none !important; }
             body.is-hosting #mobile-dashboard  { display: none !important; }
             body.is-hosting #bottom-nav        { display: none !important; }
@@ -2055,15 +2056,43 @@
         /* â”€â”€ Gift System CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         /* ── TikTok viewer layout — applied when body has class is-watching ── */
         body.is-watching #mobile-dashboard { display: none !important; }
-        /* Viewer icon strip — shown on mobile only when watching */
+        /* Viewer icon strip — shown on every screen size when watching, mirroring
+           #host-icon-strip's "show on all screens when hosting" pattern. Its
+           gift drawer (#viewer-gift-drawer) covers gifts + reactions, and it
+           now includes Raise Hand, so nothing in .live-action-row/
+           #viewer-gift-panel/#viewer-reactions-bar is left uncovered once
+           those are hidden below. */
         #viewer-icon-strip{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;flex-direction:column;align-items:center;gap:10px;z-index:30}
+        body.is-watching #viewer-icon-strip{display:flex;}
+        /* A co-host is still is-watching, so the icon strip shows for them too —
+           but Join Stage (already on stage) and Raise Hand (meaningless once
+           admitted) don't apply, and #vis-leave-stage-btn should take Join
+           Stage's place instead. Driven purely by body.is-cohost, which is
+           only ever toggled in _promoteToCoHost()/leaveCoHost() — no separate
+           JS sync needed here. */
+        body.is-cohost #vis-hand-btn,
+        body.is-cohost #vis-stage-btn { display: none !important; }
+        body.is-cohost #vis-leave-stage-btn { display: flex !important; }
+        /* Full labeled controls the icon strip replaces — hidden unconditionally
+           (not width-gated) and matched against both DOM positions, since
+           enterCinema()/exitCinema() relocate .live-action-row/#viewer-gift-panel
+           between #live-player-wrap and #cinema-controls-btns/#cinema-controls-panels
+           on desktop. ID-anchored selectors are required here, not bare classes —
+           several existing cinema-mode styling rules for these elements carry
+           tied or higher specificity (e.g. the "last in the stylesheet" block
+           lower in this file), so a plain .live-action-row{display:none} would
+           silently lose to them. */
+        body.is-watching #live-player-wrap .live-action-row,
+        body.is-watching #cinema-controls-btns .live-action-row,
+        body.is-watching #live-player-wrap #viewer-gift-panel,
+        body.is-watching #cinema-controls-panels #viewer-gift-panel,
+        body.is-watching #viewer-reactions-bar {
+            display: none !important;
+        }
         @media(max-width:900px){
             /* Hide page heading — info bar replaces it */
             body.is-watching #page-live>.page-heading,
             body.is-hosting  #page-live>.page-heading{display:none!important;}
-            body.is-watching.is-cohost #cohost-stage-wrap{display:none!important;}
-            /* Show viewer icon strip */
-            body.is-watching #viewer-icon-strip{display:flex;}
         }
         @media(max-width:900px) {
             body.is-watching #topnav{display:none!important;}
@@ -2376,6 +2405,17 @@
             display:flex; flex-wrap:wrap; gap:8px;
             padding:10px 0; margin-bottom:10px;
         }
+        /* #host-icon-strip already exposes every action (via its "more" drawer)
+           on every screen size, so the full labeled grid is now redundant and
+           would otherwise show alongside it — duplicated — once cinema mode
+           sweeps it into the desktop side panel. Both selectors are needed:
+           .studio-toolbar lives under #live-active-panel normally, but
+           enterCinema()/exitCinema() relocate it into #cinema-controls while
+           hosting on desktop. */
+        body.is-hosting .studio-toolbar,
+        body.is-hosting #cinema-controls .studio-toolbar {
+            display: none !important;
+        }
         .studio-btn {
             display:flex; align-items:center; gap:6px;
             padding:8px 14px; border-radius:50px;
@@ -2482,13 +2522,6 @@
         }
         #viewer-cohost-btn:hover { background:var(--purple-dim); }
         #viewer-cohost-btn.active { background:var(--purple); color:#fff; }
-        /* Co-host stage area (viewer promoted) */
-        #cohost-stage-wrap {
-            display:none; margin-bottom:10px;
-            background:#0d1117; border-radius:var(--radius-md);
-            overflow:hidden; position:relative; height:180px;
-        }
-        #cohost-local-video { width:100%; height:100%; }
 
         /* â”€â”€ PAID ADMISSION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .paid-badge {
@@ -3819,47 +3852,47 @@
 
         .post-actions {
             display: flex; align-items: center;
-            gap: 0px;
+            gap: 6px;
             padding: 10px 0 4px;
             border-top: 1px solid rgba(255,255,255,0.06);
         }
         .pact {
-            display: flex; align-items: center; gap: 5px;
-            padding: 6px 10px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            box-sizing: border-box;
+            min-height: 36px;
+            padding: 0 12px; border-radius: 999px;
             font-size: 0.72rem; font-weight: 700;
             cursor: pointer;
-            color: rgba(255,255,255,0.35);
-            background: none; border: none;
+            color: var(--text-muted);
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
             transition: all 0.15s; position: relative;
         }
         .pact svg { flex-shrink: 0; transition: all 0.15s; }
         .pact-label, .pact-mobile-cost { display: none !important; }
 
-        /* Each action has its own permanent colour — visible at rest, brighter on hover */
-        .pact.pact-like  { color: rgba(255,77,109,0.55); }
-        .pact.pact-like:hover  { color: #ff4d6d; background: rgba(255,77,109,0.08); }
-        .pact.pact-like:hover svg path { stroke: #ff4d6d; }
+        /* One deliberate neutral state for every action — no per-icon colour.
+           The gold accent is reserved for an action's ACTIVE state only (e.g. pact-liked). */
+        .pact:hover {
+            color: var(--text-primary);
+            background: var(--bg-input);
+            border-color: var(--border-md);
+        }
 
-        .pact.pact-comment  { color: rgba(167,139,250,0.55); }
-        .pact.pact-comment:hover { color: #a78bfa; background: rgba(167,139,250,0.08); }
+        .pact.pact-liked {
+            color: var(--gold) !important;
+            background: rgba(240,180,41,0.10);
+            border-color: rgba(240,180,41,0.4);
+        }
+        .pact.pact-liked svg path { fill: var(--gold); stroke: var(--gold); }
 
-        .pact.signal  { color: rgba(45,212,191,0.55); }
-        .pact.signal:hover { color: #2dd4bf; background: rgba(45,212,191,0.08); }
-
-        .pact.boost  { color: rgba(240,180,41,0.55); }
-        .pact.boost:hover { color: #f0b429; background: rgba(240,180,41,0.08); }
-
-        .pact.rain  { color: rgba(96,165,250,0.55); }
-        .pact.rain:hover { color: #60a5fa; background: rgba(96,165,250,0.08); }
-
-        .pact.share  { color: rgba(255,255,255,0.3); }
-        .pact.share:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
-
-        .pact.pact-liked { color: #ff4d6d !important; }
-        .pact.pact-liked svg path { fill: #ff4d6d; stroke: #ff4d6d; }
-
-        .pact.views { cursor: default; color: rgba(255,255,255,0.25); margin-left: auto; }
-        .pact.views:hover { background: none; color: rgba(255,255,255,0.25); }
+        .pact.views {
+            cursor: default; color: var(--text-muted);
+            margin-left: auto;
+            background: none; border: none; padding: 0 4px; min-height: auto;
+            font-weight: 600;
+        }
+        .pact.views:hover { background: none; color: var(--text-muted); border: none; }
         .pact-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; }
 
         /* â”€â”€ HUB TOTAL EARNINGS BADGE â”€â”€ */
@@ -3890,12 +3923,6 @@
            ðŸŒ§ï¸ RAIN BUTTON â€” post-level tipping with animation
         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .pact.rain { position: relative; }
-        .pact.rain:hover {
-            color: var(--gold);
-            border-color: rgba(240,180,41,0.4);
-            background: rgba(240,180,41,0.07);
-            box-shadow: 0 0 12px rgba(240,180,41,0.22);
-        }
         .pact.rain > svg, .pact.rain > span { pointer-events: none; }
 
         /* Rain amount picker dropdown */
@@ -4004,12 +4031,6 @@
 
         /* â”€â”€ SHARE BUTTON & DROPDOWN â”€â”€ */
         .pact.share { position: relative; }
-        .pact.share:hover {
-            color: var(--text-primary);
-            border-color: rgba(124,92,191,0.35);
-            background: var(--purple-dim);
-            box-shadow: 0 0 10px rgba(124,92,191,0.18);
-        }
         /* Prevent SVG children eating the click â€” clicks must reach the parent div */
         .pact.share > svg, .pact.share > span { pointer-events: none; }
         .share-dropdown {
@@ -4108,9 +4129,11 @@
             .hero-action-btn[data-cost]::before,
             .comm-follow-btn[data-cost]::before { display: none; }
 
-            /* Compact post action bar on mobile */
-            .post-actions { gap: 1px; padding-top: 8px; }
-            .pact { padding: 5px 7px; gap: 4px; font-size: 0.7rem; }
+            /* Compact post action bar on mobile — same pill chrome, tighter spacing.
+               min-height:36px is inherited from the base .pact rule, not overridden here,
+               so the touch target stays comfortable even as horizontal padding shrinks. */
+            .post-actions { gap: 4px; padding-top: 8px; }
+            .pact { padding: 0 9px; gap: 4px; font-size: 0.7rem; }
         }
 
         /* â”€â”€ CATEGORY FILTER BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -5843,11 +5866,13 @@
            transition:all 0.12s on .cbtn, so we just extend those values.
            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-        /* Post Like button â€” pops red on click, springs back */
+        /* Post Like button â€” pops gold on click, springs back.
+           Uses the same accent as the resting liked state (var(--gold)) so the
+           post action bar keeps its single-accent rule: no red/blue mid-interaction flash. */
         .pact.like-active {
-            color: #ff4d6d !important;
-            border-color: rgba(255,77,109,0.35) !important;
-            background: rgba(255,77,109,0.08) !important;
+            color: var(--gold) !important;
+            border-color: rgba(240,180,41,0.4) !important;
+            background: rgba(240,180,41,0.10) !important;
         }
         .pact:active {
             transform: scale(0.88);
@@ -5856,24 +5881,25 @@
         /* Spring-back is handled by the existing transition:all 0.13s when
            :active is released â€” no extra rule needed. */
 
-        /* â”€â”€ STATE 1: Liked â€” solid red fill â”€â”€ */
+        /* â”€â”€ STATE 1: Liked â€” gold accent, matches the post action bar's single active colour â”€â”€ */
         .pact.pact-liked {
-            color: #fff !important;
-            background: linear-gradient(135deg, #ff4d6d, #ff1744) !important;
-            border-color: rgba(255,23,68,0.5) !important;
+            color: var(--gold) !important;
+            background: rgba(240,180,41,0.10) !important;
+            border-color: rgba(240,180,41,0.4) !important;
             font-weight: 700 !important;
         }
         .pact.pact-liked:hover {
-            background: linear-gradient(135deg, #ff6b81, #ff4d6d) !important;
-            border-color: rgba(255,77,109,0.7) !important;
+            background: rgba(240,180,41,0.16) !important;
+            border-color: rgba(240,180,41,0.6) !important;
         }
+        .pact.pact-liked svg path { fill: var(--gold); stroke: var(--gold); }
 
         /* â”€â”€ STATE 2+: Mega Hype â€” pulse glow animation â”€â”€ */
         @keyframes megaHypePulse {
-            0%   { box-shadow: 0 0 0 0 rgba(255,23,68,0.7); transform: scale(1); }
-            40%  { box-shadow: 0 0 0 8px rgba(255,23,68,0.25); transform: scale(1.08); }
-            70%  { box-shadow: 0 0 0 14px rgba(255,23,68,0.08); transform: scale(1.04); }
-            100% { box-shadow: 0 0 0 0 rgba(255,23,68,0); transform: scale(1); }
+            0%   { box-shadow: 0 0 0 0 rgba(240,180,41,0.7); transform: scale(1); }
+            40%  { box-shadow: 0 0 0 8px rgba(240,180,41,0.25); transform: scale(1.08); }
+            70%  { box-shadow: 0 0 0 14px rgba(240,180,41,0.08); transform: scale(1.04); }
+            100% { box-shadow: 0 0 0 0 rgba(240,180,41,0); transform: scale(1); }
         }
         .pact.pact-mega-hype {
             animation: megaHypePulse 0.55s ease-out forwards;
@@ -8836,7 +8862,6 @@ html body #profile-hero .hero-action-btn.btn-follow {
     max-height:calc(100vh - 60px)!important;
 }
 /* Video stays first */
-#cohost-stage-wrap           { order:1!important; }
 #live-remote-video-container { order:2!important; }
 
 /* Action row (hype/hand/stage/leave) â†’ right below video */
@@ -9606,6 +9631,13 @@ body.cinema-mode #btn-end-stream-toolbar { display:none!important; }
         background: rgba(220, 38, 38, 0.35) !important;
         border-color: rgba(220, 38, 38, 0.6) !important;
     }
+    /* #vwr-mic-btn is #vis-stage-btn's mobile-only twin (same "Join Stage"
+       action, different component) — same is-cohost swap needed. Matches the
+       .vwr-bar-btn rule above on specificity (1 ID + 2 classes + type), so
+       this block must stay below it in source order to win the tie. */
+    body.is-watching.is-cohost #vwr-mic-btn { display: none !important; }
+    body.is-watching:not(.is-cohost) #vwr-leave-stage-btn { display: none !important; }
+    body.is-watching.is-cohost #vwr-leave-stage-btn { display: flex !important; }
 }
 
 
@@ -11951,17 +11983,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <div id="live-watch-panel">
                     <!-- Active stream player -->
                     <div id="live-player-wrap" style="display:none;">
-                        <!-- Co-host stage (shown when viewer is promoted to co-host) -->
-                        <div id="cohost-stage-wrap">
-                            <div id="cohost-local-video"></div>
-                            <div style="position:absolute;top:8px;left:12px;font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:50px;">🎤 YOU — ON STAGE</div>
-                            <button onclick="leaveCoHost()" style="position:absolute;top:8px;right:10px;background:rgba(224,62,62,0.85);border:none;color:#fff;border-radius:50px;padding:3px 10px;font-size:0.65rem;font-weight:700;cursor:pointer;">Leave Stage</button>
-                            <!-- Viewer mic/cam controls while on stage -->
-                            <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;">
-                                <button onclick="toggleCoHostMic()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:600;cursor:pointer;">🔇 Mute</button>
-                                <button onclick="toggleCoHostCam()" style="background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:600;cursor:pointer;">📷 Cam Off</button>
-                            </div>
-                        </div>
                         <!-- Stream info bar — outside the video box -->
                         <div id="live-stream-info-bar">
                             <div class="lsib-left" onclick="window._openCreatorProfile()" style="cursor:pointer;">
@@ -12046,7 +12067,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                 <button class="his-btn" id="vis-sound-btn" onclick="_toggleViewerSound()" title="Sound">🔊</button>
                                 <button class="his-btn" onclick="_openViewerGiftDrawer()" title="Send a Gift">🎁</button>
                                 <button class="his-btn" onclick="sendLiveHype()" title="Hype">⚡</button>
+                                <button class="his-btn" id="vis-hand-btn" onclick="toggleRaiseHand()" title="Raise Hand">✋</button>
                                 <button class="his-btn" id="vis-stage-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="his-btn" id="vis-leave-stage-btn" onclick="leaveCoHost()" title="Leave Stage" style="display:none;">🚪</button>
                                 <button class="his-btn" onclick="leaveLiveStream()" title="Leave" style="background:rgba(220,38,38,.35);border-color:rgba(220,38,38,.6);">✕</button>
                             </div>
 
@@ -12225,6 +12248,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                                 <button class="btn btn-purple btn-sm" onclick="sendLiveChat()">Send</button>
                                 <button class="vwr-bar-btn" onclick="_openViewerGiftDrawer()" title="Gift">🎁</button>
                                 <button class="vwr-bar-btn" id="vwr-mic-btn" onclick="requestCoHost()" title="Join Stage">🎤</button>
+                                <button class="vwr-bar-btn" id="vwr-leave-stage-btn" onclick="leaveCoHost()" title="Leave Stage" style="display:none;">🚪</button>
                                 <button class="vwr-bar-btn vwr-bar-leave" onclick="leaveLiveStream()" title="Leave">✕</button>
                             </div>
                         </div>
@@ -19312,13 +19336,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <span class="pact-num" id="cc-${postId}" style="color:var(--purple-lt);"></span>
                     </div>
                     <div class="pact signal" data-cost="Costs 1 ★" onclick="promoteToSignal('${postId}')" title="Promote to Daily Signals (1★ — 24h)">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M1 6c0 0 4-4 11-4s11 4 11 4"/><path d="M1 10c0 0 4-4 11-4s11 4 11 4"/><path d="M5 14c0 0 2.5-2.5 7-2.5s7 2.5 7 2.5"/><circle cx="12" cy="18" r="2" fill="currentColor"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
                     </div>
                     <div class="pact boost" data-cost="Costs 10 ★" onclick="boostPost('${postId}')" title="Boost to top of feed (10★)">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
                     </div>
                     <div class="pact rain" onclick="toggleRainPicker('${postId}',event)" title="Rain Stars on this post">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M18 8h-1.26A8 8 0 1 0 9 18h9a5 5 0 0 0 0-10z"/><path d="M8 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M12 21.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M16 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/></svg>
                         <span class="rain-total-badge" id="rain-total-${postId}" style="${(post.rainTotal||0)>0?'':'display:none'}">★${parseFloat(post.rainTotal||0).toFixed(0)}</span>
                     </div>
                     <div class="pact share" onclick="openShareModal('${postId}',event)" title="Share">
@@ -22184,7 +22208,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 rainBtn.className = 'pact rain';
                 rainBtn.title = 'Rain Stars on this post';
                 rainBtn.innerHTML =
-                    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>' +
+                    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M18 8h-1.26A8 8 0 1 0 9 18h9a5 5 0 0 0 0-10z"/><path d="M8 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M12 21.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/><path d="M16 20.5c0-.55.35-1.05.75-1.65.4.6.75 1.1.75 1.65a.75.75 0 1 1-1.5 0z" fill="currentColor" stroke="none"/></svg>' +
                     '<span class="rain-total-badge" id="rain-total-' + postId + '" style="' + ((post.rainTotal||0)>0?'':'display:none') + '">\u2605' + parseFloat(post.rainTotal||0).toFixed(0) + '</span>';
 
                 // Build rain picker as a SEPARATE element on body — never nested in the button
@@ -31604,10 +31628,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (el && el.parentNode) el.parentNode.removeChild(el);
         });
 
-        // Hide co-host stage
-        const stageWrap = $('cohost-stage-wrap');
-        if (stageWrap) stageWrap.style.display = 'none';
-
         // Reset co-host request button
         const cohostBtn = $('viewer-cohost-btn');
         if (cohostBtn) { cohostBtn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Join Stage</span>'; cohostBtn.style.opacity = ''; cohostBtn.style.pointerEvents = ''; cohostBtn.classList.remove('active'); }
@@ -33973,9 +33993,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 } catch(e) { console.warn('[CoHost] safety net error:', e); }
             }, 400);
 
-            var stageWrap = $('cohost-stage-wrap');
-            if (stageWrap) stageWrap.style.display = 'block';
-
             var btn = $('viewer-cohost-btn');
             if (btn) { btn.innerHTML = '<span class="studio-btn-icon">🎤</span><span>Leave Stage</span>'; btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.classList.add('active'); }
             isCoHost = true;
@@ -34029,10 +34046,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             // Remove self-view pip
             var selfPip = document.getElementById('cohost-self-pip');
             if (selfPip && selfPip.parentNode) selfPip.parentNode.removeChild(selfPip);
-
-            // Hide cohost-stage-wrap and reset button labels
-            var stageWrap = $('cohost-stage-wrap');
-            if (stageWrap) stageWrap.style.display = 'none';
 
             // Reset mic/cam state flags and button labels for next session
             _cohostMicMuted = false;
@@ -36288,10 +36301,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     var _videoPlaceholder = document.createComment('cinema-video-placeholder');
     var _chatPlaceholder  = document.createComment('cinema-chat-placeholder');
     var _inCinema = false;
+    // Which container enterCinema() actually moved — exitCinema() must restore
+    // this exact one, not guess based on which element merely exists in the
+    // DOM (both #live-broadcaster-video-container and #live-remote-video-container
+    // are always present, so an existence-based guess is wrong half the time).
+    var _activeVideoContainerId = null;
 
     function enterCinema(videoContainerId, chatFeedId) {
         if (_inCinema) return;
         _inCinema = true;
+        _activeVideoContainerId = videoContainerId;
 
         var videoEl = document.getElementById(videoContainerId);
         var feedEl  = document.getElementById(chatFeedId);
@@ -36410,8 +36429,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!_inCinema) return;
         _inCinema = false;
 
-        var videoEl        = document.getElementById('live-broadcaster-video-container') ||
-                             document.getElementById('live-remote-video-container');
+        // Was: document.getElementById('live-broadcaster-video-container') ||
+        //      document.getElementById('live-remote-video-container')
+        // Both containers always exist in the DOM (static markup, just hidden
+        // when unused), so that existence-based guess always resolved to the
+        // broadcaster's container — even when tearing down a VIEWER session,
+        // silently reinserting the wrong element and leaving the real moved
+        // element stranded. Use the ID enterCinema() actually moved instead.
+        var videoEl        = document.getElementById(_activeVideoContainerId);
+        _activeVideoContainerId = null;
         var cinemaVideoCol = document.getElementById('cinema-video-col');
         var cinemaChatCol  = document.getElementById('cinema-chat-col');
         var controlsBar    = document.getElementById('cinema-controls');
@@ -36501,6 +36527,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     var _patchedStart = async function() {
+        // Defensive teardown: startLiveStream() previously assumed a prior
+        // viewer session had already been fully torn down by leaveLiveStream()
+        // — not guaranteed (e.g. reaching Go Live without an explicit Leave).
+        // Leftover viewer state (is-watching class, handRaised, the swept
+        // .live-action-row/#viewer-gift-panel still sitting in #cinema-shell)
+        // would otherwise persist alongside the new host UI. Tear both the
+        // viewer session and any stuck cinema-mode DOM/flag down first.
+        if (document.body.classList.contains('is-watching') && typeof window.leaveLiveStream === 'function') {
+            await window.leaveLiveStream();
+        }
+        if (_inCinema) {
+            exitCinema();
+        }
         if (window.innerWidth <= 768) {
             await _origStart.apply(this, arguments);
             // Go Live was blocked (e.g. missing title) — isHosting never got set, nothing to lay out
@@ -36556,6 +36595,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }
     }
     var _patchedJoin = async function() {
+        // Defensive teardown, reverse direction of the fix in _patchedStart:
+        // stale host state (is-hosting class, cinema mode's DOM/flag) could
+        // otherwise persist into a new viewer/co-host session if a previous
+        // broadcast wasn't fully torn down. Deliberately does NOT call
+        // endLiveStream() — it shows a blocking confirm() dialog and writes
+        // to Firestore, both wrong for a silent safety net here. Reaching
+        // this function while genuinely still hosting isn't reachable through
+        // the UI anyway (cinema mode hides #live-tabs for hosts too), so a
+        // stuck is-hosting class this far along is a leftover flag, not an
+        // actual live stream — safe to clear client-side only.
+        if (document.body.classList.contains('is-hosting')) {
+            document.body.classList.remove('is-hosting');
+        }
+        if (_inCinema) {
+            exitCinema();
+        }
         await _origJoin.apply(this, arguments);
         // Mobile (≤768px): TikTok is-watching CSS handles the viewer fullscreen — skip cinema
         if (window.innerWidth <= 768) return;
@@ -36605,6 +36660,37 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         await _origEnd.apply(this, arguments);
         exitCinema();
     };
+
+    // Reactively re-enter/exit cinema mode as the viewport crosses the mobile
+    // breakpoint mid-stream. enterCinema()/exitCinema() previously only ran
+    // once — at go-live or at join time — so resizing afterward (e.g. opening
+    // or closing DevTools) left the layout stuck in whichever mode was chosen
+    // at that moment, with no way back short of reloading the page.
+    var CINEMA_BREAKPOINT = 768;
+    var _cinemaResizeTimer = null;
+    function _reconcileCinemaLayout() {
+        var isHosting  = document.body.classList.contains('is-hosting');
+        var isWatching = document.body.classList.contains('is-watching');
+        if (!isHosting && !isWatching) return;
+        var wantCinema = window.innerWidth > CINEMA_BREAKPOINT;
+        if (wantCinema === _inCinema) return;
+        if (wantCinema) {
+            if (isHosting) {
+                enterCinema('live-broadcaster-video-container', 'live-broadcast-chat-feed');
+            } else {
+                var vc = document.getElementById('live-remote-video-container');
+                if (vc && vc.querySelector('video')) {
+                    enterCinema('live-remote-video-container', 'live-chat-feed');
+                }
+            }
+        } else {
+            exitCinema();
+        }
+    }
+    window.addEventListener('resize', function() {
+        clearTimeout(_cinemaResizeTimer);
+        _cinemaResizeTimer = setTimeout(_reconcileCinemaLayout, 200);
+    });
 
     // Wait for all functions to be defined then patch — runs ONCE.
     // _tryPatchDone prevents re-polling after the countdown IIFE has already
@@ -38676,9 +38762,13 @@ body.has-battle #live-stream-info-bar{display:none!important}
 /* Clash bar inside video container */
 #live-broadcaster-video-container #battle-bar,
 #live-remote-video-container #battle-bar{position:absolute!important;top:0!important;bottom:auto!important;left:0!important;right:0!important;width:100%!important;max-width:none!important;transform:none!important;border-radius:0!important;animation:none!important;z-index:20!important;height:58px!important}
-/* Floating rematch pill */
-#battle-rematch-pill{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff;border:none;border-radius:20px;padding:9px 24px;font-size:.84rem;font-weight:800;cursor:pointer;z-index:21;letter-spacing:.5px;box-shadow:0 4px 16px rgba(220,38,38,.4);animation:bBarIn .3s ease;white-space:nowrap}
-#battle-rematch-pill:hover{transform:translateX(-50%) scale(1.06)}
+/* Floating rematch pill — wrapper holding the rematch action + a separate
+   dismiss button, so it can be cleared without starting a new battle. */
+#battle-rematch-pill{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;z-index:21;animation:bBarIn .3s ease}
+#battle-rematch-pill .brp-rematch{background:linear-gradient(135deg,#dc2626,#7c3aed);color:#fff;border:none;border-radius:20px;padding:9px 24px;font-size:.84rem;font-weight:800;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 16px rgba(220,38,38,.4);white-space:nowrap}
+#battle-rematch-pill .brp-rematch:hover{transform:scale(1.06)}
+#battle-rematch-pill .brp-dismiss{background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50%;width:28px;height:28px;font-size:.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+#battle-rematch-pill .brp-dismiss:hover{background:rgba(0,0,0,.75)}
 /* Mobile */
 @media(max-width:480px){
 #battle-bar{height:52px!important}
@@ -38849,9 +38939,6 @@ body.has-battle .live-stream-overlay-top{display:none!important}
 .bbar-score.sr{text-shadow:0 0 16px rgba(125,211,252,0.9),0 0 30px rgba(14,165,233,0.45)!important;}
 .bcell.bl{background:linear-gradient(90deg,#5b21b6,#a78bfa)!important;box-shadow:0 0 8px rgba(124,92,191,0.75),0 0 18px rgba(124,92,191,0.3)!important;}
 .bcell.br{background:linear-gradient(90deg,#0284c7,#38bdf8)!important;box-shadow:0 0 8px rgba(14,165,233,0.75),0 0 18px rgba(14,165,233,0.3)!important;}
-/* Co-host stage join animation */
-@keyframes stage-join-in{0%{opacity:0;transform:scale(0.72) translateY(18px);}55%{opacity:1;transform:scale(1.05) translateY(-3px);}100%{opacity:1;transform:scale(1) translateY(0);}}
-#cohost-stage-wrap{animation:stage-join-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;}
 </style>
 
 <!-- Host more drawer (mobile icon strip) -->
@@ -39041,21 +39128,8 @@ window._closeViewerGiftDrawer = function(){
 };
 
 // ── Detect stream start/stop via polling ──────────────────
-var _tbWasMobile = false;
 setInterval(function(){
     var isHosting = document.body.classList.contains('is-hosting');
-    if(window.innerWidth <= 700){
-        var _tb = document.querySelector('.studio-toolbar');
-        if(_tb){
-            if(isHosting && _tb.style.display !== 'none'){
-                _tb.style.setProperty('display','none','important');
-                _tbWasMobile = true;
-            } else if(!isHosting && _tbWasMobile){
-                _tb.style.display = '';
-                _tbWasMobile = false;
-            }
-        }
-    }
     var hSid = window._currentStreamId  || null;
     var vSid = window._watchingStreamId || null;
 
@@ -39064,21 +39138,6 @@ setInterval(function(){
         if(isWatching) document.body.classList.add('is-watching');
         else document.body.classList.remove('is-watching');
     }
-    if(window.innerWidth <= 700){
-        var _vAR = document.querySelector('#live-player-wrap .live-action-row');
-        var _vRB = document.getElementById('viewer-reactions-bar');
-        var _vGP = document.getElementById('viewer-gift-panel');
-        if(isWatching){
-            if(_vAR && _vAR.style.display !== 'none') _vAR.style.setProperty('display','none','important');
-            if(_vRB && _vRB.style.display !== 'none') _vRB.style.setProperty('display','none','important');
-            if(_vGP && _vGP.style.display !== 'none') _vGP.style.setProperty('display','none','important');
-        } else {
-            if(_vAR) _vAR.style.display = '';
-            if(_vRB) _vRB.style.display = '';
-            if(_vGP) _vGP.style.display = '';
-        }
-    }
-
     if(isHosting && hSid && hSid !== _lastHostSid){
         _lastHostSid = hSid; _lastViewSid = null;
         _startReqListener(hSid, 'host');
@@ -39284,7 +39343,17 @@ function _startBListener(bid){
             _lastBattleData=d; _battleEnded=true;
             _bid=null; _bdata=null;
             var _eBar=document.getElementById('battle-bar'); if(_eBar) _eBar.style.display='none';
-            _showWinner(d);
+            // A natural conclusion (timer reached endsAt) shows the normal
+            // winner/rematch card to both sides. An early end (a participant
+            // ending their own stream mid-battle) shows the OTHER participant
+            // a distinct notice instead — not a rematch prompt, since the
+            // person who ended it is the one who left, not agreeing to a
+            // shared "what's next" moment. Whoever actually called endBattle
+            // still gets the normal card if their own listener somehow fires
+            // (e.g. they were the one who noticed a real disconnect).
+            var _myAddrEB=(window.userAddress||'').toLowerCase();
+            var _endedByOpponent = !!d.endedEarly && !!d.endedByAddr && (d.endedByAddr||'').toLowerCase()!==_myAddrEB;
+            if(_endedByOpponent){ _showOpponentEndedNotice(d); } else { _showWinner(d); }
         }
     });
 }
@@ -39299,7 +39368,12 @@ function _startTimer(endsAtTs){
         var m=Math.floor(rem/60),s=rem%60;
         el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
         el.classList.toggle('urgent',rem<=30);
-        if(rem<=0) _clearTimer();
+        // Was purely decorative — clearing the interval here stopped the
+        // display but never actually ended the battle, so it just froze at
+        // 00:00 until someone ended their whole stream. endBattle is safe to
+        // call from both participants' clients (server no-ops if the battle
+        // isn't 'active' anymore), so no extra coordination is needed here.
+        if(rem<=0){ _clearTimer(); _doEndBattle().catch(function(){}); }
     }
     _tick();
     _bTimer=setInterval(_tick,1000);
@@ -39332,7 +39406,9 @@ function _showWinner(b){
             '<button class="bw-btn-end" onclick="window._closeBattleWinner()">← Close</button>';
     } else {
         var wName = b.winnerName || (b.winnerId==='challenger'?b.challengerName:b.challengeeName) || 'Winner';
-        card.innerHTML='<span class="bw-trophy">🏆</span><div class="bw-lbl">Battle Winner</div><div class="bw-name">'+_esc(wName)+'</div>'+
+        var _isWinnerMe = !!b.winnerAddr && (window.userAddress||'').toLowerCase()===(b.winnerAddr||'').toLowerCase();
+        var _headline = _isWinnerMe ? 'You Won! 🎉' : (_esc(wName)+' Won!');
+        card.innerHTML='<span class="bw-trophy">🏆</span><div class="bw-lbl">Battle Winner</div><div class="bw-name">'+_headline+'</div>'+
             '<div class="bw-scores"><div class="bw-si"><div class="bw-sn">'+sA+'★</div><div class="bw-sl">'+_esc(b.challengerName||'Host A')+'</div></div>'+
             '<div style="color:rgba(255,255,255,.3);align-self:center">vs</div>'+
             '<div class="bw-si"><div class="bw-sn">'+sB+'★</div><div class="bw-sl">'+_esc(b.challengeeName||'Host B')+'</div></div></div>'+
@@ -39349,16 +39425,60 @@ window._closeBattleWinner=function(){
     var ov=document.getElementById('battle-winner-overlay');
     if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
     document.body.classList.remove('has-battle');
+    // Was missing the rest of _deactivate()'s teardown — left the split-screen
+    // pip, .layout-battle class, and the second Agora client (_bViewerClient)
+    // all still connected/present, so both devices stayed visually "in the
+    // battle" after closing. _clearBattleSplit() also clears any rematch
+    // pill, so _showRematchPill() must run after it, not before.
+    _bRole=null; _battleEnded=false;
+    var bar=document.getElementById('battle-bar'); if(bar) bar.style.display='none';
+    _clearBattleSplit();
     _showRematchPill();
+};
+
+// Shown to the OTHER participant when one side ends the battle early (not a
+// natural timer conclusion) — reuses the same overlay/card shell as
+// _showWinner for visual consistency, but deliberately no confetti, no
+// winner/rematch framing, and no rematch pill on close, since the opponent
+// choosing to leave isn't a "what's next, together" moment.
+function _showOpponentEndedNotice(b){
+    var ov = document.getElementById('battle-winner-overlay');
+    var card = document.getElementById('battle-winner-card');
+    if(!ov||!card) return;
+    _lastBattleData = b;
+    card.innerHTML='<span class="bw-trophy">⚔️</span><div class="bw-lbl">Battle Ended</div><div class="bw-name">Your Opponent Ended the Battle</div>'+
+        '<button class="bw-btn-end" onclick="window._closeOpponentEndedNotice()">← Close</button>';
+    ov.style.display='flex';
+    setTimeout(function(){ ov.classList.add('active'); }, 40);
+}
+window._closeOpponentEndedNotice=function(){
+    var ov=document.getElementById('battle-winner-overlay');
+    if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
+    document.body.classList.remove('has-battle');
+    _bRole=null; _battleEnded=false;
+    var bar=document.getElementById('battle-bar'); if(bar) bar.style.display='none';
+    _clearBattleSplit();
 };
 function _showRematchPill(){
     if(!document.body.classList.contains('is-hosting')) return;
     var container=document.getElementById('live-broadcaster-video-container');
     if(!container||document.getElementById('battle-rematch-pill')) return;
-    var pill=document.createElement('button');
+    // Wrapper holding the rematch action + a separate dismiss button — was a
+    // single <button> with no way to clear it short of clicking it (which
+    // starts a new battle) or ending the whole stream.
+    var pill=document.createElement('div');
     pill.id='battle-rematch-pill';
-    pill.innerHTML='⚔️ Rematch';
-    pill.onclick=function(){ _clearRematchPill(); window._rematchBattle(); };
+    var rematchBtn=document.createElement('button');
+    rematchBtn.className='brp-rematch';
+    rematchBtn.innerHTML='⚔️ Rematch';
+    rematchBtn.onclick=function(){ _clearRematchPill(); window._rematchBattle(); };
+    var dismissBtn=document.createElement('button');
+    dismissBtn.className='brp-dismiss';
+    dismissBtn.title='Dismiss';
+    dismissBtn.innerHTML='✕';
+    dismissBtn.onclick=function(e){ e.stopPropagation(); _clearRematchPill(); };
+    pill.appendChild(rematchBtn);
+    pill.appendChild(dismissBtn);
     container.appendChild(pill);
 }
 function _clearRematchPill(){
@@ -39455,6 +39575,55 @@ window._battleEndOnStreamLeave = async function(){
 };
 
 // ── Split screen: join opponent's Agora channel ───────────
+// Readiness loop for the opponent PiP: the element is often freshly created
+// (zero dimensions) the instant the video track arrives. Was a single blind
+// 300ms retry with no re-check — on a slower device/layout that one retry
+// could still land on a zero-size element and never actually render.
+// Re-checks dimensions on every attempt; after ~3s gives up and plays anyway
+// rather than silently leaving the PiP stuck on the connecting placeholder.
+function _playBattleOpponentVideo(videoTrack, attempt){
+    attempt = attempt || 0;
+    var pip = document.getElementById('battle-opponent-pip');
+    if (!pip) {
+        // Was a hard bail-out with no retry — if the pip wasn't in the DOM
+        // yet (or was transiently detached) on the very first call, the
+        // "Connecting…" placeholder text never got cleared and nothing ever
+        // ran again, leaving it stuck indefinitely. Retry on the same
+        // schedule as the zero-dimension case below.
+        if (attempt >= 10) {
+            console.warn('[Battle] opponent pip never appeared in the DOM after 3s, giving up');
+            return;
+        }
+        setTimeout(function(){ _playBattleOpponentVideo(videoTrack, attempt + 1); }, 300);
+        return;
+    }
+    pip.innerHTML = '<div class="bop-label">⚔️ Opponent</div>';
+    var w = pip.offsetWidth, h = pip.offsetHeight;
+    if (w > 0 && h > 0) {
+        videoTrack.play(pip, { fit: 'cover' });
+        return;
+    }
+    if (attempt >= 10) {
+        console.warn('[Battle] opponent pip never reported real dimensions after 3s, playing anyway');
+        videoTrack.play(pip, { fit: 'cover' });
+        return;
+    }
+    setTimeout(function(){ _playBattleOpponentVideo(videoTrack, attempt + 1); }, 300);
+}
+
+// Shared by the user-published event AND the post-join remoteUsers fallback
+// below, so both paths subscribe/play identically.
+async function _handleBattleOpponentPublish(remoteUser, mediaType){
+    try{
+        await _bViewerClient.subscribe(remoteUser,mediaType);
+        if(mediaType==='video'){
+            _bOpponentTrack=remoteUser.videoTrack;
+            _playBattleOpponentVideo(remoteUser.videoTrack);
+        }
+        if(mediaType==='audio'&&remoteUser.audioTrack) remoteUser.audioTrack.play();
+    }catch(e){ console.error('[Battle] subscribe error:',e); }
+}
+
 async function _joinBattleOpponent(oppSid){
     console.log('[Battle] _joinBattleOpponent oppSid=',oppSid,'AgoraRTC=',!!window.AgoraRTC,'client=',!!_bViewerClient);
     if(_bViewerClient||!window.AgoraRTC) return;
@@ -39469,27 +39638,8 @@ async function _joinBattleOpponent(oppSid){
         _bViewerClient=window.AgoraRTC.createClient({mode:'live',codec:'h264'});
         await _bViewerClient.setClientRole('audience',{level:1});
 
-        _bViewerClient.on('user-published',async function(remoteUser,mediaType){
-            try{
-                await _bViewerClient.subscribe(remoteUser,mediaType);
-                if(mediaType==='video'){
-                    _bOpponentTrack=remoteUser.videoTrack;
-                    var pip=document.getElementById('battle-opponent-pip');
-                    if(pip){
-                        pip.innerHTML='<div class="bop-label">⚔️ Opponent</div>';
-                        var w=pip.offsetWidth, h=pip.offsetHeight;
-                        if(w>0&&h>0){
-                            remoteUser.videoTrack.play(pip, { fit: 'cover' });
-                        } else {
-                            setTimeout(function(){
-                                var p2=document.getElementById('battle-opponent-pip');
-                                if(p2) remoteUser.videoTrack.play(p2, { fit: 'cover' });
-                            },300);
-                        }
-                    }
-                }
-                if(mediaType==='audio'&&remoteUser.audioTrack) remoteUser.audioTrack.play();
-            }catch(e){ console.error('[Battle] subscribe error:',e); }
+        _bViewerClient.on('user-published',function(remoteUser,mediaType){
+            _handleBattleOpponentPublish(remoteUser,mediaType);
         });
         _bViewerClient.on('user-left',function(){
             var pip=document.getElementById('battle-opponent-pip');
@@ -39507,6 +39657,26 @@ async function _joinBattleOpponent(oppSid){
 
         await _bViewerClient.join('e32b02aab43a4762b385498535b0f51d',oppChannel,tokenData.token,tokenData.uid||null);
         _showBattleSplit();
+
+        // Fallback: user-published isn't guaranteed to fire for a user who was
+        // already publishing before we joined/attached the listener — same
+        // class of gap the co-host promotion code already works around
+        // elsewhere in this file ("Agora internally unsubscribes... and does
+        // NOT re-fire user-published"). Check remoteUsers directly for
+        // anything the event missed. Guarded on videoTrack/audioTrack already
+        // being set, so this can't double-subscribe against the event handler
+        // whichever one wins the race.
+        setTimeout(async function(){
+            if(!_bViewerClient) return;
+            try{
+                var _existing=_bViewerClient.remoteUsers||[];
+                for(var _ei=0;_ei<_existing.length;_ei++){
+                    var _eu=_existing[_ei];
+                    if(_eu.hasVideo && !_eu.videoTrack) await _handleBattleOpponentPublish(_eu,'video');
+                    if(_eu.hasAudio && !_eu.audioTrack) await _handleBattleOpponentPublish(_eu,'audio');
+                }
+            }catch(_fallbackErr){ console.warn('[Battle] remoteUsers fallback error:',_fallbackErr); }
+        }, 300);
     }catch(e){
         console.error('[Battle] _joinBattleOpponent failed:',e.message,e);
         if(typeof showToast==='function') showToast('⚠️ Battle stream error: '+e.message);
