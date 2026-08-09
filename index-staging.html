@@ -39339,7 +39339,17 @@ function _startBListener(bid){
             _lastBattleData=d; _battleEnded=true;
             _bid=null; _bdata=null;
             var _eBar=document.getElementById('battle-bar'); if(_eBar) _eBar.style.display='none';
-            _showWinner(d);
+            // A natural conclusion (timer reached endsAt) shows the normal
+            // winner/rematch card to both sides. An early end (a participant
+            // ending their own stream mid-battle) shows the OTHER participant
+            // a distinct notice instead — not a rematch prompt, since the
+            // person who ended it is the one who left, not agreeing to a
+            // shared "what's next" moment. Whoever actually called endBattle
+            // still gets the normal card if their own listener somehow fires
+            // (e.g. they were the one who noticed a real disconnect).
+            var _myAddrEB=(window.userAddress||'').toLowerCase();
+            var _endedByOpponent = !!d.endedEarly && !!d.endedByAddr && (d.endedByAddr||'').toLowerCase()!==_myAddrEB;
+            if(_endedByOpponent){ _showOpponentEndedNotice(d); } else { _showWinner(d); }
         }
     });
 }
@@ -39354,7 +39364,12 @@ function _startTimer(endsAtTs){
         var m=Math.floor(rem/60),s=rem%60;
         el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
         el.classList.toggle('urgent',rem<=30);
-        if(rem<=0) _clearTimer();
+        // Was purely decorative — clearing the interval here stopped the
+        // display but never actually ended the battle, so it just froze at
+        // 00:00 until someone ended their whole stream. endBattle is safe to
+        // call from both participants' clients (server no-ops if the battle
+        // isn't 'active' anymore), so no extra coordination is needed here.
+        if(rem<=0){ _clearTimer(); _doEndBattle().catch(function(){}); }
     }
     _tick();
     _bTimer=setInterval(_tick,1000);
@@ -39387,7 +39402,9 @@ function _showWinner(b){
             '<button class="bw-btn-end" onclick="window._closeBattleWinner()">← Close</button>';
     } else {
         var wName = b.winnerName || (b.winnerId==='challenger'?b.challengerName:b.challengeeName) || 'Winner';
-        card.innerHTML='<span class="bw-trophy">🏆</span><div class="bw-lbl">Battle Winner</div><div class="bw-name">'+_esc(wName)+'</div>'+
+        var _isWinnerMe = !!b.winnerAddr && (window.userAddress||'').toLowerCase()===(b.winnerAddr||'').toLowerCase();
+        var _headline = _isWinnerMe ? 'You Won! 🎉' : (_esc(wName)+' Won!');
+        card.innerHTML='<span class="bw-trophy">🏆</span><div class="bw-lbl">Battle Winner</div><div class="bw-name">'+_headline+'</div>'+
             '<div class="bw-scores"><div class="bw-si"><div class="bw-sn">'+sA+'★</div><div class="bw-sl">'+_esc(b.challengerName||'Host A')+'</div></div>'+
             '<div style="color:rgba(255,255,255,.3);align-self:center">vs</div>'+
             '<div class="bw-si"><div class="bw-sn">'+sB+'★</div><div class="bw-sl">'+_esc(b.challengeeName||'Host B')+'</div></div></div>'+
@@ -39405,6 +39422,27 @@ window._closeBattleWinner=function(){
     if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
     document.body.classList.remove('has-battle');
     _showRematchPill();
+};
+
+// Shown to the OTHER participant when one side ends the battle early (not a
+// natural timer conclusion) — reuses the same overlay/card shell as
+// _showWinner for visual consistency, but deliberately no confetti, no
+// winner/rematch framing, and no rematch pill on close, since the opponent
+// choosing to leave isn't a "what's next, together" moment.
+function _showOpponentEndedNotice(b){
+    var ov = document.getElementById('battle-winner-overlay');
+    var card = document.getElementById('battle-winner-card');
+    if(!ov||!card) return;
+    _lastBattleData = b;
+    card.innerHTML='<span class="bw-trophy">⚔️</span><div class="bw-lbl">Battle Ended</div><div class="bw-name">Your Opponent Ended the Battle</div>'+
+        '<button class="bw-btn-end" onclick="window._closeOpponentEndedNotice()">← Close</button>';
+    ov.style.display='flex';
+    setTimeout(function(){ ov.classList.add('active'); }, 40);
+}
+window._closeOpponentEndedNotice=function(){
+    var ov=document.getElementById('battle-winner-overlay');
+    if(ov){ ov.classList.remove('active'); setTimeout(function(){ov.style.display='none';},300); }
+    document.body.classList.remove('has-battle');
 };
 function _showRematchPill(){
     if(!document.body.classList.contains('is-hosting')) return;
