@@ -30715,7 +30715,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             if (!_matched && _slotRetry < 20) { _slotRetry++; setTimeout(_trySlotPlay, 200); }
                         })();
                     }
-                    if (mediaType === 'audio') remoteUser.audioTrack.play();
+                    if (mediaType === 'audio') {
+                        try {
+                            remoteUser.audioTrack.play();
+                        } catch(audioErr) {
+                            console.warn('[CoHost] Audio autoplay blocked — showing unmute prompt', audioErr);
+                            _showUnmutePrompt(remoteUser.audioTrack);
+                        }
+                    }
                     showToast('🎤 Co-host joined the stage!');
                 } catch(e) { console.warn('[CoHost] host subscribe error:', e); }
             });
