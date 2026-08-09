@@ -32076,6 +32076,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             addDoc(collection(window.db, LIVE_CHAT_COL, _watchingStreamId, 'messages'), {
                 author:   userHandle,
                 avatar:   userAvatar || '',
+                address:  userAddress.toLowerCase(),
                 text:     `⚡ ${userHandle} hyped the stream!`,
                 ts:       serverTimestamp(),
                 isSystem: false,
@@ -32155,7 +32156,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 author:     window._liveUserHandle  || (window.userAddress || '').slice(0,8) + '…',
                 avatar:     window._liveUserAvatar  || '',
                 text:       text.slice(0, 500),
-                senderAddr: (window.userAddress || '').toLowerCase(),
+                address:    (window.userAddress || '').toLowerCase(),
                 ts:         serverTimestamp(),
                 isSystem:   false
             };
@@ -32568,7 +32569,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }).catch(() => {});
             // Chat message
             addDoc(collection(window.db, LIVE_CHAT_COL, sid, 'messages'), {
-                author:userHandle, avatar:userAvatar,
+                author:userHandle, avatar:userAvatar, address:userAddress.toLowerCase(),
                 text:`${tier.icon} ${userHandle} gifted ${tier.name} to ${recipientHandle}! (${tier.cost} ★)`,
                 ts:serverTimestamp(), isGift:true, giftTier:tierKey, giftIcon:tier.icon, giftStyle:tier.chatStyle
             }).catch(() => {});
