@@ -17883,9 +17883,45 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return showToast("Not enough Stars! Deposit APTM.");
         }
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // Everything below this point is a chain of several sequential
+        // Firestore writes (log spend, deduct, credit creator, log earn...).
+        // Showing nothing until all of them finish made every like feel like
+        // it hadn't registered — people would tap again thinking it failed.
+        // Show the visual result immediately; roll back only if the write
+        // chain genuinely fails, in the catch block below.
+        const isComment    = displayId.startsWith('hc-');
+        const entityId      = displayId.replace(isComment ? 'hc-' : 'hp-', '');
+        const _optWasAlreadyLiked = !isComment && _isLiked(entityId);
+        let _optLikeBtn = null, _optCounterEl = null, _optCounterBumped = false;
+        if (!isComment) {
+            _markLiked(entityId);
+            const _optHypeSpan = document.getElementById('hp-' + entityId);
+            _optLikeBtn = _optHypeSpan ? _optHypeSpan.closest('.pact') : null;
+            if (_optLikeBtn) {
+                if (!_optWasAlreadyLiked) {
+                    _optLikeBtn.classList.add('pact-liked');
+                    _optLikeBtn.classList.remove('like-active');
+                } else {
+                    _optLikeBtn.classList.remove('pact-mega-hype');
+                    void _optLikeBtn.offsetWidth;
+                    _optLikeBtn.classList.add('pact-mega-hype');
+                    _optLikeBtn.addEventListener('animationend', () => { _optLikeBtn.classList.remove('pact-mega-hype'); }, { once: true });
+                }
+            }
+            if (_activeCommunity) {
+                _optCounterEl = document.getElementById('hp-' + entityId);
+                if (_optCounterEl) {
+                    _optCounterEl.textContent = String((parseInt(_optCounterEl.textContent, 10) || 0) + 1);
+                    _optCounterBumped = true;
+                }
+            }
+            showToast(_optWasAlreadyLiked ? "⚡ Mega Hype! Creator +0.8★" : "Hyped! Creator +0.8★");
+        } else {
+            showToast("Hyped! Creator +0.8★");
+        }
+
         try {
-            const isComment    = displayId.startsWith('hc-');
-            const entityId     = displayId.replace(isComment ? 'hc-' : 'hp-', '');
             const senderAddr   = userAddress.toLowerCase();
             const recipientNorm = recipientAddress ? recipientAddress.toLowerCase() : null;
 
@@ -18000,52 +18036,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             updateUI();
             updateDrawerUI();
-            // ── Counter update ────────────────────────────────────────────────────
-            // Global feed: the loadGlobalFeed onSnapshot 'modified' handler patches
-            // #hp-{postId} atomically — do NOT also update it here or the count jumps.
-            // Community feed: openCommunityFeed uses getDocs (one-time query), so
-            // there is no live listener. Optimistically increment the span here after
-            // the Firestore write succeeds so the UI reflects the hype immediately
-            // without requiring a page refresh.
-            if (_activeCommunity && !isComment) {
-                const hypeSpan = document.getElementById('hp-' + entityId);
-                if (hypeSpan) {
-                    hypeSpan.textContent = String((parseInt(hypeSpan.textContent, 10) || 0) + 1);
-                }
-            }
-
-            // ── Like state update ────────────────────────────────────────────────────
-            if (!isComment) {
-                const wasAlreadyLiked = _isLiked(entityId);
-                _markLiked(entityId);
-                // Find the like button for this post — it contains the span id="hp-{entityId}"
-                const hypeSpan = document.getElementById('hp-' + entityId);
-                const likeBtn  = hypeSpan ? hypeSpan.closest('.pact') : null;
-                if (likeBtn) {
-                    if (!wasAlreadyLiked) {
-                        // STATE 1 → Solid red
-                        likeBtn.classList.add('pact-liked');
-                        likeBtn.classList.remove('like-active');
-                    } else {
-                        // STATE 2+ → Mega Hype pulse (retains pact-liked base)
-                        likeBtn.classList.remove('pact-mega-hype'); // force reflow
-                        void likeBtn.offsetWidth;
-                        likeBtn.classList.add('pact-mega-hype');
-                        // Remove animation class after it plays so it can re-trigger
-                        likeBtn.addEventListener('animationend', () => {
-                            likeBtn.classList.remove('pact-mega-hype');
-                        }, { once: true });
-                    }
-                }
-                showToast(wasAlreadyLiked ? "⚡ Mega Hype! Creator +0.8★" : "Hyped! Creator +0.8★");
-            } else {
-                showToast("Hyped! Creator +0.8★");
-            }
+            // Counter + "liked" visual state were already applied optimistically
+            // above, right when the click was accepted — see that block for why.
             // Notify post/comment author (fire-and-forget)
             writeNotif(recipientNorm, 'hype', { postId: entityId || null });
         } catch (e) {
             console.error(e);
-            showToast("Hype failed.");
+            // Roll back the optimistic UI — the write chain genuinely failed.
+            if (!isComment) {
+                if (_optLikeBtn) {
+                    if (!_optWasAlreadyLiked) _optLikeBtn.classList.remove('pact-liked');
+                    else _optLikeBtn.classList.remove('pact-mega-hype');
+                }
+                if (!_optWasAlreadyLiked) {
+                    _likedPosts.delete(entityId);
+                    sessionStorage.setItem('_likedPosts', JSON.stringify([..._likedPosts]));
+                }
+                if (_optCounterBumped && _optCounterEl) {
+                    _optCounterEl.textContent = String(Math.max(0, (parseInt(_optCounterEl.textContent, 10) || 0) - 1));
+                }
+            }
+            showToast("Hype failed — try again.");
         } finally {
             // Release lock and restore pointer events after DB confirms
             isActionPending = false;
@@ -29786,6 +29797,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (picker) picker.classList.remove('open');
         if (!_vrRoomId || !userAddress) return;
         if (!_vrGiftTarget) { showToast('Tap a speaker to gift them'); return; }
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // This Cloud Function call can run several seconds (cold start), and
+        // nothing told the sender it was even in flight — show it immediately,
+        // and correct the toast if the server actually rejects it below.
+        const _optVrTargetName = _vrGiftTarget.name;
+        showToast('Gift sent to ' + _optVrTargetName + '!');
         try {
             const res = await fetch(VR_CF_BASE + 'sendVoiceRoomGift', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -29827,7 +29844,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     description: `${_t.icon} ${_t.name} Gift received in Voice Room (+${_cut.toFixed(1)}★)`
                 });
             }
-            showToast('Gift sent to ' + _vrGiftTarget.name + '!');
             _vrGiftTarget = null;
             const lbl = document.getElementById('vr-gift-to-lbl');
             if (lbl) lbl.textContent = '';
@@ -32570,14 +32586,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!tier) return;
         if (available < tier.cost) { showToast(`Not enough Stars — need ${tier.cost} ★`); return; }
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // deductSpendableStars() is a Firestore transaction (read+write, two
+        // round-trips) followed by another awaited write — showing the "sent"
+        // toast only after both finished made gifts feel unresponsive. We've
+        // already confirmed locally that the balance covers this, so show it
+        // now and roll back only if something genuinely fails below.
+        const _optPrevSpendable2 = window._liveTotalSpendable;
+        if (typeof window._liveTotalSpendable === 'number') {
+            window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
+            window._liveAvailableStars = window._liveTotalSpendable;
+        }
+        if (typeof updateUI === 'function') updateUI();
+        showToast(`${tier.icon} ${tier.name} sent to ${recipientHandle}!`);
+
         try {
             const { doc, updateDoc, increment, collection, addDoc, serverTimestamp } = window.fs;
             // Deduct from sender using the same canonical spend waterfall.
             await deductSpendableStars(userAddress.toLowerCase(), tier.cost);
-            if (typeof window._liveTotalSpendable === 'number') {
-                window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
-                window._liveAvailableStars = window._liveTotalSpendable;
-            }
             const creatorCut  = parseFloat((tier.cost * 0.8).toFixed(4));
             const platformCut = parseFloat((tier.cost * 0.2).toFixed(4));
             // Credit 80% to recipient
@@ -32620,9 +32646,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 giftCount:  increment(1),
                 lastGift:   serverTimestamp()
             }, { merge: true }).catch(() => {});
-            showToast(`${tier.icon} ${tier.name} sent to ${recipientHandle}!`);
             writeNotif(recipientAddr.toLowerCase(), 'tip', { giftTier: tierKey, giftIcon: tier.icon, giftName: tier.name, cost: tier.cost, text: tier.icon + ' ' + tier.name + ' (' + tier.cost + '★)' });
-        } catch(e) { showToast('Gift failed: ' + (e.message || String(e))); }
+        } catch(e) {
+            // Roll back — the deduct/credit chain genuinely failed.
+            window._liveTotalSpendable = _optPrevSpendable2;
+            window._liveAvailableStars = _optPrevSpendable2;
+            if (typeof updateUI === 'function') updateUI();
+            showToast('Gift failed: ' + (e.message || String(e)));
+        }
     };
 
     window.sendGift = async function(tierKey) {
@@ -32650,6 +32681,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             ? currentAptmPriceUsd
             : 1.0;
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // This is one server round-trip, but the Cloud Function does an
+        // on-chain balance verification (blockchain RPC call) plus its own
+        // cold-start risk — that can easily run several seconds. Showing
+        // nothing until it returns made gifts feel like they hadn't sent,
+        // especially in battles where a late-registering gift can miss the
+        // scoring window. We've already confirmed locally that the balance
+        // covers this gift, so show the result now and roll back only if the
+        // server genuinely rejects it.
+        const _optPrevSpendable = window._liveTotalSpendable;
+        if (typeof window._liveTotalSpendable === 'number') {
+            window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
+            window._liveAvailableStars = window._liveTotalSpendable;
+        }
+        if (typeof window.tickerLog === 'function') {
+            window.tickerLog('spend', `${tier.name} Gift`, tier.cost, tier.icon);
+        }
+        _showGiftBurst(tier, userHandle);
+        if (typeof updateUI === 'function') updateUI();
+        showToast(`${tier.icon} ${tier.name} sent!`);
+
         try {
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/sendGift', {
                 method:  'POST',
@@ -32665,28 +32717,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             });
             const data = await resp.json();
             if (!data.success) {
+                // Roll back — the server rejected it (insufficient balance server-side,
+                // stream ended, etc.) despite our local check passing.
+                window._liveTotalSpendable = _optPrevSpendable;
+                window._liveAvailableStars = _optPrevSpendable;
+                if (typeof updateUI === 'function') updateUI();
                 showToast(data.error || 'Gift failed. Please try again.');
                 return;
             }
 
-            // Update local balance immediately for snappy UX
-            if (typeof window._liveTotalSpendable === 'number') {
-                window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
-                window._liveAvailableStars = window._liveTotalSpendable;
-            }
-
-            if (typeof window.tickerLog === 'function') {
-                window.tickerLog('spend', `${tier.name} Gift`, tier.cost, tier.icon);
-            }
-
-            _showGiftBurst(tier, userHandle);
-            if (typeof updateUI === 'function') updateUI();
             const cut = data.creatorCut != null ? data.creatorCut : (tier.cost * 0.8);
-            showToast(`${tier.icon} ${tier.name} sent! Creator gets ${cut.toFixed(1)} ★ instantly.`);
+            showToast(`${tier.icon} ${tier.name} — Creator got ${cut.toFixed(1)} ★.`);
             if (data.creatorAddress) writeNotif(data.creatorAddress, 'tip', { giftTier: tierKey, giftIcon: tier.icon, giftName: tier.name, cost: tier.cost, text: tier.icon + ' ' + tier.name + ' (' + tier.cost + '★)' });
 
         } catch(e) {
             console.warn('[Gift] Error:', e);
+            window._liveTotalSpendable = _optPrevSpendable;
+            window._liveAvailableStars = _optPrevSpendable;
+            if (typeof updateUI === 'function') updateUI();
             showToast('Gift failed: ' + (e.message || String(e)));
         }
     };
