@@ -26437,6 +26437,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return showToast('Community ID missing — cannot follow.');
         }
 
+        let _optCommFollowShown = false;
         try {
             const docId  = senderAddr + '_' + commId;
             const docRef = window.fs.doc(window.db, 'social_graph', docId);
@@ -26464,6 +26465,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     if (followBtn) followBtn.disabled = false;
                     return showToast('Not enough Stars to follow! Deposit APTM.');
                 }
+
+                // ── Optimistic UI ─────────────────────────────────────────
+                // We already know at this point (from the getDoc check above)
+                // that this is genuinely a new follow, not an unfollow, and
+                // that the balance covers it — the actual write chain below
+                // (spend log → deduct → credit → follow record) is 4+
+                // sequential round-trips with nothing shown until all of them
+                // finish. Show the result now; the internal ordering that
+                // actually matters for money-safety (spend-before-deduct,
+                // deduct-before-credit, including the self-dealing guard's
+                // careful sequencing) is completely untouched below — this
+                // only changes when the toast/button appear, not what runs
+                // or in what order.
+                if (followBtn) { followBtn.textContent = '✓ Following Hub'; followBtn.classList.add('following'); }
+                showToast('Following ' + (_activeCommunity.name || 'Hub') + '! 0.9★ sent to creator.');
+                _optCommFollowShown = true;
 
                 // ── SELF-DEALING GUARD ───────────────────────────────────────
                 // When senderAddr === creatorAddr (creator follows their own Hub),
@@ -26537,8 +26554,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 });
 
                 _followingSet.add(commId);
-                if (followBtn) { followBtn.textContent = '✓ Following Hub'; followBtn.classList.add('following'); }
-                showToast('Following ' + (_activeCommunity.name || 'Hub') + '! 0.9★ sent to creator.');
+                // Toast + button state were already applied optimistically above.
                 writeNotif(creatorAddr, 'follow', { hubName: _activeCommunity.name || commId, communityId: commId });
                 if (typeof loadMyNetwork === 'function') loadMyNetwork();
             }
@@ -26561,6 +26577,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch (e) {
             console.error('[commFollowHub]', e);
+            // Roll back the optimistic UI — the write chain genuinely failed.
+            if (_optCommFollowShown) {
+                if (followBtn) { followBtn.textContent = '+ Follow Hub'; followBtn.classList.remove('following'); }
+                _followingSet.delete(commId);
+            }
             showToast('Follow failed. Please try again.');
         }
 
