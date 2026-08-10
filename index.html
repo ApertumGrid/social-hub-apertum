@@ -17925,18 +17925,23 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const senderAddr   = userAddress.toLowerCase();
             const recipientNorm = recipientAddress ? recipientAddress.toLowerCase() : null;
 
-            if (isComment) {
-                await window.fs.updateDoc(window.fs.doc(window.db, "comments", entityId), { hypes: window.fs.increment(1) });
-            } else {
-                await window.fs.updateDoc(window.fs.doc(window.db, "posts", entityId), { hypes: window.fs.increment(1) });
-            }
+            // ── Parallelized: the hype-counter increment (posts/comments doc) and the
+            // spend log (user_transactions doc) touch two completely unrelated documents
+            // — neither reads or depends on the other's result. Running them together
+            // instead of one-after-another doesn't change what either one does, only
+            // how long we wait. The actual money-safety rule — spend log written before
+            // any deduction happens — is untouched: STEP B below still only starts once
+            // BOTH of these have resolved.
+            const _hypeCounterWrite = isComment
+                ? window.fs.updateDoc(window.fs.doc(window.db, "comments", entityId), { hypes: window.fs.increment(1) })
+                : window.fs.updateDoc(window.fs.doc(window.db, "posts", entityId), { hypes: window.fs.increment(1) });
 
             // ── STEP A: Log spend FIRST — no spend record = no deduction ─────────────────
             // Satisfies the log-before-deduct contract. The spend is permanently
             // in Firestore before any balance change, so the ledger always shows
             // the debit regardless of what happens next. Also fixes self-hype
             // direction rendering: stored type='spend' is used by renderLedger.
-            await window.fs.addDoc(
+            const _spendLogWrite = window.fs.addDoc(
                 window.fs.collection(window.db, 'user_transactions'),
                 {
                     type:           'spend',
@@ -17950,6 +17955,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     schema_version: 2
                 }
             );
+            await Promise.all([_hypeCounterWrite, _spendLogWrite]);
 
             // ── STEP B: Deduct 1★ from sender (spend is now in Firestore) ────────────
             await deductStars(1);
@@ -17959,13 +17965,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (isComment) {
                 if (recipientNorm && recipientNorm !== "unknown") {
                     if (_activeCommunity) {
-                        await creditCreatorStars(recipientNorm, 0.4);
+                        // These two credits land on two different user_balances documents
+                        // (guest poster's / hub owner's) — neither reads or depends on the
+                        // other, so running them together is safe. STEP D below still only
+                        // starts once both have resolved.
+                        await Promise.all([
+                            creditCreatorStars(recipientNorm, 0.4),
+                            creditCreatorStars(_activeCommunity.ownerId, 0.4)
+                        ]);
                         logTransaction('earn', 0.4, {
                             from: senderAddr, to: recipientNorm,
                             description: "Earnings from " + _activeCommunity.name + " Hub (comment hype)",
                             communityId: _activeCommunity.id
                         });
-                        await creditCreatorStars(_activeCommunity.ownerId, 0.4);
                         logTransaction('earn', 0.4, {
                             from: senderAddr, to: (_activeCommunity.ownerId || '').toLowerCase(),
                             description: "Landlord Earnings from " + _activeCommunity.name + " Hub (comment hype)",
@@ -17986,13 +17998,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
             } else if (_activeCommunity && recipientNorm &&
                        recipientNorm !== _activeCommunity.ownerId.toLowerCase()) {
-                await creditCreatorStars(recipientNorm, 0.4);
+                // Two different user_balances documents (guest poster's / hub owner's) —
+                // neither credit reads or depends on the other, safe to run together.
+                await Promise.all([
+                    creditCreatorStars(recipientNorm, 0.4),
+                    creditCreatorStars(_activeCommunity.ownerId, 0.4)
+                ]);
                 logTransaction('earn', 0.4, {
                     from: senderAddr, to: recipientNorm,
                     description: "Earnings from " + _activeCommunity.name + " Hub (guest post)",
                     postId: entityId, communityId: _activeCommunity.id
                 });
-                await creditCreatorStars(_activeCommunity.ownerId, 0.4);
                 logTransaction('earn', 0.4, {
                     from: senderAddr, to: (_activeCommunity.ownerId || '').toLowerCase(),
                     description: "Landlord Earnings from " + _activeCommunity.name + " Hub (guest post)",
