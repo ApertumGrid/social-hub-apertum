@@ -2,7 +2,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -898,6 +897,27 @@
         .vr-role-badge { font-size:0.46rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; padding:1px 6px; border-radius:4px; }
         .vr-role-badge.host { background:rgba(240,180,41,0.14); color:var(--gold); border:1px solid rgba(240,180,41,0.28); }
         .vr-role-badge.speaker { background:rgba(124,92,191,0.14); color:var(--purple-lt); border:1px solid rgba(124,92,191,0.28); }
+
+        /* Join announcement banner — slides in near the top when anyone enters */
+        #vr-join-banner {
+            position:absolute; top:64px; left:50%; transform:translateX(-50%) translateY(-14px);
+            display:flex; align-items:center; gap:8px;
+            background:linear-gradient(135deg,rgba(28,20,52,0.95),rgba(16,12,34,0.95));
+            border:1px solid rgba(240,180,41,0.28); border-radius:30px;
+            padding:5px 16px 5px 5px; box-shadow:0 6px 24px rgba(0,0,0,0.45);
+            opacity:0; pointer-events:none; z-index:20; max-width:82%;
+            transition:opacity 0.25s ease, transform 0.25s ease;
+        }
+        #vr-join-banner.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        #vr-join-banner img { width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        #vr-join-banner span { font-size:0.72rem; color:var(--text-secondary); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #vr-join-banner span b { color:var(--gold); }
+
+        /* Speaker stage entrance — plays once when someone is newly admitted */
+        @keyframes vr-speaker-pop { 0%{ transform:scale(0.4); opacity:0; } 55%{ transform:scale(1.12); opacity:1; } 100%{ transform:scale(1); opacity:1; } }
+        @keyframes vr-speaker-glow { 0%{ box-shadow:0 0 0 0 rgba(124,92,191,0.55), 0 0 0 0 rgba(240,180,41,0.4); } 60%{ box-shadow:0 0 0 22px rgba(124,92,191,0), 0 0 0 12px rgba(240,180,41,0); } 100%{ box-shadow:0 0 0 0 rgba(124,92,191,0), 0 0 0 0 rgba(240,180,41,0); } }
+        .vr-speaker-enter { animation:vr-speaker-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .vr-speaker-enter .vr-orb { animation:vr-speaker-glow 0.9s ease-out 0.05s both; }
         #vr-queue-strip { margin:8px 14px 0; padding:8px 12px; background:rgba(124,92,191,0.06); border:1px solid rgba(124,92,191,0.15); border-radius:12px; flex-shrink:0; }
         .vr-q-label { font-size:0.58rem; color:var(--purple-lt); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:8px; }
         #vr-queue-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
@@ -10478,7 +10498,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span style="font-size:1.3rem;">🎰</span>
                             <div>
-                                <div style="font-size:0.72rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;">Star Lottery</div>
+                                <div style="font-size:0.72rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;">Daily Star Pot</div>
                                 <div style="font-size:0.62rem;color:var(--text-muted);">Daily draw · 80% to winner · 10★ (≈ $0.10 USD) per ticket</div>
                             </div>
                         </div>
@@ -11111,7 +11131,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
                     <!-- 🎰 Lottery control -->
                     <div style="border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;background:rgba(168,85,247,0.06);">
-                        <div style="font-size:0.7rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">🎰 Lottery Control</div>
+                        <div style="font-size:0.7rem;font-weight:800;color:rgba(168,85,247,0.95);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;">🎰 Daily Star Pot Control</div>
                         <div id="lottery-admin-status" style="font-size:0.65rem;color:var(--text-muted);margin-bottom:8px;">No active round.</div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
                             <button onclick="adminInitLottery()" style="padding:7px 12px;border-radius:8px;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:rgba(200,160,255,0.95);font-size:0.68rem;font-weight:700;cursor:pointer;">Init Round</button>
@@ -23391,7 +23411,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (rvEl) {
             if ((round.rollovers || 0) > 0) {
                 rvEl.style.display = 'block';
-                rvEl.textContent = '🔄 Jackpot has rolled over ' + round.rollovers + 'x — pot keeps growing until 2+ players enter!';
+                rvEl.textContent = '🔄 Rolled over ' + round.rollovers + 'x — pot keeps growing until 2+ players enter!';
             } else { rvEl.style.display = 'none'; }
         }
         var buyEl = document.getElementById('lottery-buy-section');
@@ -23470,7 +23490,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
     async function buyLotteryTickets() {
         if (!window.userAddress) return showToast('Connect your wallet first.');
-        if (!_lotteryRound || _lotteryRound.status !== 'open') return showToast('No active lottery round.');
+        if (!_lotteryRound || _lotteryRound.status !== 'open') return showToast('No active Daily Star Pot round.');
         var qty  = _lotteryQty || 1;
         var cost = qty * 10;
         var btn  = document.getElementById('lottery-buy-btn');
@@ -23518,7 +23538,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     window.adminSeedLottery = adminSeedLottery;
     async function adminDrawLottery() {
-        if (!await _shConfirm('Force draw the lottery now?')) return;
+        if (!await _shConfirm('Force draw the Daily Star Pot now?')) return;
         var resp = await fetch(_LOTTERY_CF + '/drawLottery', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adminAddress: window.userAddress })
@@ -29229,8 +29249,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     let _vrRoomUnsub   = null;
     let _vrChatUnsub   = null;
     let _vrQueueUnsub  = null;
+    let _vrListenerUnsub = null;
+    let _vrRoomsListUnsub = null;
     let _vrGiftOpen    = false;
     let _vrPrevQueueSize = 0;
+    let _vrMyJoinTime = 0; // captured when we start watching presence — anyone whose joinedAt predates this was already in the room, not a new arrival
+    let _vrLatestRoomData    = null;
+    let _vrLatestPresenceSnap = null;
+    let _vrKnownSpeakerAddrs = null;  // null = not yet initialized (first render since joining)
+    let _vrJoinBannerQueue   = [];
+    let _vrJoinBannerShowing = false;
+    let _vrSelfSteppingDown  = false; // set right before voluntarily leaving the stage, so the reactive "removed from stage" handler shows the right toast
 
     function _vrDoorbellSound() {
         try {
@@ -29265,33 +29294,43 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     }
     window.closeStartRoomModal = closeStartRoomModal;
 
-    window.loadVoiceRooms = async function() {
+    window.loadVoiceRooms = function() {
         if (!window.db || !window.fs) return;
+        // Live subscription, not a one-time fetch — a one-time snapshot meant a
+        // room the host had already ended stayed listed as active until the user
+        // manually left this tab and came back. Re-subscribing here (tearing down
+        // any previous listener first) means this can be called every time the
+        // tab is activated without leaking multiple stacked listeners.
+        if (_vrRoomsListUnsub) { try { _vrRoomsListUnsub(); } catch(_) {} _vrRoomsListUnsub = null; }
         const grid    = document.getElementById('vr-room-grid');
         const loading = document.getElementById('vr-rooms-loading');
         const empty   = document.getElementById('vr-rooms-empty');
         if (loading) loading.style.display = 'block';
         if (grid)    grid.style.display    = 'none';
         if (empty)   empty.style.display   = 'none';
-        try {
-            const q = window.fs.query(
-                window.fs.collection(window.db, VR_COL),
-                window.fs.where('active', '==', true),
-                window.fs.orderBy('startedAt', 'desc'),
-                window.fs.limit(20)
-            );
-            const snap = await window.fs.getDocs(q);
+        const q = window.fs.query(
+            window.fs.collection(window.db, VR_COL),
+            window.fs.where('active', '==', true),
+            window.fs.orderBy('startedAt', 'desc'),
+            window.fs.limit(20)
+        );
+        _vrRoomsListUnsub = window.fs.onSnapshot(q, snap => {
             if (loading) loading.style.display = 'none';
-            if (snap.empty) { if (empty) empty.style.display = 'block'; return; }
+            if (snap.empty) {
+                if (empty) empty.style.display = 'block';
+                if (grid)  grid.style.display  = 'none';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
             if (grid) {
                 grid.style.display = 'grid';
                 grid.innerHTML = '';
                 snap.forEach(doc => grid.insertAdjacentHTML('beforeend', _vrBuildCard(doc.id, doc.data())));
             }
-        } catch(e) {
-            console.error('[loadVoiceRooms]', e);
+        }, err => {
+            console.error('[loadVoiceRooms]', err);
             if (loading) loading.style.display = 'none';
-        }
+        });
     };
 
     function _vrBuildCard(roomId, r) {
@@ -29365,6 +29404,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             await _vrConnectAgora(roomId, token, uid, _vrIsHost);
             _vrSubscribeRoom(roomId);
             _vrSubscribeChat(roomId);
+            _vrSubscribeListeners(roomId);
             if (_vrIsHost) _vrSubscribeQueue(roomId);
             if (window.db && window.fs) {
                 window.fs.setDoc(
@@ -29459,10 +29499,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 const myAddr  = userAddress.toLowerCase();
                 const myEntry = (r.currentSpeakers || []).find(s => s.addr === myAddr);
                 if (_vrIsSpeaker && !myEntry) {
-                    // We were removed from the stage
+                    // We were removed from the stage — by the host, or we voluntarily
+                    // stepped down via vrLeaveStage() (which sets _vrSelfSteppingDown
+                    // right before writing, so the toast reflects which one happened).
                     _vrIsSpeaker = false;
                     if (_vrAudioTrack) { try { _vrAgoraClient.unpublish([_vrAudioTrack]); _vrAudioTrack.stop(); _vrAudioTrack.close(); } catch(_) {} _vrAudioTrack = null; }
-                    showToast('You were removed from the stage');
+                    _vrMuted = false;
+                    const _mBtn = document.getElementById('vr-ctrl-mute');
+                    const _hBtn2 = document.getElementById('vr-ctrl-hand');
+                    const _sBtn = document.getElementById('vr-ctrl-stepdown');
+                    if (_mBtn) { _mBtn.style.display = 'none'; _mBtn.classList.remove('muted'); }
+                    if (_hBtn2) _hBtn2.style.display = 'flex';
+                    if (_sBtn) _sBtn.style.display = 'none';
+                    showToast(_vrSelfSteppingDown ? 'You left the stage' : 'You were removed from the stage');
+                    _vrSelfSteppingDown = false;
                 } else if (myEntry && myEntry.hostMuted && _vrAudioTrack && !_vrMuted) {
                     // Host muted us
                     _vrMuted = true;
@@ -29490,14 +29540,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         }
                         const muteBtn = document.getElementById('vr-ctrl-mute');
                         const handBtn = document.getElementById('vr-ctrl-hand');
+                        const stepBtn = document.getElementById('vr-ctrl-stepdown');
                         if (muteBtn) muteBtn.style.display = 'flex';
                         if (handBtn) handBtn.style.display = 'none';
+                        if (stepBtn) stepBtn.style.display = 'flex';
                     })();
                 }
             }
 
+            _vrLatestRoomData = r;
             _vrRenderSpeakers(r);
-            _vrRenderListeners(roomId, r);
+            _vrRenderListenerGrid(roomId);
         });
     }
 
@@ -29527,15 +29580,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 <div class="vr-role-badge host">HOST</div>
                 ${hostBalHtml}
             </div>`);
+        // Track which speakers were already on stage so a re-render triggered by an
+        // unrelated room-doc change (e.g. stars ticking up) doesn't replay the
+        // "took the stage" entrance animation for people already up there. On the
+        // very first render since joining, nobody counts as a new arrival.
+        const isFirstSpeakerRender = _vrKnownSpeakerAddrs === null;
+        const nextKnownSpeakers = new Set();
         (r.currentSpeakers || []).forEach(sp => {
             const sUid  = _vrUidFromAddr(sp.addr);
             const sAddr = escHtml(sp.addr || '');
+            const sAddrLower = (sp.addr || '').toLowerCase();
             const sName = escHtml(sp.name || 'Speaker');
             const sAv   = escHtml(sp.avatar || '');
-            const isSpeakerMe = myAddr && (sp.addr || '').toLowerCase() === myAddr;
+            const isSpeakerMe = myAddr && sAddrLower === myAddr;
             const spkBalHtml  = isSpeakerMe ? `<div class="vr-orb-balance">` + '★ ' + `${_myBal}</div>` : '';
+            const isNewArrival = !isFirstSpeakerRender && !_vrKnownSpeakerAddrs.has(sAddrLower);
+            nextKnownSpeakers.add(sAddrLower);
             row.insertAdjacentHTML('beforeend', `
-                <div class="vr-orb-wrap" onclick="vrOpenOrbPopup('${sAddr}','${sName}','${sAv}')" style="cursor:pointer;">
+                <div class="vr-orb-wrap${isNewArrival ? ' vr-speaker-enter' : ''}" onclick="vrOpenOrbPopup('${sAddr}','${sName}','${sAv}')" style="cursor:pointer;">
                     <div class="vr-orb vr-orb-speaker" data-uid="${sUid}">
                         <img src="${sAv}" onerror="this.src='https://placehold.co/64/7c5cbf/fff?text=S'">
                         <div class="vr-orb-ring spk"></div>
@@ -29545,34 +29607,92 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     ${spkBalHtml}
                 </div>`);
         });
+        _vrKnownSpeakerAddrs = nextKnownSpeakers;
     }
-    function _vrRenderListeners(roomId, r) {
+    // ── Join announcement banner ────────────────────────────────────────────
+    // Queued so a burst of joins doesn't overlap/garble mid-animation; capped
+    // so a very busy room doesn't build up a growing backlog of stale toasts.
+    function _vrShowJoinBanner(name, avatar) {
+        if (_vrJoinBannerQueue.length >= 5) return;
+        _vrJoinBannerQueue.push({ name, avatar });
+        _vrDrainJoinBannerQueue();
+    }
+    function _vrDrainJoinBannerQueue() {
+        if (_vrJoinBannerShowing || !_vrJoinBannerQueue.length) return;
+        const next = _vrJoinBannerQueue.shift();
+        const el  = document.getElementById('vr-join-banner');
+        const av  = document.getElementById('vr-jb-av');
+        const txt = document.getElementById('vr-jb-text');
+        if (!el || !av || !txt) return;
+        av.onerror = function() { this.src = 'https://placehold.co/26/1a1535/fff?text=?'; };
+        av.src = next.avatar || 'https://placehold.co/26/1a1535/fff?text=?';
+        txt.innerHTML = '<b>' + escHtml(next.name) + '</b> joined';
+        _vrJoinBannerShowing = true;
+        el.classList.add('show');
+        setTimeout(function() {
+            el.classList.remove('show');
+            setTimeout(function() {
+                _vrJoinBannerShowing = false;
+                _vrDrainJoinBannerQueue();
+            }, 260); // matches CSS transition-out duration
+        }, 2400);
+    }
+
+    // ── Listener presence — live subscription (not a one-time fetch) so we can
+    // detect genuinely NEW arrivals via docChanges() and announce them. ─────
+    function _vrSubscribeListeners(roomId) {
+        if (_vrListenerUnsub) { try { _vrListenerUnsub(); } catch(_) {} _vrListenerUnsub = null; }
+        _vrLatestPresenceSnap = null;
+        // Captured once, here — not "was this the first snapshot I received", since
+        // Firestore can deliver the initial snapshot in two pieces (a partial/cache
+        // one, then the real one), which made someone already in the room look like
+        // a fresh arrival on the second delivery. Comparing each doc's own joinedAt
+        // against this is immune to that regardless of snapshot count or ordering.
+        _vrMyJoinTime = Date.now();
         if (!window.db || !window.fs) return;
+        _vrListenerUnsub = window.fs.onSnapshot(
+            window.fs.collection(window.db, VR_LISTEN, roomId, 'presence'),
+            snap => {
+                snap.docChanges().forEach(ch => {
+                    if (ch.type !== 'added') return;
+                    const l = ch.doc.data();
+                    if ((l.addr || '').toLowerCase() === (userAddress || '').toLowerCase()) return; // don't announce myself
+                    if ((l.joinedAt || 0) < _vrMyJoinTime) return; // already here before I opened the room
+                    _vrShowJoinBanner(l.name || 'Someone', l.avatar || '');
+                });
+                _vrLatestPresenceSnap = snap;
+                _vrRenderListenerGrid(roomId);
+            },
+            err => console.error('[vrListeners]', err.code)
+        );
+    }
+
+    function _vrRenderListenerGrid(roomId) {
+        if (!window.db || !window.fs || !_vrLatestPresenceSnap) return;
         // Build set of on-stage addresses so they're excluded from the listener grid
+        const r = _vrLatestRoomData || {};
         const stageAddrs = new Set([(r.hostAddr || '').toLowerCase()]);
         (r.currentSpeakers || []).forEach(s => stageAddrs.add((s.addr || '').toLowerCase()));
-        window.fs.getDocs(window.fs.collection(window.db, VR_LISTEN, roomId, 'presence')).then(snap => {
-            const grid = document.getElementById('vr-listener-grid');
-            const lbl  = document.getElementById('vr-listener-label');
-            if (!grid) return;
-            grid.innerHTML = '';
-            const MAX = 24;
-            let shown = 0, listenerCount = 0;
-            snap.forEach(doc => {
-                const l = doc.data();
-                if (stageAddrs.has((l.addr || '').toLowerCase())) return; // skip host + speakers
-                listenerCount++;
-                if (shown >= MAX) return;
-                grid.insertAdjacentHTML('beforeend', `<img class="vr-l-av" src="${escHtml(l.avatar||'')}" title="${escHtml(l.name||'')}" onerror="this.src='https://placehold.co/32/1a1535/fff?text=?'">`);
-                shown++;
-            });
-            const extra = listenerCount - shown;
-            if (extra > 0) grid.insertAdjacentHTML('beforeend', `<div class="vr-l-more">+${extra}</div>`);
-            if (lbl) lbl.textContent = `Listening (${listenerCount})`;
-            if (_vrIsHost && window.db && window.fs) {
-                window.fs.updateDoc(window.fs.doc(window.db, VR_COL, roomId), { listenerCount }).catch(() => {});
-            }
-        }).catch(() => {});
+        const grid = document.getElementById('vr-listener-grid');
+        const lbl  = document.getElementById('vr-listener-label');
+        if (!grid) return;
+        grid.innerHTML = '';
+        const MAX = 24;
+        let shown = 0, listenerCount = 0;
+        _vrLatestPresenceSnap.forEach(doc => {
+            const l = doc.data();
+            if (stageAddrs.has((l.addr || '').toLowerCase())) return; // skip host + speakers
+            listenerCount++;
+            if (shown >= MAX) return;
+            grid.insertAdjacentHTML('beforeend', `<img class="vr-l-av" src="${escHtml(l.avatar||'')}" title="${escHtml(l.name||'')}" onerror="this.src='https://placehold.co/32/1a1535/fff?text=?'">`);
+            shown++;
+        });
+        const extra = listenerCount - shown;
+        if (extra > 0) grid.insertAdjacentHTML('beforeend', `<div class="vr-l-more">+${extra}</div>`);
+        if (lbl) lbl.textContent = `Listening (${listenerCount})`;
+        if (_vrIsHost && window.db && window.fs) {
+            window.fs.updateDoc(window.fs.doc(window.db, VR_COL, roomId), { listenerCount }).catch(() => {});
+        }
     }
 
     function _vrSubscribeQueue(roomId) {
@@ -29821,6 +29941,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }).catch(() => {});
     };
 
+    // Self-service: step down from the stage but stay in the room as a listener.
+    // The actual local cleanup (unpublish mic, reset buttons, toast) happens
+    // reactively in _vrSubscribeRoom's snapshot handler once this write lands —
+    // the same path host-initiated removal already goes through, so there's one
+    // single place that does the cleanup instead of two copies of it.
+    window.vrLeaveStage = async function() {
+        if (_vrIsHost || !_vrIsSpeaker || !_vrRoomId || !window.db || !window.fs) return;
+        const myAddr  = (userAddress || '').toLowerCase();
+        const roomRef = window.fs.doc(window.db, VR_COL, _vrRoomId);
+        const roomSnap = await window.fs.getDoc(roomRef).catch(() => null);
+        if (!roomSnap || !roomSnap.exists()) return;
+        const speakers = (roomSnap.data().currentSpeakers || []).filter(sp => sp.addr !== myAddr);
+        _vrSelfSteppingDown = true;
+        await window.fs.updateDoc(roomRef, { currentSpeakers: speakers }).catch(() => { _vrSelfSteppingDown = false; });
+    };
+
     window.vrToggleGiftPicker = async function() {
         if (!_vrGiftOpen) {
             // Default to host if no orb was tapped
@@ -29914,14 +30050,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (_vrRoomUnsub)  { try { _vrRoomUnsub();  } catch(_) {} _vrRoomUnsub  = null; }
         if (_vrChatUnsub)  { try { _vrChatUnsub();  } catch(_) {} _vrChatUnsub  = null; }
         if (_vrQueueUnsub) { try { _vrQueueUnsub(); } catch(_) {} _vrQueueUnsub = null; }
+        if (_vrListenerUnsub) { try { _vrListenerUnsub(); } catch(_) {} _vrListenerUnsub = null; }
         if (userAddress && _vrRoomId && window.db && window.fs) {
             window.fs.deleteDoc(window.fs.doc(window.db, VR_LISTEN, _vrRoomId, 'presence', userAddress.toLowerCase())).catch(() => {});
         }
         _vrRoomId = null; _vrIsHost = false; _vrIsSpeaker = false; _vrMuted = false; _vrGiftOpen = false; _vrGiftTarget = null; _vrOrbTarget = null;
+        _vrMyJoinTime = 0; _vrLatestRoomData = null; _vrLatestPresenceSnap = null; _vrKnownSpeakerAddrs = null;
+        _vrJoinBannerQueue = []; _vrJoinBannerShowing = false; _vrSelfSteppingDown = false;
         const popup = document.getElementById('vr-orb-popup');
         if (popup) popup.classList.remove('open');
         const ov = document.getElementById('vr-room-overlay');
         if (ov) ov.style.display = 'none';
+        const jb = document.getElementById('vr-join-banner');
+        if (jb) jb.classList.remove('show');
     }
 
     // ── Config ────────────────────────────────────────────────────
@@ -38818,6 +38959,12 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
         <button class="vr-close-btn" onclick="vrLeave()">✕</button>
     </div>
 
+    <!-- Join announcement banner -->
+    <div id="vr-join-banner">
+        <img id="vr-jb-av" src="" alt="">
+        <span id="vr-jb-text"></span>
+    </div>
+
     <!-- Speaker Stage -->
     <div id="vr-stage-card">
         <div id="vr-speakers-row"></div>
@@ -38889,6 +39036,11 @@ body.is-hosting #cmd-orb, body.is-hosting #cmd-wheel, body.is-hosting #cmd-scrim
         <button class="vr-ctrl" id="vr-ctrl-mute" onclick="vrToggleMute()" style="display:none;">
             <span class="vr-ctrl-icon"><span class="vci">🎙</span></span>
             <span class="vr-ctrl-lbl" id="vr-mute-lbl">Mute</span>
+        </button>
+        <!-- Cohost-only: step down from the stage, stay in the room as a listener -->
+        <button class="vr-ctrl" id="vr-ctrl-stepdown" onclick="vrLeaveStage()" style="display:none;">
+            <span class="vr-ctrl-icon"><span class="vci">⬇</span></span>
+            <span class="vr-ctrl-lbl">Step Down</span>
         </button>
         <button class="vr-ctrl hand" id="vr-ctrl-hand" onclick="vrRaiseHand()">
             <span class="vr-ctrl-icon"><span class="vci">🎤</span></span>
