@@ -40033,8 +40033,16 @@ window.sendGift = async function(tierKey){
     else if(_bRole==='viewer-b'||_bRole==='challengee') field='scoreChallengee';
     if(!field||!window.db||!window.fs) return;
     try{
-        await window.fs.updateDoc(window.fs.doc(window.db,'live_battles',_bid),
-            {[field]: window.fs.increment(stars)});
+        var battleRef = window.fs.doc(window.db,'live_battles',_bid);
+        // Transaction, not a plain increment: a gift that lands after endBattle
+        // has already frozen the winner off the score at that instant must not
+        // silently keep bumping the score afterward — that would show a
+        // scoreboard that contradicts the declared winner. Skip it instead.
+        await window.fs.runTransaction(window.db, async (txn) => {
+            var snap = await txn.get(battleRef);
+            if (!snap.exists() || snap.data().status !== 'active') return;
+            txn.update(battleRef, {[field]: window.fs.increment(stars)});
+        });
     }catch(e){}
 };
 
