@@ -17641,12 +17641,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // Show the edit modal with a contextual prompt, then call cb() after save.
     // cb is stored globally so saveProfile() can invoke it after syncing.
     let _profileGateCb = null;
-    function _requireProfile(cb) {
+    const _PROFILE_GATE_HINTS = {
+        comment:   '⚡ Set your display name & avatar to post a comment.',
+        broadcast: '⚡ Set your display name & avatar to start broadcasting.'
+    };
+    function _requireProfile(cb, reason) {
         _profileGateCb = cb || null;
         openHeroEditForm();
-        // Add a hint banner inside the modal
+        // Add a hint banner inside the modal — text depends on what actually
+        // triggered the gate. This used to always say "start broadcasting"
+        // even when triggered by trying to comment, which read as broken/
+        // unrelated to whatever the person was actually doing.
         const hint = document.getElementById('edit-identity-gate-hint');
-        if (hint) hint.style.display = 'block';
+        if (hint) {
+            hint.textContent = _PROFILE_GATE_HINTS[reason] || _PROFILE_GATE_HINTS.broadcast;
+            hint.style.display = 'block';
+        }
     }
 
     window.openHeroEditForm  = openHeroEditForm;
@@ -17925,18 +17935,23 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const senderAddr   = userAddress.toLowerCase();
             const recipientNorm = recipientAddress ? recipientAddress.toLowerCase() : null;
 
-            if (isComment) {
-                await window.fs.updateDoc(window.fs.doc(window.db, "comments", entityId), { hypes: window.fs.increment(1) });
-            } else {
-                await window.fs.updateDoc(window.fs.doc(window.db, "posts", entityId), { hypes: window.fs.increment(1) });
-            }
+            // ── Parallelized: the hype-counter increment (posts/comments doc) and the
+            // spend log (user_transactions doc) touch two completely unrelated documents
+            // — neither reads or depends on the other's result. Running them together
+            // instead of one-after-another doesn't change what either one does, only
+            // how long we wait. The actual money-safety rule — spend log written before
+            // any deduction happens — is untouched: STEP B below still only starts once
+            // BOTH of these have resolved.
+            const _hypeCounterWrite = isComment
+                ? window.fs.updateDoc(window.fs.doc(window.db, "comments", entityId), { hypes: window.fs.increment(1) })
+                : window.fs.updateDoc(window.fs.doc(window.db, "posts", entityId), { hypes: window.fs.increment(1) });
 
             // ── STEP A: Log spend FIRST — no spend record = no deduction ─────────────────
             // Satisfies the log-before-deduct contract. The spend is permanently
             // in Firestore before any balance change, so the ledger always shows
             // the debit regardless of what happens next. Also fixes self-hype
             // direction rendering: stored type='spend' is used by renderLedger.
-            await window.fs.addDoc(
+            const _spendLogWrite = window.fs.addDoc(
                 window.fs.collection(window.db, 'user_transactions'),
                 {
                     type:           'spend',
@@ -17950,6 +17965,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     schema_version: 2
                 }
             );
+            await Promise.all([_hypeCounterWrite, _spendLogWrite]);
 
             // ── STEP B: Deduct 1★ from sender (spend is now in Firestore) ────────────
             await deductStars(1);
@@ -17959,13 +17975,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (isComment) {
                 if (recipientNorm && recipientNorm !== "unknown") {
                     if (_activeCommunity) {
-                        await creditCreatorStars(recipientNorm, 0.4);
+                        // These two credits land on two different user_balances documents
+                        // (guest poster's / hub owner's) — neither reads or depends on the
+                        // other, so running them together is safe. STEP D below still only
+                        // starts once both have resolved.
+                        await Promise.all([
+                            creditCreatorStars(recipientNorm, 0.4),
+                            creditCreatorStars(_activeCommunity.ownerId, 0.4)
+                        ]);
                         logTransaction('earn', 0.4, {
                             from: senderAddr, to: recipientNorm,
                             description: "Earnings from " + _activeCommunity.name + " Hub (comment hype)",
                             communityId: _activeCommunity.id
                         });
-                        await creditCreatorStars(_activeCommunity.ownerId, 0.4);
                         logTransaction('earn', 0.4, {
                             from: senderAddr, to: (_activeCommunity.ownerId || '').toLowerCase(),
                             description: "Landlord Earnings from " + _activeCommunity.name + " Hub (comment hype)",
@@ -17986,13 +18008,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
             } else if (_activeCommunity && recipientNorm &&
                        recipientNorm !== _activeCommunity.ownerId.toLowerCase()) {
-                await creditCreatorStars(recipientNorm, 0.4);
+                // Two different user_balances documents (guest poster's / hub owner's) —
+                // neither credit reads or depends on the other, safe to run together.
+                await Promise.all([
+                    creditCreatorStars(recipientNorm, 0.4),
+                    creditCreatorStars(_activeCommunity.ownerId, 0.4)
+                ]);
                 logTransaction('earn', 0.4, {
                     from: senderAddr, to: recipientNorm,
                     description: "Earnings from " + _activeCommunity.name + " Hub (guest post)",
                     postId: entityId, communityId: _activeCommunity.id
                 });
-                await creditCreatorStars(_activeCommunity.ownerId, 0.4);
                 logTransaction('earn', 0.4, {
                     from: senderAddr, to: (_activeCommunity.ownerId || '').toLowerCase(),
                     description: "Landlord Earnings from " + _activeCommunity.name + " Hub (guest post)",
@@ -18111,7 +18137,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!_hasCompleteProfile()) {
             isActionPending = false;
             if (feedEl) feedEl.style.pointerEvents = '';
-            _requireProfile(() => addComment(recipientAddress, postId, isReply, parentId));
+            _requireProfile(() => addComment(recipientAddress, postId, isReply, parentId), 'comment');
             return;
         }
 
@@ -20718,7 +20744,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         // ── Profile gate: require name + avatar before first broadcast ───────────
         if (!_hasCompleteProfile()) {
-            _requireProfile(() => handleBroadcastWithSignal());
+            _requireProfile(() => handleBroadcastWithSignal(), 'broadcast');
             return;
         }
 
@@ -26411,6 +26437,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return showToast('Community ID missing — cannot follow.');
         }
 
+        let _optCommFollowShown = false;
         try {
             const docId  = senderAddr + '_' + commId;
             const docRef = window.fs.doc(window.db, 'social_graph', docId);
@@ -26438,6 +26465,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     if (followBtn) followBtn.disabled = false;
                     return showToast('Not enough Stars to follow! Deposit APTM.');
                 }
+
+                // ── Optimistic UI ─────────────────────────────────────────
+                // We already know at this point (from the getDoc check above)
+                // that this is genuinely a new follow, not an unfollow, and
+                // that the balance covers it — the actual write chain below
+                // (spend log → deduct → credit → follow record) is 4+
+                // sequential round-trips with nothing shown until all of them
+                // finish. Show the result now; the internal ordering that
+                // actually matters for money-safety (spend-before-deduct,
+                // deduct-before-credit, including the self-dealing guard's
+                // careful sequencing) is completely untouched below — this
+                // only changes when the toast/button appear, not what runs
+                // or in what order.
+                if (followBtn) { followBtn.textContent = '✓ Following Hub'; followBtn.classList.add('following'); }
+                showToast('Following ' + (_activeCommunity.name || 'Hub') + '! 0.9★ sent to creator.');
+                _optCommFollowShown = true;
 
                 // ── SELF-DEALING GUARD ───────────────────────────────────────
                 // When senderAddr === creatorAddr (creator follows their own Hub),
@@ -26511,8 +26554,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 });
 
                 _followingSet.add(commId);
-                if (followBtn) { followBtn.textContent = '✓ Following Hub'; followBtn.classList.add('following'); }
-                showToast('Following ' + (_activeCommunity.name || 'Hub') + '! 0.9★ sent to creator.');
+                // Toast + button state were already applied optimistically above.
                 writeNotif(creatorAddr, 'follow', { hubName: _activeCommunity.name || commId, communityId: commId });
                 if (typeof loadMyNetwork === 'function') loadMyNetwork();
             }
@@ -26535,6 +26577,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch (e) {
             console.error('[commFollowHub]', e);
+            // Roll back the optimistic UI — the write chain genuinely failed.
+            if (_optCommFollowShown) {
+                if (followBtn) { followBtn.textContent = '+ Follow Hub'; followBtn.classList.remove('following'); }
+                _followingSet.delete(commId);
+            }
             showToast('Follow failed. Please try again.');
         }
 
@@ -39986,8 +40033,16 @@ window.sendGift = async function(tierKey){
     else if(_bRole==='viewer-b'||_bRole==='challengee') field='scoreChallengee';
     if(!field||!window.db||!window.fs) return;
     try{
-        await window.fs.updateDoc(window.fs.doc(window.db,'live_battles',_bid),
-            {[field]: window.fs.increment(stars)});
+        var battleRef = window.fs.doc(window.db,'live_battles',_bid);
+        // Transaction, not a plain increment: a gift that lands after endBattle
+        // has already frozen the winner off the score at that instant must not
+        // silently keep bumping the score afterward — that would show a
+        // scoreboard that contradicts the declared winner. Skip it instead.
+        await window.fs.runTransaction(window.db, async (txn) => {
+            var snap = await txn.get(battleRef);
+            if (!snap.exists() || snap.data().status !== 'active') return;
+            txn.update(battleRef, {[field]: window.fs.increment(stars)});
+        });
     }catch(e){}
 };
 
