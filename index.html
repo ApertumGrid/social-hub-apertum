@@ -17641,12 +17641,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // Show the edit modal with a contextual prompt, then call cb() after save.
     // cb is stored globally so saveProfile() can invoke it after syncing.
     let _profileGateCb = null;
-    function _requireProfile(cb) {
+    const _PROFILE_GATE_HINTS = {
+        comment:   '⚡ Set your display name & avatar to post a comment.',
+        broadcast: '⚡ Set your display name & avatar to start broadcasting.'
+    };
+    function _requireProfile(cb, reason) {
         _profileGateCb = cb || null;
         openHeroEditForm();
-        // Add a hint banner inside the modal
+        // Add a hint banner inside the modal — text depends on what actually
+        // triggered the gate. This used to always say "start broadcasting"
+        // even when triggered by trying to comment, which read as broken/
+        // unrelated to whatever the person was actually doing.
         const hint = document.getElementById('edit-identity-gate-hint');
-        if (hint) hint.style.display = 'block';
+        if (hint) {
+            hint.textContent = _PROFILE_GATE_HINTS[reason] || _PROFILE_GATE_HINTS.broadcast;
+            hint.style.display = 'block';
+        }
     }
 
     window.openHeroEditForm  = openHeroEditForm;
@@ -18127,7 +18137,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!_hasCompleteProfile()) {
             isActionPending = false;
             if (feedEl) feedEl.style.pointerEvents = '';
-            _requireProfile(() => addComment(recipientAddress, postId, isReply, parentId));
+            _requireProfile(() => addComment(recipientAddress, postId, isReply, parentId), 'comment');
             return;
         }
 
@@ -20734,7 +20744,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         // ── Profile gate: require name + avatar before first broadcast ───────────
         if (!_hasCompleteProfile()) {
-            _requireProfile(() => handleBroadcastWithSignal());
+            _requireProfile(() => handleBroadcastWithSignal(), 'broadcast');
             return;
         }
 
