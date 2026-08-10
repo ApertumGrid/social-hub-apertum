@@ -32587,6 +32587,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }).catch(() => {});
             // Update stream stars counter
             updateDoc(doc(window.db, LIVE_COL, sid), { starsEarned: increment(tier.cost), hypeCount: increment(1) }).catch(() => {});
+            // Top gifter leaderboard (feeds Viewer Rankings sheet + Live Leaderboard) —
+            // sendGift() reaches this via the server-side CF; this direct-to-cohost path
+            // never did, so gifts sent here never counted toward the crown/eye rankings.
+            window.fs.setDoc(doc(window.db, LIVE_COL, sid, 'top_gifters', userAddress.toLowerCase()), {
+                name: userHandle, avatar: userAvatar,
+                totalStars: increment(tier.cost),
+                giftCount:  increment(1),
+                lastGift:   serverTimestamp()
+            }, { merge: true }).catch(() => {});
             showToast(`${tier.icon} ${tier.name} sent to ${recipientHandle}!`);
             writeNotif(recipientAddr.toLowerCase(), 'tip', { giftTier: tierKey, giftIcon: tier.icon, giftName: tier.name, cost: tier.cost, text: tier.icon + ' ' + tier.name + ' (' + tier.cost + '★)' });
         } catch(e) { showToast('Gift failed: ' + (e.message || String(e))); }
@@ -33818,7 +33827,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const userAddress = window._liveUserAddress || '';
         const userHandle  = window._liveUserHandle  || 'Viewer';
         if (!userAddress) { showToast('Connect wallet first.'); return; }
-        if (isCoHost) { await window.leaveCoHost(); return; }
+        // This function is shared by the dedicated Join/Leave Stage toggle button
+        // (called with no slotIndex) AND clicking an empty grid box to request that
+        // specific slot (called with a real slotIndex). The "already on stage → leave"
+        // shortcut only makes sense for the toggle button — a co-host tapping an
+        // unrelated empty box was silently leaving the stage instead of doing nothing,
+        // since this guard didn't check which of the two callers it was.
+        if (isCoHost) {
+            if (typeof slotIndex === 'number') { showToast("You're already on stage."); return; }
+            await window.leaveCoHost();
+            return;
+        }
 
         // Find target slot — the specific box the viewer tapped, else first empty
         var slots = window._currentCoSlots || [];
