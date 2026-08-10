@@ -17883,9 +17883,45 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             return showToast("Not enough Stars! Deposit APTM.");
         }
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // Everything below this point is a chain of several sequential
+        // Firestore writes (log spend, deduct, credit creator, log earn...).
+        // Showing nothing until all of them finish made every like feel like
+        // it hadn't registered — people would tap again thinking it failed.
+        // Show the visual result immediately; roll back only if the write
+        // chain genuinely fails, in the catch block below.
+        const isComment    = displayId.startsWith('hc-');
+        const entityId      = displayId.replace(isComment ? 'hc-' : 'hp-', '');
+        const _optWasAlreadyLiked = !isComment && _isLiked(entityId);
+        let _optLikeBtn = null, _optCounterEl = null, _optCounterBumped = false;
+        if (!isComment) {
+            _markLiked(entityId);
+            const _optHypeSpan = document.getElementById('hp-' + entityId);
+            _optLikeBtn = _optHypeSpan ? _optHypeSpan.closest('.pact') : null;
+            if (_optLikeBtn) {
+                if (!_optWasAlreadyLiked) {
+                    _optLikeBtn.classList.add('pact-liked');
+                    _optLikeBtn.classList.remove('like-active');
+                } else {
+                    _optLikeBtn.classList.remove('pact-mega-hype');
+                    void _optLikeBtn.offsetWidth;
+                    _optLikeBtn.classList.add('pact-mega-hype');
+                    _optLikeBtn.addEventListener('animationend', () => { _optLikeBtn.classList.remove('pact-mega-hype'); }, { once: true });
+                }
+            }
+            if (_activeCommunity) {
+                _optCounterEl = document.getElementById('hp-' + entityId);
+                if (_optCounterEl) {
+                    _optCounterEl.textContent = String((parseInt(_optCounterEl.textContent, 10) || 0) + 1);
+                    _optCounterBumped = true;
+                }
+            }
+            showToast(_optWasAlreadyLiked ? "⚡ Mega Hype! Creator +0.8★" : "Hyped! Creator +0.8★");
+        } else {
+            showToast("Hyped! Creator +0.8★");
+        }
+
         try {
-            const isComment    = displayId.startsWith('hc-');
-            const entityId     = displayId.replace(isComment ? 'hc-' : 'hp-', '');
             const senderAddr   = userAddress.toLowerCase();
             const recipientNorm = recipientAddress ? recipientAddress.toLowerCase() : null;
 
@@ -18000,52 +18036,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             updateUI();
             updateDrawerUI();
-            // ── Counter update ────────────────────────────────────────────────────
-            // Global feed: the loadGlobalFeed onSnapshot 'modified' handler patches
-            // #hp-{postId} atomically — do NOT also update it here or the count jumps.
-            // Community feed: openCommunityFeed uses getDocs (one-time query), so
-            // there is no live listener. Optimistically increment the span here after
-            // the Firestore write succeeds so the UI reflects the hype immediately
-            // without requiring a page refresh.
-            if (_activeCommunity && !isComment) {
-                const hypeSpan = document.getElementById('hp-' + entityId);
-                if (hypeSpan) {
-                    hypeSpan.textContent = String((parseInt(hypeSpan.textContent, 10) || 0) + 1);
-                }
-            }
-
-            // ── Like state update ────────────────────────────────────────────────────
-            if (!isComment) {
-                const wasAlreadyLiked = _isLiked(entityId);
-                _markLiked(entityId);
-                // Find the like button for this post — it contains the span id="hp-{entityId}"
-                const hypeSpan = document.getElementById('hp-' + entityId);
-                const likeBtn  = hypeSpan ? hypeSpan.closest('.pact') : null;
-                if (likeBtn) {
-                    if (!wasAlreadyLiked) {
-                        // STATE 1 → Solid red
-                        likeBtn.classList.add('pact-liked');
-                        likeBtn.classList.remove('like-active');
-                    } else {
-                        // STATE 2+ → Mega Hype pulse (retains pact-liked base)
-                        likeBtn.classList.remove('pact-mega-hype'); // force reflow
-                        void likeBtn.offsetWidth;
-                        likeBtn.classList.add('pact-mega-hype');
-                        // Remove animation class after it plays so it can re-trigger
-                        likeBtn.addEventListener('animationend', () => {
-                            likeBtn.classList.remove('pact-mega-hype');
-                        }, { once: true });
-                    }
-                }
-                showToast(wasAlreadyLiked ? "⚡ Mega Hype! Creator +0.8★" : "Hyped! Creator +0.8★");
-            } else {
-                showToast("Hyped! Creator +0.8★");
-            }
+            // Counter + "liked" visual state were already applied optimistically
+            // above, right when the click was accepted — see that block for why.
             // Notify post/comment author (fire-and-forget)
             writeNotif(recipientNorm, 'hype', { postId: entityId || null });
         } catch (e) {
             console.error(e);
-            showToast("Hype failed.");
+            // Roll back the optimistic UI — the write chain genuinely failed.
+            if (!isComment) {
+                if (_optLikeBtn) {
+                    if (!_optWasAlreadyLiked) _optLikeBtn.classList.remove('pact-liked');
+                    else _optLikeBtn.classList.remove('pact-mega-hype');
+                }
+                if (!_optWasAlreadyLiked) {
+                    _likedPosts.delete(entityId);
+                    sessionStorage.setItem('_likedPosts', JSON.stringify([..._likedPosts]));
+                }
+                if (_optCounterBumped && _optCounterEl) {
+                    _optCounterEl.textContent = String(Math.max(0, (parseInt(_optCounterEl.textContent, 10) || 0) - 1));
+                }
+            }
+            showToast("Hype failed — try again.");
         } finally {
             // Release lock and restore pointer events after DB confirms
             isActionPending = false;
@@ -23763,6 +23774,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             snap.forEach(d => _followingSet.add(d.data().following));
         } catch (e) { console.warn('[SocialGraph] followingSet load failed:', e); }
     }
+
+    // Referenced in 4 places across the live-stream UI but never defined —
+    // every call site guarded itself with typeof===... so the missing
+    // function silently always fell back to false, meaning "already
+    // following" indicators never worked and Follow buttons never hid
+    // themselves for someone who already follows. Best-effort: reflects
+    // whatever _followingSet has loaded so far (populated by
+    // _loadHeroSocialGraph / loadMyNetwork), not a live server check —
+    // callers that need certainty (e.g. the live-stream info bar) should
+    // still verify against social_graph directly before deciding.
+    window._isFollowing = function(addr) {
+        return _followingSet.has((addr || '').toLowerCase());
+    };
 
     // Follow / Unfollow toggle — costs 1★ · 90% to creator, 10% to platform
     async function heroFollow() {
@@ -29773,6 +29797,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (picker) picker.classList.remove('open');
         if (!_vrRoomId || !userAddress) return;
         if (!_vrGiftTarget) { showToast('Tap a speaker to gift them'); return; }
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // This Cloud Function call can run several seconds (cold start), and
+        // nothing told the sender it was even in flight — show it immediately,
+        // and correct the toast if the server actually rejects it below.
+        const _optVrTargetName = _vrGiftTarget.name;
+        showToast('Gift sent to ' + _optVrTargetName + '!');
         try {
             const res = await fetch(VR_CF_BASE + 'sendVoiceRoomGift', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -29814,7 +29844,6 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     description: `${_t.icon} ${_t.name} Gift received in Voice Room (+${_cut.toFixed(1)}★)`
                 });
             }
-            showToast('Gift sent to ' + _vrGiftTarget.name + '!');
             _vrGiftTarget = null;
             const lbl = document.getElementById('vr-gift-to-lbl');
             if (lbl) lbl.textContent = '';
@@ -30146,8 +30175,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const minDisplayMs = 1500; // Minimum 1.5 seconds so user can see it
 
         let maxVolume = 0;
-        const samples = 10;
         const sampleInterval = 50; // ms
+        // Sample for the full banner display time, not a fixed short window —
+        // the banner promises 1.5s+ to react, but sampling used to stop at
+        // 500ms (10 samples), failing people who hadn't started talking yet
+        // by then. Real reports: mic worked fine, still got "No sound
+        // detected" — a timing mismatch, not an actual silent mic.
+        const samples = Math.ceil(minDisplayMs / sampleInterval);
 
         for (let i = 0; i < samples; i++) {
             try {
@@ -30715,7 +30749,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                             if (!_matched && _slotRetry < 20) { _slotRetry++; setTimeout(_trySlotPlay, 200); }
                         })();
                     }
-                    if (mediaType === 'audio') remoteUser.audioTrack.play();
+                    if (mediaType === 'audio') {
+                        try {
+                            remoteUser.audioTrack.play();
+                        } catch(audioErr) {
+                            console.warn('[CoHost] Audio autoplay blocked — showing unmute prompt', audioErr);
+                            _showUnmutePrompt(remoteUser.audioTrack);
+                        }
+                    }
                     showToast('🎤 Co-host joined the stage!');
                 } catch(e) { console.warn('[CoHost] host subscribe error:', e); }
             });
@@ -31455,8 +31496,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var hostA=(streamData.hostAddr||'').toLowerCase();
                     window._lsibHostAddr=hostA;
                     var isOwn=myA&&myA===hostA;
-                    var isF=typeof window._isFollowing==='function'?window._isFollowing(hostA):false;
-                    fb.style.display=(!isOwn&&!isF)?'':'none';
+                    // Direct social_graph check (same collection/doc-id heroFollow() itself
+                    // uses) instead of trusting _followingSet, which is only populated after
+                    // visiting a profile or the Network panel — empty for someone who joined
+                    // a stream directly, which made this button show "Follow" even for
+                    // people already following, and clicking it would silently unfollow
+                    // them for free (heroFollow() itself checks correctly) — then a second,
+                    // confused click would genuinely re-follow and charge again.
+                    fb.style.display='none';
+                    if(!isOwn && myA && window.db && window.fs){
+                        window.fs.getDoc(window.fs.doc(window.db,'social_graph',myA+'_'+hostA)).then(function(snap){
+                            fb.style.display=(snap&&snap.exists())?'none':'';
+                        }).catch(function(){ fb.style.display=''; });
+                    }
                 }
                 var vCon=document.getElementById('live-remote-video-container');
                 if (window.innerWidth <= 768) {
@@ -32534,14 +32586,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!tier) return;
         if (available < tier.cost) { showToast(`Not enough Stars — need ${tier.cost} ★`); return; }
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // deductSpendableStars() is a Firestore transaction (read+write, two
+        // round-trips) followed by another awaited write — showing the "sent"
+        // toast only after both finished made gifts feel unresponsive. We've
+        // already confirmed locally that the balance covers this, so show it
+        // now and roll back only if something genuinely fails below.
+        const _optPrevSpendable2 = window._liveTotalSpendable;
+        if (typeof window._liveTotalSpendable === 'number') {
+            window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
+            window._liveAvailableStars = window._liveTotalSpendable;
+        }
+        if (typeof updateUI === 'function') updateUI();
+        showToast(`${tier.icon} ${tier.name} sent to ${recipientHandle}!`);
+
         try {
             const { doc, updateDoc, increment, collection, addDoc, serverTimestamp } = window.fs;
             // Deduct from sender using the same canonical spend waterfall.
             await deductSpendableStars(userAddress.toLowerCase(), tier.cost);
-            if (typeof window._liveTotalSpendable === 'number') {
-                window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
-                window._liveAvailableStars = window._liveTotalSpendable;
-            }
             const creatorCut  = parseFloat((tier.cost * 0.8).toFixed(4));
             const platformCut = parseFloat((tier.cost * 0.2).toFixed(4));
             // Credit 80% to recipient
@@ -32575,9 +32637,23 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }).catch(() => {});
             // Update stream stars counter
             updateDoc(doc(window.db, LIVE_COL, sid), { starsEarned: increment(tier.cost), hypeCount: increment(1) }).catch(() => {});
-            showToast(`${tier.icon} ${tier.name} sent to ${recipientHandle}!`);
+            // Top gifter leaderboard (feeds Viewer Rankings sheet + Live Leaderboard) —
+            // sendGift() reaches this via the server-side CF; this direct-to-cohost path
+            // never did, so gifts sent here never counted toward the crown/eye rankings.
+            window.fs.setDoc(doc(window.db, LIVE_COL, sid, 'top_gifters', userAddress.toLowerCase()), {
+                name: userHandle, avatar: userAvatar,
+                totalStars: increment(tier.cost),
+                giftCount:  increment(1),
+                lastGift:   serverTimestamp()
+            }, { merge: true }).catch(() => {});
             writeNotif(recipientAddr.toLowerCase(), 'tip', { giftTier: tierKey, giftIcon: tier.icon, giftName: tier.name, cost: tier.cost, text: tier.icon + ' ' + tier.name + ' (' + tier.cost + '★)' });
-        } catch(e) { showToast('Gift failed: ' + (e.message || String(e))); }
+        } catch(e) {
+            // Roll back — the deduct/credit chain genuinely failed.
+            window._liveTotalSpendable = _optPrevSpendable2;
+            window._liveAvailableStars = _optPrevSpendable2;
+            if (typeof updateUI === 'function') updateUI();
+            showToast('Gift failed: ' + (e.message || String(e)));
+        }
     };
 
     window.sendGift = async function(tierKey) {
@@ -32605,6 +32681,27 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             ? currentAptmPriceUsd
             : 1.0;
 
+        // ── Optimistic UI ───────────────────────────────────────────────────
+        // This is one server round-trip, but the Cloud Function does an
+        // on-chain balance verification (blockchain RPC call) plus its own
+        // cold-start risk — that can easily run several seconds. Showing
+        // nothing until it returns made gifts feel like they hadn't sent,
+        // especially in battles where a late-registering gift can miss the
+        // scoring window. We've already confirmed locally that the balance
+        // covers this gift, so show the result now and roll back only if the
+        // server genuinely rejects it.
+        const _optPrevSpendable = window._liveTotalSpendable;
+        if (typeof window._liveTotalSpendable === 'number') {
+            window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
+            window._liveAvailableStars = window._liveTotalSpendable;
+        }
+        if (typeof window.tickerLog === 'function') {
+            window.tickerLog('spend', `${tier.name} Gift`, tier.cost, tier.icon);
+        }
+        _showGiftBurst(tier, userHandle);
+        if (typeof updateUI === 'function') updateUI();
+        showToast(`${tier.icon} ${tier.name} sent!`);
+
         try {
             const resp = await fetch('https://us-central1-socialhubaptm.cloudfunctions.net/sendGift', {
                 method:  'POST',
@@ -32620,28 +32717,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             });
             const data = await resp.json();
             if (!data.success) {
+                // Roll back — the server rejected it (insufficient balance server-side,
+                // stream ended, etc.) despite our local check passing.
+                window._liveTotalSpendable = _optPrevSpendable;
+                window._liveAvailableStars = _optPrevSpendable;
+                if (typeof updateUI === 'function') updateUI();
                 showToast(data.error || 'Gift failed. Please try again.');
                 return;
             }
 
-            // Update local balance immediately for snappy UX
-            if (typeof window._liveTotalSpendable === 'number') {
-                window._liveTotalSpendable = Math.max(0, window._liveTotalSpendable - tier.cost);
-                window._liveAvailableStars = window._liveTotalSpendable;
-            }
-
-            if (typeof window.tickerLog === 'function') {
-                window.tickerLog('spend', `${tier.name} Gift`, tier.cost, tier.icon);
-            }
-
-            _showGiftBurst(tier, userHandle);
-            if (typeof updateUI === 'function') updateUI();
             const cut = data.creatorCut != null ? data.creatorCut : (tier.cost * 0.8);
-            showToast(`${tier.icon} ${tier.name} sent! Creator gets ${cut.toFixed(1)} ★ instantly.`);
+            showToast(`${tier.icon} ${tier.name} — Creator got ${cut.toFixed(1)} ★.`);
             if (data.creatorAddress) writeNotif(data.creatorAddress, 'tip', { giftTier: tierKey, giftIcon: tier.icon, giftName: tier.name, cost: tier.cost, text: tier.icon + ' ' + tier.name + ' (' + tier.cost + '★)' });
 
         } catch(e) {
             console.warn('[Gift] Error:', e);
+            window._liveTotalSpendable = _optPrevSpendable;
+            window._liveAvailableStars = _optPrevSpendable;
+            if (typeof updateUI === 'function') updateUI();
             showToast('Gift failed: ' + (e.message || String(e)));
         }
     };
@@ -32923,6 +33016,34 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         });
     }
 
+    // ── Chat avatar self-heal ─────────────────────────────────────────────
+    // Messages store the sender's avatar at send time (window._liveUserAvatar),
+    // which loads asynchronously after wallet connect (loadProfileFromFirebase).
+    // Someone who sends a message right after joining can beat that fetch,
+    // permanently baking a blank avatar into that message doc — it never
+    // corrects itself since chat docs aren't rewritten later. Cache correct
+    // avatars as we see them, and for a blank one, look the real profile up
+    // once and patch any already-rendered <img>s for that address.
+    window._chatAvatarCache = window._chatAvatarCache || {};
+    var _chatAvatarFetching = {};
+    function _resolveChatAvatar(addr) {
+        if (!addr) return '';
+        if (window._chatAvatarCache[addr]) return window._chatAvatarCache[addr];
+        if (!_chatAvatarFetching[addr] && window.db && window.fs) {
+            _chatAvatarFetching[addr] = true;
+            window.fs.getDoc(window.fs.doc(window.db, 'users', addr)).then(function(snap) {
+                var url = snap.exists() ? (snap.data().avatarUrl || '') : '';
+                if (url) {
+                    window._chatAvatarCache[addr] = url;
+                    document.querySelectorAll('.live-chat-av[data-addr-for="' + addr + '"]').forEach(function(img) {
+                        img.src = url;
+                    });
+                }
+            }).catch(function(){});
+        }
+        return '';
+    }
+
     function renderChatFeed(feedElId, msgs) {
         const feed = $(feedElId);
         if (!feed) return;
@@ -32975,7 +33096,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const nameAttrs= addr ? `class="live-chat-user lcu-click" onclick="window._openChatCtx(event,this.closest('[data-id]'))"` : `class="live-chat-user"`;
             const replyBtn = `<button class="live-reply-btn" onclick="event.stopPropagation();var _m=this.closest('[data-id]');window._setReplyTo(_m.dataset.id,_m.dataset.author,_m.dataset.text.slice(0,40))">↩</button>`;
             const replyQ   = m.replyTo ? `<div class="lcm-reply-quote"><b>${_esc(m.replyTo.author)}</b>: ${_esc(m.replyTo.text)}</div>` : '';
-            const av       = m.avatar || window._defaultAvatarSvgFor(addr);
+            if (addr && m.avatar) window._chatAvatarCache[addr] = m.avatar;
+            const av       = m.avatar || _resolveChatAvatar(addr) || window._defaultAvatarSvgFor(addr);
             const badge    = _giftBadge(addr);
 
             if (m.isGift && m.giftStyle) {
@@ -32987,7 +33109,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
             if (m.isGift) {
                 return `<div class="live-chat-msg" ${da} style="background:rgba(124,92,191,0.08);border-radius:6px;padding:4px 6px;margin:2px 0;">
-                    <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                    <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                     <div style="flex:1;min-width:0;">${replyQ}<div ${nameAttrs}>${_esc(m.author)}${badge}</div><div class="live-chat-body live-chat-hype-msg">${_esc(m.text)}</div></div>
                     ${replyBtn}
                 </div>`;
@@ -33004,7 +33126,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
             if (m.isHost) {
                 return `<div class="live-chat-msg" ${da} style="background:rgba(124,92,191,0.07);border-radius:6px;padding:4px 6px;margin:2px 0;">
-                    <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                    <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                     <div style="flex:1;min-width:0;">${replyQ}<div ${nameAttrs} style="color:var(--purple-lt);">👑 ${_esc(m.author)}</div><div class="live-chat-body">${_esc(m.text)}</div></div>
                     ${replyBtn}
                 </div>`;
@@ -33021,7 +33143,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 </div>`;
             }
             return `<div class="live-chat-msg" ${da}>
-                <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                 <div style="flex:1;min-width:0;">${replyQ}<div><span ${nameAttrs}>${_esc(m.author)}</span>${badge}${replyBtn}</div><div class="live-chat-body">${_esc(m.text)}</div></div>
             </div>`;
         }).join('');
@@ -33806,7 +33928,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         const userAddress = window._liveUserAddress || '';
         const userHandle  = window._liveUserHandle  || 'Viewer';
         if (!userAddress) { showToast('Connect wallet first.'); return; }
-        if (isCoHost) { await window.leaveCoHost(); return; }
+        // This function is shared by the dedicated Join/Leave Stage toggle button
+        // (called with no slotIndex) AND clicking an empty grid box to request that
+        // specific slot (called with a real slotIndex). The "already on stage → leave"
+        // shortcut only makes sense for the toggle button — a co-host tapping an
+        // unrelated empty box was silently leaving the stage instead of doing nothing,
+        // since this guard didn't check which of the two callers it was.
+        if (isCoHost) {
+            if (typeof slotIndex === 'number') { showToast("You're already on stage."); return; }
+            await window.leaveCoHost();
+            return;
+        }
 
         // Find target slot — the specific box the viewer tapped, else first empty
         var slots = window._currentCoSlots || [];
@@ -40094,7 +40226,10 @@ function _openLiveProfile(addr,name,avatarUrl){
     if(addr===myAddr){if(fbBtn){fbBtn.textContent="That's you!";fbBtn.disabled=true;} return;}
     if(window.db&&window.fs){
         var getDoc=window.fs.getDoc, doc=window.fs.doc;
-        getDoc(doc(window.db,'follows',myAddr+'_'+addr)).then(function(snap){
+        // Real follow relationships live in social_graph (see heroFollow()) —
+        // 'follows' isn't written anywhere, so this always came back empty and
+        // never showed "✓ Following" for someone you already follow.
+        getDoc(doc(window.db,'social_graph',myAddr+'_'+addr)).then(function(snap){
             if(!fbBtn) return;
             if(snap.exists()){fbBtn.textContent='✓ Following';fbBtn.className='lvpc-btn following';fbBtn.disabled=true;}
             else{fbBtn.textContent='+ Follow';fbBtn.disabled=false;fbBtn.className='lvpc-btn';}
@@ -40694,7 +40829,10 @@ window._openSlotAction = function(slotData, slotEl, isHost) {
                 else if (typeof showToast === 'function') showToast('Follow unavailable.');
             });
             if (window.fs.getDoc && window.fs.doc) {
-                window.fs.getDoc(window.fs.doc(window.db, 'follows', myAddr+'_'+theirAddr)).then(function(snap) {
+                // Real follow relationships live in social_graph (see heroFollow()) —
+                // 'follows' isn't written anywhere, so this always came back empty and
+                // never showed "✓ Following" for a co-host you already follow.
+                window.fs.getDoc(window.fs.doc(window.db, 'social_graph', myAddr+'_'+theirAddr)).then(function(snap) {
                     if (snap && snap.exists()) {
                         followBtn.querySelector('span:nth-child(1)').textContent = '✓';
                         followBtn.querySelector('span:nth-child(2)').textContent = 'Following';
