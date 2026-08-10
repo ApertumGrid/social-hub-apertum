@@ -23764,6 +23764,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         } catch (e) { console.warn('[SocialGraph] followingSet load failed:', e); }
     }
 
+    // Referenced in 4 places across the live-stream UI but never defined —
+    // every call site guarded itself with typeof===... so the missing
+    // function silently always fell back to false, meaning "already
+    // following" indicators never worked and Follow buttons never hid
+    // themselves for someone who already follows. Best-effort: reflects
+    // whatever _followingSet has loaded so far (populated by
+    // _loadHeroSocialGraph / loadMyNetwork), not a live server check —
+    // callers that need certainty (e.g. the live-stream info bar) should
+    // still verify against social_graph directly before deciding.
+    window._isFollowing = function(addr) {
+        return _followingSet.has((addr || '').toLowerCase());
+    };
+
     // Follow / Unfollow toggle — costs 1★ · 90% to creator, 10% to platform
     async function heroFollow() {
         if (!userAddress) return showToast('Connect wallet first!');
@@ -31467,8 +31480,19 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var hostA=(streamData.hostAddr||'').toLowerCase();
                     window._lsibHostAddr=hostA;
                     var isOwn=myA&&myA===hostA;
-                    var isF=typeof window._isFollowing==='function'?window._isFollowing(hostA):false;
-                    fb.style.display=(!isOwn&&!isF)?'':'none';
+                    // Direct social_graph check (same collection/doc-id heroFollow() itself
+                    // uses) instead of trusting _followingSet, which is only populated after
+                    // visiting a profile or the Network panel — empty for someone who joined
+                    // a stream directly, which made this button show "Follow" even for
+                    // people already following, and clicking it would silently unfollow
+                    // them for free (heroFollow() itself checks correctly) — then a second,
+                    // confused click would genuinely re-follow and charge again.
+                    fb.style.display='none';
+                    if(!isOwn && myA && window.db && window.fs){
+                        window.fs.getDoc(window.fs.doc(window.db,'social_graph',myA+'_'+hostA)).then(function(snap){
+                            fb.style.display=(snap&&snap.exists())?'none':'';
+                        }).catch(function(){ fb.style.display=''; });
+                    }
                 }
                 var vCon=document.getElementById('live-remote-video-container');
                 if (window.innerWidth <= 768) {
@@ -32944,6 +32968,34 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         });
     }
 
+    // ── Chat avatar self-heal ─────────────────────────────────────────────
+    // Messages store the sender's avatar at send time (window._liveUserAvatar),
+    // which loads asynchronously after wallet connect (loadProfileFromFirebase).
+    // Someone who sends a message right after joining can beat that fetch,
+    // permanently baking a blank avatar into that message doc — it never
+    // corrects itself since chat docs aren't rewritten later. Cache correct
+    // avatars as we see them, and for a blank one, look the real profile up
+    // once and patch any already-rendered <img>s for that address.
+    window._chatAvatarCache = window._chatAvatarCache || {};
+    var _chatAvatarFetching = {};
+    function _resolveChatAvatar(addr) {
+        if (!addr) return '';
+        if (window._chatAvatarCache[addr]) return window._chatAvatarCache[addr];
+        if (!_chatAvatarFetching[addr] && window.db && window.fs) {
+            _chatAvatarFetching[addr] = true;
+            window.fs.getDoc(window.fs.doc(window.db, 'users', addr)).then(function(snap) {
+                var url = snap.exists() ? (snap.data().avatarUrl || '') : '';
+                if (url) {
+                    window._chatAvatarCache[addr] = url;
+                    document.querySelectorAll('.live-chat-av[data-addr-for="' + addr + '"]').forEach(function(img) {
+                        img.src = url;
+                    });
+                }
+            }).catch(function(){});
+        }
+        return '';
+    }
+
     function renderChatFeed(feedElId, msgs) {
         const feed = $(feedElId);
         if (!feed) return;
@@ -32996,7 +33048,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const nameAttrs= addr ? `class="live-chat-user lcu-click" onclick="window._openChatCtx(event,this.closest('[data-id]'))"` : `class="live-chat-user"`;
             const replyBtn = `<button class="live-reply-btn" onclick="event.stopPropagation();var _m=this.closest('[data-id]');window._setReplyTo(_m.dataset.id,_m.dataset.author,_m.dataset.text.slice(0,40))">↩</button>`;
             const replyQ   = m.replyTo ? `<div class="lcm-reply-quote"><b>${_esc(m.replyTo.author)}</b>: ${_esc(m.replyTo.text)}</div>` : '';
-            const av       = m.avatar || window._defaultAvatarSvgFor(addr);
+            if (addr && m.avatar) window._chatAvatarCache[addr] = m.avatar;
+            const av       = m.avatar || _resolveChatAvatar(addr) || window._defaultAvatarSvgFor(addr);
             const badge    = _giftBadge(addr);
 
             if (m.isGift && m.giftStyle) {
@@ -33008,7 +33061,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
             if (m.isGift) {
                 return `<div class="live-chat-msg" ${da} style="background:rgba(124,92,191,0.08);border-radius:6px;padding:4px 6px;margin:2px 0;">
-                    <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                    <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                     <div style="flex:1;min-width:0;">${replyQ}<div ${nameAttrs}>${_esc(m.author)}${badge}</div><div class="live-chat-body live-chat-hype-msg">${_esc(m.text)}</div></div>
                     ${replyBtn}
                 </div>`;
@@ -33025,7 +33078,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             }
             if (m.isHost) {
                 return `<div class="live-chat-msg" ${da} style="background:rgba(124,92,191,0.07);border-radius:6px;padding:4px 6px;margin:2px 0;">
-                    <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                    <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                     <div style="flex:1;min-width:0;">${replyQ}<div ${nameAttrs} style="color:var(--purple-lt);">👑 ${_esc(m.author)}</div><div class="live-chat-body">${_esc(m.text)}</div></div>
                     ${replyBtn}
                 </div>`;
@@ -33042,7 +33095,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 </div>`;
             }
             return `<div class="live-chat-msg" ${da}>
-                <img class="live-chat-av" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
+                <img class="live-chat-av" data-addr-for="${addr}" src="${av}" onerror="this.src='https://api.dicebear.com/7.x/identicon/svg?seed=hub'">
                 <div style="flex:1;min-width:0;">${replyQ}<div><span ${nameAttrs}>${_esc(m.author)}</span>${badge}${replyBtn}</div><div class="live-chat-body">${_esc(m.text)}</div></div>
             </div>`;
         }).join('');
@@ -40125,7 +40178,10 @@ function _openLiveProfile(addr,name,avatarUrl){
     if(addr===myAddr){if(fbBtn){fbBtn.textContent="That's you!";fbBtn.disabled=true;} return;}
     if(window.db&&window.fs){
         var getDoc=window.fs.getDoc, doc=window.fs.doc;
-        getDoc(doc(window.db,'follows',myAddr+'_'+addr)).then(function(snap){
+        // Real follow relationships live in social_graph (see heroFollow()) —
+        // 'follows' isn't written anywhere, so this always came back empty and
+        // never showed "✓ Following" for someone you already follow.
+        getDoc(doc(window.db,'social_graph',myAddr+'_'+addr)).then(function(snap){
             if(!fbBtn) return;
             if(snap.exists()){fbBtn.textContent='✓ Following';fbBtn.className='lvpc-btn following';fbBtn.disabled=true;}
             else{fbBtn.textContent='+ Follow';fbBtn.disabled=false;fbBtn.className='lvpc-btn';}
@@ -40725,7 +40781,10 @@ window._openSlotAction = function(slotData, slotEl, isHost) {
                 else if (typeof showToast === 'function') showToast('Follow unavailable.');
             });
             if (window.fs.getDoc && window.fs.doc) {
-                window.fs.getDoc(window.fs.doc(window.db, 'follows', myAddr+'_'+theirAddr)).then(function(snap) {
+                // Real follow relationships live in social_graph (see heroFollow()) —
+                // 'follows' isn't written anywhere, so this always came back empty and
+                // never showed "✓ Following" for a co-host you already follow.
+                window.fs.getDoc(window.fs.doc(window.db, 'social_graph', myAddr+'_'+theirAddr)).then(function(snap) {
                     if (snap && snap.exists()) {
                         followBtn.querySelector('span:nth-child(1)').textContent = '✓';
                         followBtn.querySelector('span:nth-child(2)').textContent = 'Following';
