@@ -11255,6 +11255,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     ">
                         ⚠ Platform Revenue — Separate Account · Source: admin_revenue/global · Contract: adminWithdraw()
                     </div>
+                    <!-- MANUAL STOPGAP (2026-08-11): most fee sources (sendGift, hypePost,
+                         follows, hub fees, Daily Star Pot) log platform revenue to Firestore
+                         but never call adminAddPlatformFees() on-chain — only renewListing's
+                         marketplace fee does. So admin_revenue/global.total and the contract's
+                         real platformPool() drift apart. This button runs settlePlatformRevenue,
+                         which moves the Firestore-tracked total into platformPool on demand.
+                         Run this BEFORE "Withdraw Platform Fees" if that one says the pool is
+                         empty. The real fix — wiring every fee source to settle in real time —
+                         is separate, larger work, deliberately not done here. -->
+                    <button id="admin-settle-revenue-btn" onclick="settlePlatformRevenue()" style="margin-bottom:8px;">⚡ Settle Revenue On-Chain (settlePlatformRevenue)</button>
                     <button id="admin-withdraw-btn" onclick="adminWithdraw()">⬇ Withdraw Platform Fees → Treasury (adminWithdrawToTreasury)</button>
                     <button id="admin-reconcile-btn" onclick="adminReconcile()"
                             style="display:flex;align-items:center;justify-content:center;gap:8px;
@@ -16731,6 +16741,56 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             );
         }
     }
+
+    // Manual, repeatable stopgap — moves Firestore-tracked admin_revenue/global.total
+    // into the contract's real platformPool via the settlePlatformRevenue Cloud
+    // Function. Run this before adminWithdraw() if that one reports an empty pool —
+    // most fee sources don't call adminAddPlatformFees() on-chain today, only
+    // renewListing's marketplace fee does, so the two numbers drift apart. See the
+    // comment above the button in the dashboard markup for the full explanation.
+    async function settlePlatformRevenue() {
+        if (!userAddress || userAddress.toLowerCase() !== CONFIG.OWNER_ADDRESS.toLowerCase()) {
+            return alert("Admin only.");
+        }
+        const confirmed = await _shConfirm(
+            `Settle Platform Revenue On-Chain\n` +
+            `${'─'.repeat(30)}\n` +
+            `Reads admin_revenue/global.total from Firestore, confirms the on-chain\n` +
+            `price oracle is within 2% of live DEX (refuses to run otherwise), then\n` +
+            `calls adminAddPlatformFees() to move that revenue into the contract's\n` +
+            `real, claimable platformPool.\n\n` +
+            `Manual stopgap, not automatic/real-time. Safe to run repeatedly —\n` +
+            `each run only settles whatever has accumulated since the last one.\n\n` +
+            `Proceed?`
+        );
+        if (!confirmed) return;
+
+        showToast("Settling platform revenue on-chain…");
+        try {
+            const resp = await fetch(_LOTTERY_CF + '/settlePlatformRevenue', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminAddress: userAddress })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                return alert("Settlement failed: " + (data.error || 'Unknown error'));
+            }
+            alert(
+                `Platform Revenue Settled On-Chain\n\n` +
+                `${data.settledStars} ★ = ${data.settledAptm.toFixed(6)} APTM\n` +
+                `Price used: $${data.priceUsed}\n` +
+                `Tx: ${data.txHash}\n` +
+                `Block: ${data.blockNumber}\n\n` +
+                `platformPool() should now hold this amount — safe to run\n` +
+                `"Withdraw Platform Fees → Treasury" next.`
+            );
+            updateUI();
+            updateDrawerUI();
+        } catch (e) {
+            alert("Settlement request failed: " + e.message);
+        }
+    }
+    window.settlePlatformRevenue = settlePlatformRevenue;
 
     async function adminWithdraw() {
         if (!hubContract || !signer || !provider) return alert("Connect Wallet First");
