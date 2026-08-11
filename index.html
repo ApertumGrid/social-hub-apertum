@@ -14468,6 +14468,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('Brave Wallet not found. Open this page in the Brave browser with Brave Wallet enabled.');
                     return;
                 }
+                const _braveOnAptm = await _ensureApertumChain(eth);
+                if (!_braveOnAptm) return;
             } else if (walletType === 'rabby') {
                 // Same reasoning as Brave above — Rabby sets isRabby, never isMetaMask,
                 // and we never want to silently fall back to a different injected wallet.
@@ -14480,6 +14482,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     showToast('Rabby Wallet not found. Please install the Rabby extension.');
                     return;
                 }
+                const _rabbyOnAptm = await _ensureApertumChain(eth);
+                if (!_rabbyOnAptm) return;
             } else if (walletType === 'walletconnect') {
                 // ── WalletConnect v2 ─────────────────────────────────────
                 // Lazily import WalletConnect EthereumProvider from CDN
@@ -14669,6 +14673,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
                 if (!eth) eth = await _waitForEthereum(4000);
                 if (!eth) { showToast('No wallet detected. Please install MetaMask.'); return; }
+                const _mmOnAptm = await _ensureApertumChain(eth);
+                if (!_mmOnAptm) return;
             }
 
             provider    = new ethers.providers.Web3Provider(eth);
@@ -16823,6 +16829,17 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             `Proceed?`
         );
         if (!confirmed) return;
+
+        // Defense-in-depth: re-verify the connected wallet is actually on Apertum
+        // right before signing, independent of whatever check ran at connect time —
+        // catches a session established before that enforcement existed, or a
+        // network switched mid-session. Same pattern already used elsewhere
+        // (e.g. settleStarsToWallet()) — window._shLastEth is set for every
+        // wallet type by _connectWithProvider(), not just MetaMask.
+        if (window._shLastEth) {
+            const onAptm = await _ensureApertumChain(window._shLastEth);
+            if (!onAptm) return;
+        }
 
         showToast("Calling adminWithdrawToTreasury() on contract…");
 
