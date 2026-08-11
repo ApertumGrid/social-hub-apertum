@@ -19419,7 +19419,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     }
                 </div>
                 ${mediaHtml}
-                ${post.category && post.category !== 'Global' ? `<span class="cat-badge">${post.category}</span>` : ''}
+                ${post.communityId && post.communityName
+                    ? `<span class="cat-badge" style="cursor:pointer;" onclick="event.stopPropagation();jumpToPost('${postId}','${post.communityId}')" title="Posted in ${post.communityName}">🏠 Posted in ${post.communityName}</span>`
+                    : (post.category && post.category !== 'Global' ? `<span class="cat-badge">${post.category}</span>` : '')}
                 ${post.type === 4 ? '<span class="cat-badge" style="background:rgba(255,107,53,0.15);border-color:rgba(255,107,53,0.45);color:#ff6b35;">▶ Flick</span>' : ''}
                 <div class="post-body">${linkify(post.text)}</div>
                 <div class="post-actions">
@@ -37590,7 +37592,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 // actually broadcasting — this makes the pulse genuinely reflect whether
 // at least one stream is currently active.
 (function() {
-    function _applyLiveAmbientState(anyLive) {
+    // Two independent sources feed the same pulse — each listener only knows
+    // its own collection, so both write into shared state and the combined
+    // flag is recomputed after either one updates (not just whichever fired
+    // last), otherwise a stream-only or room-only update could clobber the
+    // other source's contribution to the pulse.
+    var _anyStreamLive  = false;
+    var _anyRoomActive  = false;
+    function _applyLiveAmbientState() {
+        var anyLive = _anyStreamLive || _anyRoomActive;
         document.body.classList.toggle('someone-live', anyLive);
         var mBtn = document.getElementById('mdash-live');
         if (mBtn) mBtn.classList.toggle('live-pulse-active', anyLive);
@@ -37610,8 +37620,29 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     var age = startMs ? now - startMs : 0;
                     if (age < MAX_AGE) anyLive = true;
                 });
-                _applyLiveAmbientState(anyLive);
+                _anyStreamLive = anyLive;
+                _applyLiveAmbientState();
             }, function(err) { console.warn('[LiveAmbient] listener error:', err); });
+
+            // Voice Rooms — same ambient signal, extended to cover "no way to tell
+            // if anyone's actually in a Voice Room" from the main nav. Only counts
+            // rooms with real participants beyond the host (a listener, or someone
+            // admitted to the stage) — an empty room the host just opened shouldn't
+            // pulse the nav, that's the exact silent/empty-looking-room problem
+            // this exists to fix, not reproduce.
+            var vrCol = window.fs.collection(window.db, 'voice_rooms');
+            var vrQ   = window.fs.query(vrCol, window.fs.where('active', '==', true));
+            window.fs.onSnapshot(vrQ, function(snap) {
+                var anyActive = false;
+                snap.forEach(function(d) {
+                    var data = d.data();
+                    var hasListeners = (data.listenerCount || 0) > 0;
+                    var hasSpeakers  = (data.currentSpeakers || []).length > 0;
+                    if (hasListeners || hasSpeakers) anyActive = true;
+                });
+                _anyRoomActive = anyActive;
+                _applyLiveAmbientState();
+            }, function(err) { console.warn('[LiveAmbient] room listener error:', err); });
         } catch (e) { console.warn('[LiveAmbient] init error:', e); }
     }
     document.addEventListener('DOMContentLoaded', function() { setTimeout(_startLiveAmbientListener, 1000); });
