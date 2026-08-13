@@ -4666,6 +4666,35 @@
         .mcd-solvency.solvent   .mcd-sol-ratio { color: #22c55e; }
         .mcd-solvency.insolvent .mcd-sol-ratio { color: #ef4444; }
         .mcd-sol-sub { font-size: 0.6rem; color: var(--text-muted); margin-top: 1px; }
+        .mcd-sol-adminrev {
+            font-family: var(--font-mono); font-size: 0.68rem; font-weight: 800;
+            color: var(--gold); margin-top: 5px; letter-spacing: 0.3px;
+        }
+        .mcd-comp-wrap {
+            margin: -4px 0 16px; padding: 10px 14px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+        }
+        .mcd-comp-text {
+            font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-secondary);
+            margin-bottom: 8px; line-height: 1.5;
+        }
+        .mcd-comp-bar {
+            display: flex; width: 100%; height: 10px; border-radius: 6px; overflow: hidden;
+            background: rgba(255,255,255,0.05); margin-bottom: 8px;
+        }
+        .mcd-comp-seg { height: 100%; transition: width 0.4s; }
+        .mcd-comp-owed     { background: #f59e0b; }
+        .mcd-comp-adminrev { background: var(--gold); }
+        .mcd-comp-buffer   { background: #2dd4bf; }
+        .mcd-comp-legend {
+            display: flex; gap: 14px; flex-wrap: wrap;
+            font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-muted);
+            letter-spacing: 0.4px;
+        }
+        .mcd-comp-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            margin-right: 4px; vertical-align: middle;
+        }
 
         /* Tokenomics */
         .tok-section { font-family: var(--font-mono-gem); font-size: 0.56rem; color: #f59e0b; letter-spacing: 2.5px; text-transform: uppercase; margin: 18px 0 8px; font-weight: 700; }
@@ -11152,6 +11181,22 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         <div class="mcd-sol-right">
                             <div class="mcd-sol-ratio" id="mcd-sol-ratio">— / —</div>
                             <div class="mcd-sol-sub">Contract APTM / Liability APTM owed</div>
+                            <div class="mcd-sol-adminrev" id="mcd-sol-adminrev"></div>
+                        </div>
+                    </div>
+
+                    <!-- Surplus composition breakdown -->
+                    <div class="mcd-comp-wrap" id="mcd-comp-wrap" style="display:none;">
+                        <div class="mcd-comp-text" id="mcd-comp-text"></div>
+                        <div class="mcd-comp-bar" id="mcd-comp-bar">
+                            <div class="mcd-comp-seg mcd-comp-owed" id="mcd-comp-seg-owed"></div>
+                            <div class="mcd-comp-seg mcd-comp-adminrev" id="mcd-comp-seg-adminrev"></div>
+                            <div class="mcd-comp-seg mcd-comp-buffer" id="mcd-comp-seg-buffer"></div>
+                        </div>
+                        <div class="mcd-comp-legend">
+                            <span><i class="mcd-comp-dot mcd-comp-owed"></i>Owed to users</span>
+                            <span><i class="mcd-comp-dot mcd-comp-adminrev"></i>Platform revenue (withdrawable)</span>
+                            <span><i class="mcd-comp-dot mcd-comp-buffer"></i>Buffer</span>
                         </div>
                     </div>
 
@@ -16662,6 +16707,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const statusEl = document.getElementById('mcd-sol-status');
             const detailEl = document.getElementById('mcd-sol-detail');
             const ratioEl  = document.getElementById('mcd-sol-ratio');
+            const adminRevLineEl = document.getElementById('mcd-sol-adminrev');
+            const compWrapEl     = document.getElementById('mcd-comp-wrap');
+            const compTextEl     = document.getElementById('mcd-comp-text');
+            const compOwedEl     = document.getElementById('mcd-comp-seg-owed');
+            const compAdminEl    = document.getElementById('mcd-comp-seg-adminrev');
+            const compBufferEl   = document.getElementById('mcd-comp-seg-buffer');
 
             if (!provider) {
                 if (bar) bar.className = 'mcd-solvency loading';
@@ -16719,6 +16770,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             if (bar) bar.className = 'mcd-solvency ' + (isSolvent ? 'solvent' : 'insolvent');
             if (ratioEl) ratioEl.textContent =
                 contractAptm + ' APTM / ' + liabilityAptm + ' APTM owed';
+            if (adminRevLineEl) adminRevLineEl.textContent =
+                adminRevAptm + ' APTM platform revenue — withdrawable';
 
             const pendingEl = document.getElementById('mcd-pending');
             if (pendingEl) pendingEl.textContent = liabilityAptm + ' APTM';
@@ -16729,6 +16782,24 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     'Coverage: ' + coverageRatio + '% · Surplus: ' + discrepancyAptm + ' APTM' +
                     ' · Users owed: ' + liabilityAptm + ' APTM' +
                     ' · Admin rev: ' + adminRevAptm + ' APTM';
+
+                // Surplus composition — how much of the surplus is legitimate,
+                // already-accounted-for platform revenue vs genuine extra buffer.
+                const bufferUsdt = Math.max(0, discrepancyUsd - adminRevUsdt);
+                const bufferAptm = (bufferUsdt / _mcPrice).toFixed(4);
+                if (compWrapEl && contractBalUsdt > 0) {
+                    compWrapEl.style.display = '';
+                    if (compTextEl) compTextEl.textContent =
+                        contractAptm + ' APTM total = ' + liabilityAptm +
+                        ' APTM owed to users + ' + adminRevAptm + ' APTM platform revenue (withdrawable) + ' +
+                        bufferAptm + ' APTM buffer';
+                    const owedPct   = Math.min(100, (userLiabilityUsdt / contractBalUsdt) * 100);
+                    const adminPct  = Math.min(100 - owedPct, (adminRevUsdt / contractBalUsdt) * 100);
+                    const bufferPct = Math.max(0, 100 - owedPct - adminPct);
+                    if (compOwedEl)   compOwedEl.style.width   = owedPct.toFixed(2) + '%';
+                    if (compAdminEl)  compAdminEl.style.width  = adminPct.toFixed(2) + '%';
+                    if (compBufferEl) compBufferEl.style.width = bufferPct.toFixed(2) + '%';
+                }
             } else {
                 if (statusEl) statusEl.textContent = 'RESERVE DISCREPANCY';
                 if (detailEl) detailEl.textContent =
@@ -16736,6 +16807,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     ' · Coverage: ' + coverageRatio + '%' +
                     ' · Users owed: ' + liabilityAptm + ' APTM' +
                     ' · Admin rev: ' + adminRevAptm + ' APTM';
+                if (compWrapEl) compWrapEl.style.display = 'none';
             }
 
             console.log(
