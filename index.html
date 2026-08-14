@@ -13570,6 +13570,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     let initialDepositAptm    = 0;
     let totalAnchors          = 0;
     let provider, signer, hubContract;
+
+    // Debug logging gate — OFF by default (production). Financial/balance detail
+    // must never print to the console for a normal visitor. Opt in locally via
+    // `localStorage.setItem('sh_debug','1')` in your own browser console when
+    // you actually need to see this output; no code change/redeploy required.
+    const _DEBUG_LOGS = (typeof localStorage !== 'undefined' && localStorage.getItem('sh_debug') === '1');
+
     let userAddress  = "";
     // Identity is ONLY populated after wallet connection — never from cache on startup
     let userHandle   = "";
@@ -14983,7 +14990,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     creatorEarnings   = fbCreatorStars + onChainSettled;
                     currentEarnedUsdt = creatorEarnings * CONFIG.STAR_USD;
                     _updatePendingWithdrawalBanner(withdrawableHuman * _aptmPrice);
-                    console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} @ $${_aptmPrice.toFixed(4)} | depositedUSD=${depositedUsdValue.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
+                    if (_DEBUG_LOGS) console.log(`[syncData] depositedAPTM=${depositedHuman.toFixed(4)} @ $${_aptmPrice.toFixed(4)} | depositedUSD=${depositedUsdValue.toFixed(4)} | purchasedStars=${purchasedStars.toFixed(2)}★ | earnedStars=${creatorEarnings.toFixed(2)}★`);
                     // Write live USD value back to Firestore so onSnapshot displays correct Stars
                     const _syncPayload = { lastSync: Date.now() };
                     if (depositedUsdValue > 0) {
@@ -15000,7 +15007,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 }
             }
             updateUI();
-            console.log('[syncData] complete');
+            if (_DEBUG_LOGS) console.log('[syncData] complete');
         } catch (e) { console.error('Sync Failed:', e); }
     }
 
@@ -15697,7 +15704,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 // accumulates across thousands of 0.8 / 0.4 / 0.9 additions.
                 // Simulation: 1000 hypes drifts 1.4e-11★ without rounding.
                 const updated = parseFloat((current + amount).toFixed(10));
-                console.log(`[creditCreatorStars] ${addr.slice(0,8)}… +${amount}★ creatorStars: ${current.toFixed(4)} → ${updated.toFixed(4)}`);
+                if (_DEBUG_LOGS) console.log(`[creditCreatorStars] ${addr.slice(0,8)}… +${amount}★ creatorStars: ${current.toFixed(4)} → ${updated.toFixed(4)}`);
                 txn.set(ref, { creatorStars: updated, lastUpdated: Date.now() }, { merge: true });
             });
             // Ticker: only log for the connected user's own wallet
@@ -16810,7 +16817,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 if (compWrapEl) compWrapEl.style.display = 'none';
             }
 
-            console.log(
+            if (_DEBUG_LOGS) console.log(
                 '[Solvency] Contract: ' + contractAptm + ' APTM' +
                 ' | userLiability: ' + liabilityAptm + ' APTM' +
                 ' | adminRev: ' + adminRevAptm + ' APTM' +
@@ -16916,9 +16923,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         showToast("Calling adminWithdrawToTreasury() on contract…");
 
         try {
-            console.log("[AdminWithdraw] Sending adminWithdrawToTreasury() tx…");
+            if (_DEBUG_LOGS) console.log("[AdminWithdraw] Sending adminWithdrawToTreasury() tx…");
             const tx = await hubContract.adminWithdrawToTreasury({ gasLimit: 200000 });
-            console.log("[AdminWithdraw] Tx submitted:", tx.hash);
+            if (_DEBUG_LOGS) console.log("[AdminWithdraw] Tx submitted:", tx.hash);
             showToast("Withdrawal submitted — waiting for on-chain confirmation…");
 
             // ── RECEIPT LOGIC: reset Firebase ONLY after status === 1 ────────────
@@ -16932,7 +16939,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     "Check that the contract has claimable platform revenue."
                 );
             }
-            console.log(`[AdminWithdraw] Confirmed. Block: ${receipt.blockNumber}, Gas: ${receipt.gasUsed.toString()}`);
+            if (_DEBUG_LOGS) console.log(`[AdminWithdraw] Confirmed. Block: ${receipt.blockNumber}, Gas: ${receipt.gasUsed.toString()}`);
 
             // ── Step 7: Reset admin_revenue/global ONLY after receipt.status===1 ──
             if (window.db) {
@@ -16946,7 +16953,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         },
                         { merge: true }
                     );
-                    console.log("[AdminWithdraw] Firebase admin_revenue/global reset to 0 after confirmed receipt.");
+                    if (_DEBUG_LOGS) console.log("[AdminWithdraw] Firebase admin_revenue/global reset to 0 after confirmed receipt.");
                 } catch (e) {
                     console.error("[AdminWithdraw] CRITICAL: on-chain OK but Firebase reset failed:", e);
                 }
@@ -16972,7 +16979,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             s('drawer-admin-revenue',  "0.00 ★");
             s('drawer-admin-count',    "0 fee events");
 
-            console.log(`[AdminWithdraw] ── Complete. adminWithdraw() confirmed on block ${receipt.blockNumber} ──`);
+            if (_DEBUG_LOGS) console.log(`[AdminWithdraw] ── Complete. adminWithdraw() confirmed on block ${receipt.blockNumber} ──`);
             alert(`Platform Revenue Settled\n\n${revenueStars} ★ (${poolUsdt.toFixed(4)} APTM) withdrawn to Treasury.\n\nBlock: ${receipt.blockNumber}`);
             updateUI();
             updateDrawerUI();
@@ -17026,7 +17033,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const livePrice     = currentAptmPriceUsd > 0 ? currentAptmPriceUsd : 0.17;
             const usdValue      = aptmAmount * livePrice;
             const starsReceived = Math.floor(usdValue / CONFIG.STAR_USD);
-            console.log(`[Deposit] ${aptmAmount} APTM @ $${livePrice.toFixed(4)} = ${starsReceived} Stars`);
+            if (_DEBUG_LOGS) console.log(`[Deposit] ${aptmAmount} APTM @ $${livePrice.toFixed(4)} = ${starsReceived} Stars`);
 
             // Optimistic local update
             currentUsdtBalance = (parseFloat(currentUsdtBalance) || 0) + usdValue;
@@ -17043,7 +17050,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     });
                     const cfData = await cfResp.json();
                     if (cfData.success) {
-                        console.log(`[Deposit] CF recorded: ${aptmAmount} APTM`);
+                        if (_DEBUG_LOGS) console.log(`[Deposit] CF recorded: ${aptmAmount} APTM`);
                     } else {
                         console.warn('[Deposit] CF rejected:', cfData.error);
                     }
@@ -17206,7 +17213,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 return alert('Withdraw amount is 0 at the current price.\n\nYour stars could not be converted to APTM.');
             }
 
-            console.log('[settleToWallet] depositAptm=' + depositAptmOwed.toFixed(8) +
+            if (_DEBUG_LOGS) console.log('[settleToWallet] depositAptm=' + depositAptmOwed.toFixed(8) +
                 ' earnedAptm=' + earnedAptmOwed.toFixed(8) +
                 ' spentDebt=' + spentAptmDebt.toFixed(8) +
                 ' withdrawAptm=' + withdrawAptm.toFixed(8) +
@@ -18649,7 +18656,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     spentStarsTotal: newSpent,
                     lastUpdated:     Date.now()
                 }, { merge: true });
-                console.log(`[deductStars] Database successfully updated — spentStarsTotal: ${prevSpent.toFixed(4)} → ${newSpent.toFixed(4)}★`);
+                if (_DEBUG_LOGS) console.log(`[deductStars] Database successfully updated — spentStarsTotal: ${prevSpent.toFixed(4)} → ${newSpent.toFixed(4)}★`);
             });
         } catch (e) { console.warn('[deductStars] Firestore write failed:', e); }
 
@@ -19672,6 +19679,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 // ── Unified following filter: author-follow OR community-follow
                 const passesFollowing = (_followMode === 'global') ||
                     !!_wallFilter ||
+                    (!!userAddress && (post.authorAddr || '').toLowerCase() === userAddress.toLowerCase()) ||
                     _followingSet.has((post.authorAddr  || '').toLowerCase()) ||
                     _followingSet.has((post.communityId || '').toLowerCase());
                 // Flicks (type 4) only appear in the Flicks feed, not in global/following.
@@ -27129,7 +27137,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             const aptmWei = ethers.utils.parseEther(aptmAmount.toFixed(18));
 
             setStatus('Sending to MetaMask — confirm the transaction…', 'var(--teal)');
-            console.log(`[SeedVault] Calling depositAPTM() with ${aptmAmount.toFixed(6)} APTM (${aptmWei.toString()} wei)`);
+            if (_DEBUG_LOGS) console.log(`[SeedVault] Calling depositAPTM() with ${aptmAmount.toFixed(6)} APTM (${aptmWei.toString()} wei)`);
 
             // ── On-chain call: depositAPTM() payable ────────────────────
             // CRITICAL: value= is the APTM sent; gasLimit gives headroom for the payable path.
@@ -27141,10 +27149,10 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             });
 
             setStatus(`Tx sent — waiting for confirmation… (${tx.hash.slice(0,12)}…)`, 'var(--teal)');
-            console.log(`[SeedVault] Tx hash: ${tx.hash} — awaiting receipt…`);
+            if (_DEBUG_LOGS) console.log(`[SeedVault] Tx hash: ${tx.hash} — awaiting receipt…`);
 
             const receipt = await tx.wait();
-            console.log(`[SeedVault] Confirmed on block ${receipt.blockNumber} ✓`);
+            if (_DEBUG_LOGS) console.log(`[SeedVault] Confirmed on block ${receipt.blockNumber} ✓`);
 
             setStatus(`✓ Confirmed block ${receipt.blockNumber} — logging & re-syncing vault…`, '#22c55e');
 
@@ -27460,6 +27468,14 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     //   Force-zero any address. Admin-wallet only.
     // ═══════════════════════════════════════════════════════════════════
     window.adminZeroMyBalance = async function(overrideAddr) {
+        // SECURITY: this was directly callable from DevTools by any connected
+        // wallet against ANY address — adminZeroAddress()'s owner-only gate sat
+        // in front of it but this function was also exposed on window itself,
+        // bypassing that gate entirely. Same check adminZeroAddress already used.
+        if (!userAddress || userAddress.toLowerCase() !== CONFIG.OWNER_ADDRESS.toLowerCase()) {
+            console.error('[adminZeroMyBalance] Admin wallet only.');
+            return;
+        }
         const addr = (overrideAddr || userAddress || '').toLowerCase();
         if (!addr) { console.error('[adminZeroMyBalance] No wallet connected.'); return; }
         if (!window.db || !window.fs) { console.error('[adminZeroMyBalance] Firebase not ready.'); return; }
@@ -27472,7 +27488,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             'Only do this AFTER a confirmed on-chain withdrawal.\n\n' +
             'Proceed?'
         );
-        if (!confirmed) { console.log('[adminZeroMyBalance] Cancelled.'); return; }
+        if (!confirmed) { if (_DEBUG_LOGS) console.log('[adminZeroMyBalance] Cancelled.'); return; }
 
         try {
             await window.fs.setDoc(
@@ -27508,7 +27524,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 totalDepositedAptm = 0;
                 updateUI();
             }
-            console.log('%c[adminZeroMyBalance] DONE — Firebase balance zeroed for ' + addr, 'color:#2dd4bf; font-weight:700;');
+            if (_DEBUG_LOGS) console.log('%c[adminZeroMyBalance] DONE — Firebase balance zeroed for ' + addr, 'color:#2dd4bf; font-weight:700;');
             alert('Firebase balance zeroed for ' + addr + '.\nUI has been refreshed.');
         } catch (e) {
             console.error('[adminZeroMyBalance] FAILED:', e);
