@@ -30769,7 +30769,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (e.name === 'NotAllowedError' || e.message?.includes('Permission')) {
             return 'Camera/microphone permission denied. Please allow access in your browser settings and try again.';
         }
-        if (e.name === 'NotReadableError') {
+        // Agora wraps the browser's own error inside AgoraRTCError, so e.name
+        // is 'AgoraRTCError' / e.code is 'NOT_READABLE' — not the bare
+        // NotReadableError DOMException name. Check the message text too so
+        // this still catches it instead of falling through to raw error text.
+        if (e.name === 'NotReadableError' || e.code === 'NOT_READABLE' || e.message?.includes('NotReadableError') || e.message?.includes('Could not start video source')) {
             return 'Camera is in use by another app or browser tab. Close it, then tap Try Again.';
         }
         return e.message || 'Failed to access camera/microphone. Please try again.';
@@ -30873,10 +30877,16 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // Close any existing tracks first
             await closeExistingTracks();
+            // Also release any raw preview stream left open by the pre-live flip
+            // toggle — otherwise this opens a second, independent camera
+            // connection while the first is still active (NotReadableError),
+            // and honors the toggle's actual selection instead of silently
+            // defaulting to front camera.
+            _releasePreLiveRawStream();
             await _delayForCameraRelease();
 
             // Acquire tracks
-            [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
+            [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks(undefined, { facingMode: _currentFacingMode });
             window._localVideoTrack_ref = localVideoTrack;
             window._localAudioTrack_ref = localAudioTrack;
 
