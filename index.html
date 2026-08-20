@@ -30326,7 +30326,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 console.log('[Live] Re-attaching broadcaster video after tab switch');
                 // Use the correct track — screen or camera
                 const activeTrack = isScreenSharing ? screenTrack : localVideoTrack;
-                if (activeTrack) _playInContainer(activeTrack, 'live-broadcaster-video');
+                if (activeTrack) _playInContainer(activeTrack, 'live-broadcaster-video', !isScreenSharing && _currentFacingMode === 'user');
 
                 // Re-sync PiP camera if screen sharing
                 if (isScreenSharing && localVideoTrack) {
@@ -30430,13 +30430,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     //  2. Never clear innerHTML — Agora manages its own <video> inside the container.
     //  3. Container must be visible (non-zero size) before calling track.play().
     //  4. If already playing in the same container, track.play() is idempotent — safe to call again.
-    function _playInContainer(track, containerId) {
+    // `mirror` is explicit opt-in, not left to Agora's internal default: pass
+    // true/false to force our own CSS transform on the container Agora fills,
+    // or omit it entirely to leave any existing transform untouched (used by
+    // callers that aren't the local camera feed, e.g. remote/reaction targets).
+    function _playInContainer(track, containerId, mirror) {
         if (!track) { console.warn('[Live] _playInContainer: no track'); return; }
         const el = typeof containerId === 'string' ? $(containerId) : containerId;
         if (!el) { console.warn('[Live] _playInContainer: element not found:', containerId); return; }
         console.log('[Live] Playing track into', containerId, '— dims:', el.offsetWidth, 'x', el.offsetHeight);
         try {
             track.play(el);
+            if (mirror !== undefined) el.style.transform = mirror ? 'scaleX(-1)' : '';
         } catch(e) {
             console.error('[Live] track.play() error:', e);
         }
@@ -31076,7 +31081,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             // 3. Publish tracks (create if not already previewed)
             if (!localVideoTrack || !localAudioTrack) {
-                [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks();
+                // Release any raw preview stream left open by the pre-live flip
+                // toggle before requesting our own — this is the actual fix for
+                // the "can't go live on rear camera" crash: two concurrent,
+                // independent camera opens is what threw NotReadableError.
+                _releasePreLiveRawStream();
+                await _delayForCameraRelease();
+                [localAudioTrack, localVideoTrack] = await window.AgoraRTC.createMicrophoneAndCameraTracks(undefined, { facingMode: _currentFacingMode });
                 window._localVideoTrack_ref = localVideoTrack;
                 window._localAudioTrack_ref = localAudioTrack;
             }
@@ -31167,11 +31178,11 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             (function _retryPlay(attempts) {
                 const vc = document.getElementById('live-broadcaster-video');
                 if (vc && (vc.offsetWidth > 0 || vc.offsetHeight > 0)) {
-                    _playInContainer(localVideoTrack, 'live-broadcaster-video');
+                    _playInContainer(localVideoTrack, 'live-broadcaster-video', _currentFacingMode === 'user');
                 } else if (attempts < 15) {
                     setTimeout(() => _retryPlay(attempts + 1), 150);
                 } else {
-                    _playInContainer(localVideoTrack, 'live-broadcaster-video');
+                    _playInContainer(localVideoTrack, 'live-broadcaster-video', _currentFacingMode === 'user');
                 }
             })(0);
 
@@ -31235,7 +31246,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
         } catch(e) {
             console.error('[Live] Go live error:', e);
-            showToast('Stream error: ' + (e.message || String(e)));
+            showToast(_mediaErrorMessage(e));
             isHosting = false;
             document.body.classList.remove('is-hosting');
         } finally {
@@ -33903,7 +33914,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.forceVideoPlay = function() {
         if (!localVideoTrack) { console.warn('[forceVideoPlay] No localVideoTrack'); return; }
         console.log('[forceVideoPlay] Forcing replay into live-broadcaster-video');
-        _playInContainer(localVideoTrack, 'live-broadcaster-video');
+        _playInContainer(localVideoTrack, 'live-broadcaster-video', _currentFacingMode === 'user');
     };
 
     console.log('[SocialHub] Live Stream Engine initialised — Agora App ID:', window.APP_CONFIG && window.APP_CONFIG.agoraAppId);
@@ -35069,7 +35080,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                         await localVideoTrack.setEnabled(false);
                     }
                     // Play camera in main container
-                    _playInContainer(localVideoTrack, 'live-broadcaster-video');
+                    _playInContainer(localVideoTrack, 'live-broadcaster-video', _currentFacingMode === 'user');
                 }
 
                 // Hide PiP
@@ -35123,8 +35134,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                 if (screenAudioTrack) toPublish.push(screenAudioTrack);
                 await agoraClient.publish(toPublish);
 
-                // Play screen in main container
-                _playInContainer(screenTrack, 'live-broadcaster-video');
+                // Play screen in main container — never mirrored, regardless of camera facing mode
+                _playInContainer(screenTrack, 'live-broadcaster-video', false);
 
                 // PiP camera (small overlay)
                 const pip = $('pip-camera-overlay');
@@ -35267,6 +35278,20 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     // ── FLIP CAMERA (mobile — front ↔ rear) ──────────────────────
     var _currentFacingMode = 'user'; // 'user' = front, 'environment' = rear
 
+    // Stops and releases the raw getUserMedia preview stream created by
+    // preFlipCamera(), if any. Must run before anything else independently
+    // requests the camera (e.g. Go Live's createMicrophoneAndCameraTracks()),
+    // otherwise the browser/Agora sees two concurrent, uncoordinated opens on
+    // the same camera — which throws NotReadableError, especially on rear
+    // cameras that enforce a stricter single-consumer hardware lock.
+    function _releasePreLiveRawStream() {
+        var vid = document.getElementById('live-local-video');
+        if (vid && vid.srcObject) {
+            try { vid.srcObject.getTracks().forEach(function(t){ t.stop(); }); } catch(_) {}
+            vid.srcObject = null;
+        }
+    }
+
     // Flip while live — unpublish, swap track, republish
     window.flipCamera = async function() {
         if (!localVideoTrack) { showToast('Start your stream first.'); return; }
@@ -35285,7 +35310,12 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
             });
 
             var container = document.getElementById('live-broadcaster-video');
-            if (container) localVideoTrack.play(container);
+            if (container) {
+                localVideoTrack.play(container);
+                // Explicit CSS mirror, not Agora's internal guess — front camera
+                // mirrored (selfie convention), rear camera never mirrored.
+                container.style.transform = (_currentFacingMode === 'user') ? 'scaleX(-1)' : '';
+            }
 
             await agoraClient.publish([localVideoTrack]);
 
@@ -35303,11 +35333,7 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     window.preFlipCamera = function() {
         _currentFacingMode = _currentFacingMode === 'user' ? 'environment' : 'user';
         var label = _currentFacingMode === 'user' ? 'Front' : 'Rear';
-        var vid = document.getElementById('live-local-video');
-        if (vid && vid.srcObject) {
-            vid.srcObject.getTracks().forEach(function(t){ t.stop(); });
-            vid.srcObject = null;
-        }
+        _releasePreLiveRawStream();
         if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); localVideoTrack = null; }
         navigator.mediaDevices.getUserMedia({
             video: { facingMode: _currentFacingMode }, audio: false
