@@ -30440,8 +30440,15 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         if (!el) { console.warn('[Live] _playInContainer: element not found:', containerId); return; }
         console.log('[Live] Playing track into', containerId, '— dims:', el.offsetWidth, 'x', el.offsetHeight);
         try {
-            track.play(el);
-            if (mirror !== undefined) el.style.transform = mirror ? 'scaleX(-1)' : '';
+            if (mirror !== undefined) {
+                // Explicitly disable Agora's own internal mirror default so it
+                // can't fight or compound with our own CSS transform below —
+                // we are the only thing controlling mirroring, not a guess.
+                track.play(el, { mirror: false });
+                el.style.transform = mirror ? 'scaleX(-1)' : '';
+            } else {
+                track.play(el);
+            }
         } catch(e) {
             console.error('[Live] track.play() error:', e);
         }
@@ -35311,7 +35318,9 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
 
             var container = document.getElementById('live-broadcaster-video');
             if (container) {
-                localVideoTrack.play(container);
+                // Explicitly disable Agora's own internal mirror default first —
+                // otherwise it can compose/cancel with our own CSS transform below.
+                localVideoTrack.play(container, { mirror: false });
                 // Explicit CSS mirror, not Agora's internal guess — front camera
                 // mirrored (selfie convention), rear camera never mirrored.
                 container.style.transform = (_currentFacingMode === 'user') ? 'scaleX(-1)' : '';
@@ -35330,11 +35339,18 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
     };
 
     // Flip during preview (before going live)
-    window.preFlipCamera = function() {
+    var _preFlipInProgress = false; // guards against overlapping taps desyncing _currentFacingMode
+    window.preFlipCamera = async function() {
+        if (_preFlipInProgress) return;
+        _preFlipInProgress = true;
         _currentFacingMode = _currentFacingMode === 'user' ? 'environment' : 'user';
         var label = _currentFacingMode === 'user' ? 'Front' : 'Rear';
         _releasePreLiveRawStream();
         if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); localVideoTrack = null; }
+        // Closing a track doesn't synchronously release the OS camera hardware —
+        // requesting the new one immediately after races that release and can
+        // throw NotReadableError (the exact error reported when flipping here).
+        await _delayForCameraRelease();
         navigator.mediaDevices.getUserMedia({
             video: { facingMode: _currentFacingMode }, audio: false
         }).then(function(stream) {
@@ -35346,6 +35362,8 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
         }).catch(function() {
             _currentFacingMode = _currentFacingMode === 'user' ? 'environment' : 'user';
             showToast('Camera flip failed. Check permissions.');
+        }).finally(function() {
+            _preFlipInProgress = false;
         });
     };
 
