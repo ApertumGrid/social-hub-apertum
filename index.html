@@ -1180,6 +1180,7 @@
             top:0 !important; left:0 !important;
             width:100% !important; height:100% !important;
             object-fit:cover !important;
+            transform:none !important;  /* Desktop: no mirroring by default; mobile rear camera mirroring handled by JS */
         }
         /* ── Co-host slot grid ─────────────────────────────────────────────── */
         .live-slot { box-sizing:border-box; border:1px solid rgba(124,92,191,0.22); background:#07060f; overflow:hidden; }
@@ -37181,6 +37182,13 @@ body.host-viewing #live-pinned-comment .lpc-unpin{display:block;}
                     el.style.setProperty('position', 'absolute', 'important');
                     el.style.setProperty('top', '0', 'important');
                     el.style.setProperty('left', '0', 'important');
+                    // Mirror correction: only for mobile + rear camera (environment mode)
+                    // Front camera (user) and desktop should NOT be mirrored
+                    if (window.innerWidth <= 768 && typeof _currentFacingMode !== 'undefined' && _currentFacingMode === 'environment') {
+                        el.style.setProperty('transform', 'scaleX(-1)', 'important');
+                    } else {
+                        el.style.setProperty('transform', 'none', 'important');
+                    }
                 });
             }
             var _bcCon = document.getElementById('live-broadcaster-video-container');
